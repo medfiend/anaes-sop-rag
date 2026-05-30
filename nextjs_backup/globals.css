@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #1e293b;
+  --color-primary-dark: #0f172a;
+  --color-accent: #0d9488;
+  --color-accent-light: #14b8a6;
+  --color-emergency: #dc2626;
+  --color-emergency-hover: #b91c1c;
+  --color-bg-dark: #030712;
+  --color-card-dark: #1f2937;
+}
+
+/* Custom Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+body {
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  background-color: #f8fafc;
+  color: #0f172a;
+  overflow-x: hidden;
+}
+
+/* Micro-animations */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(0.98); }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 3s infinite ease-in-out;
+}
+
+/* PDF highlighting styling */
+.pdf-highlight-box {
+  background-color: rgba(20, 184, 166, 0.25);
+  border: 1.5px solid #14b8a6;
+  box-shadow: 0 0 8px rgba(20, 184, 166, 0.4);
+  pointer-events: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.pdf-canvas-container {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
