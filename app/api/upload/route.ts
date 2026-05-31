@@ -20,7 +20,7 @@ async function extractTextFromPdfBuffer(buffer: Buffer): Promise<string> {
 
 export async function POST(req: Request) {
   // Admin auth guard — check BEFORE starting the stream
-  const authResult = await requireAdmin();
+  const authResult = await requireAdmin(req);
   if (authResult instanceof NextResponse) {
     return authResult;
   }

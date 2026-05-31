@@ -8,7 +8,7 @@ import path from 'path';
 export async function GET(req: Request) {
   try {
     // 1. Authenticate Request
-    const authResult = await requireAuth();
+    const authResult = await requireAuth(req);
     if (authResult instanceof NextResponse) {
       return authResult;
     }

@@ -1,51 +1,85 @@
+import { createClerkClient } from '@clerk/backend';
 import { auth } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 
 const ADMIN_EMAILS = ['audit.lead@nhs.net', 's.parashar1@nhs.net'];
 
 /**
- * Verify the request is from an authenticated Clerk user.
- * Returns the user's email if authenticated, or a 401 NextResponse if not.
+ * Get a verified Clerk user from a request.
  *
- * auth() reads the Clerk session from the request cookies automatically.
- * Same-origin fetch() calls from the browser always include cookies.
+ * Strategy:
+ * 1. Try the Authorization: Bearer <token> header first — this is the JWT
+ *    that the admin page explicitly sends via getToken(). We verify it
+ *    directly with the Clerk backend SDK, bypassing the middleware cookie
+ *    system (which has issues with test-instance keys on Vercel deployments).
+ * 2. Fall back to auth() (cookie-based session) for any other route.
  */
-export async function requireAuth(): Promise<{ email: string } | NextResponse> {
+async function getVerifiedUser(req: Request): Promise<{ userId: string; email: string } | null> {
+  // --- Path 1: Bearer token from Authorization header ---
+  const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+  if (bearerToken) {
+    try {
+      const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
+      const payload = await clerk.verifyToken(bearerToken);
+      if (payload?.sub) {
+        // Fetch user details from Clerk to get their email
+        const user = await clerk.users.getUser(payload.sub);
+        const email =
+          user.emailAddresses.find(e => e.id === user.primaryEmailAddressId)?.emailAddress ||
+          user.emailAddresses[0]?.emailAddress ||
+          'authenticated-user';
+        return { userId: payload.sub, email };
+      }
+    } catch (err: any) {
+      console.warn('[authGuard] Bearer token verification failed:', err.message || err);
+      // Fall through to cookie-based auth
+    }
+  }
+
+  // --- Path 2: Cookie-based session via Clerk middleware ---
   try {
     const { userId, sessionClaims } = await auth();
-    if (!userId) {
-      // Log detail so we can see in Vercel function logs what's happening
-      console.warn('[requireAuth] userId is null — session cookie not recognised by Clerk');
-      return NextResponse.json(
-        { error: 'Authentication required. Please sign in.' },
-        { status: 401 }
-      );
+    if (userId) {
+      const email =
+        (sessionClaims?.email as string) ||
+        (sessionClaims as any)?.email_address ||
+        'authenticated-user';
+      return { userId, email };
     }
-    const email =
-      (sessionClaims?.email as string) ||
-      (sessionClaims as any)?.email_address ||
-      'authenticated-user';
-    return { email };
   } catch (err: any) {
-    const msg = err?.message || String(err);
-    console.error('[requireAuth] Clerk auth() threw:', msg);
+    console.error('[authGuard] auth() threw:', err.message || err);
+  }
+
+  return null;
+}
+
+/**
+ * Verify the request is from an authenticated Clerk user.
+ * Accepts both Authorization: Bearer JWT and session cookies.
+ */
+export async function requireAuth(req: Request): Promise<{ email: string } | NextResponse> {
+  const user = await getVerifiedUser(req);
+  if (!user) {
+    console.warn('[authGuard] requireAuth: no authenticated user found');
     return NextResponse.json(
-      { error: `Authentication error: ${msg}` },
+      { error: 'Authentication required. Please sign in.' },
       { status: 401 }
     );
   }
+  return { email: user.email };
 }
 
 /**
  * Verify the request is from an authenticated admin user.
- * Returns the user's email if admin, or a 403/401 NextResponse if not.
  */
-export async function requireAdmin(): Promise<{ email: string } | NextResponse> {
-  const result = await requireAuth();
+export async function requireAdmin(req: Request): Promise<{ email: string } | NextResponse> {
+  const result = await requireAuth(req);
   if (result instanceof NextResponse) return result;
 
   if (!ADMIN_EMAILS.includes(result.email)) {
-    console.warn(`[requireAdmin] Access denied for email: ${result.email}`);
+    console.warn('[authGuard] requireAdmin: access denied for', result.email);
     return NextResponse.json(
       { error: 'Access denied. Admin privileges required.' },
       { status: 403 }

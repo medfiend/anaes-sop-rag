@@ -5,7 +5,7 @@ import { requireAuth } from '../../../lib/authGuard';
 export async function POST(req: Request) {
   try {
     // Auth guard
-    const authResult = await requireAuth();
+    const authResult = await requireAuth(req);
     if (authResult instanceof NextResponse) {
       return authResult;
     }
