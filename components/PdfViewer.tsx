@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Loader2, ZoomIn, ZoomOut, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useAuth } from '@clerk/nextjs';
 
 interface BoundingBox {
   x0: number;
@@ -17,6 +18,7 @@ interface PdfViewerProps {
 }
 
 export default function PdfViewer({ fileUrl, pageNumber, highlights = [], fileName, onPageChange }: PdfViewerProps) {
+  const { getToken } = useAuth();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
@@ -47,12 +49,19 @@ export default function PdfViewer({ fileUrl, pageNumber, highlights = [], fileNa
       setLoading(true);
       setError(null);
       try {
+        const token = await getToken();
         // Dynamically import PDF.js client-side
         const pdfjs = await import('pdfjs-dist');
         // Configure worker CDN
         pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
 
-        const loadingTask = pdfjs.getDocument(fileUrl);
+        const loadingTask = pdfjs.getDocument({
+          url: fileUrl,
+          withCredentials: true,
+          httpHeaders: token ? {
+            'Authorization': `Bearer ${token}`
+          } : undefined
+        });
         const doc = await loadingTask.promise;
         setPdfDoc(doc);
       } catch (err: any) {

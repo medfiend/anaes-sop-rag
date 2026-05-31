@@ -40,8 +40,7 @@ export default {
       console.log(`[CF WORKER AI] Starting compilation for: ${name} (${documentId})`);
 
       // 2. Perform layout section parsing using LLM
-      const systemPrompt = `You are a clinical database compiler. Parse this clinical guideline text and compile it into a structured JSON object.
-Strictly capture ALL clinical guidelines, steps, algorithms, contraindications, and drug dosing instructions.
+      const systemPrompt = `You are a clinical database compiler. Parse this clinical guideline text and compile it into a structured JSON object containing up to 5 of the most critical clinical considerations, steps, warnings, or dosing instructions.
 
 Your JSON structure MUST follow this schema:
 {
@@ -49,7 +48,7 @@ Your JSON structure MUST follow this schema:
   "records": [
     {
       "title": "Clean, descriptive title of this clinical section or step",
-      "context": "Detailed clinical instructions, formulas, parameters, dosages, or checklist items exactly as written.",
+      "context": "Concise, bulleted clinical instructions, formulas, parameters, dosages, or checklist items for this section (limit to 150 words).",
       "summaryText": "A brief clinical summary of this specific section.",
       "synonyms": ["abbreviation", "clinical synonyms", "search keywords", "drug names"],
       "breadcrumbs": ["${name}", "Section Name"]
@@ -123,15 +122,89 @@ Output only the raw JSON. Do not wrap in markdown code blocks.`;
         }
       }
 
-      // Fallback if parser failed to build JSON
+      // 2.5 Robust text summary fallback if JSON parsing failed
+      if (sections.length === 0) {
+        console.log(`[CF WORKER AI] JSON extraction failed. Running robust text summary fallback model...`);
+        try {
+          const fallbackPrompt = `You are a clinical audit lead. Summarize the key clinical considerations, instructions, warnings, and dosing guidelines from this clinical document: "${name}".
+Provide 3 to 5 distinct clinical categories or steps. For each category/step, output the category name prefixed with "SECTION:" on its own line, followed by concise clinical instructions as bullet points.
+
+Example format:
+SECTION: Patient Assessment
+- Assess airway patency and administer high-flow oxygen.
+- Confirm patient weight for dose calculations.
+
+SECTION: Dosing and Infusion Setup
+- Initial loading dose is 1 mcg/kg over 10 minutes.
+- titration to Ramsay Sedation Scale of 2 or 3.
+
+Do not include any intro, outro, or markdown code blocks. Summarize this text:
+${rawText.substring(0, 12000)}`;
+
+          const fallbackResponse = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
+            messages: [
+              { role: 'user', content: fallbackPrompt }
+            ]
+          });
+
+          if (fallbackResponse && fallbackResponse.response) {
+            const lines = fallbackResponse.response.split('\n');
+            let currentTitle = "";
+            let currentBullets: string[] = [];
+            const parsedRecords: any[] = [];
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (trimmed.startsWith("SECTION:")) {
+                if (currentTitle && currentBullets.length > 0) {
+                  parsedRecords.push({
+                    title: currentTitle,
+                    context: currentBullets.join('\n'),
+                    summaryText: currentTitle,
+                    synonyms: [name.toLowerCase().replace(/\s+/g, '-')],
+                    breadcrumbs: [name, currentTitle]
+                  });
+                }
+                currentTitle = trimmed.substring(8).trim();
+                currentBullets = [];
+              } else if (trimmed.startsWith("-") || trimmed.startsWith("*")) {
+                currentBullets.push(trimmed);
+              } else if (trimmed.length > 0) {
+                if (currentTitle) {
+                  currentBullets.push(trimmed);
+                }
+              }
+            }
+
+            if (currentTitle && currentBullets.length > 0) {
+              parsedRecords.push({
+                title: currentTitle,
+                context: currentBullets.join('\n'),
+                summaryText: currentTitle,
+                synonyms: [name.toLowerCase().replace(/\s+/g, '-')],
+                breadcrumbs: [name, currentTitle]
+              });
+            }
+
+            if (parsedRecords.length > 0) {
+              sections = parsedRecords;
+              summaryText = `### Key SOP Considerations for ${name}\n\n` + parsedRecords.map(r => `**${r.title}**\n${r.context}`).join('\n\n');
+            }
+          }
+        } catch (fallbackErr) {
+          console.error("Text summary fallback failed:", fallbackErr);
+        }
+      }
+
+      // Hard fallback if everything failed
       if (sections.length === 0) {
         sections = [
           {
-            title: `${name} - Core Section`,
-            context: rawText,
+            title: `${name} - Core Guidance`,
+            context: rawText.substring(0, 1500) + (rawText.length > 1500 ? "\n\n[Content truncated. Please refer to the source PDF document for complete details.]" : ""),
             summaryText: `Auto-extracted content from ${name}.`,
             synonyms: [name.toLowerCase().replace(/\s+/g, '-')],
-            breadcrumbs: [name, "Core Section"]
+            breadcrumbs: [name, "Core Guidance"]
           }
         ];
       }
