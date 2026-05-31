@@ -125,7 +125,7 @@ export async function POST(req: Request) {
         const geminiApiKey = process.env.GEMINI_API_KEY || '';
         if (geminiApiKey) {
           try {
-            sendStatus('Multi-Register Extraction', { progress: 65, msg: "Invoking Gemini 1.5 Pro multimodal parser to extract clinical sections from PDF..." });
+            sendStatus('Multi-Register Extraction', { progress: 65, msg: "Invoking Gemini 1.5 Flash parser to extract clinical sections from PDF..." });
             const base64Pdf = buffer.toString('base64');
             
             const compilationPrompt = `You are a clinical database compiler. Parse this PDF clinical guideline and compile it into a structured JSON array of sections.
@@ -141,7 +141,7 @@ Each section in the array MUST have this format:
 Output only the raw JSON array. Do not include markdown tags.`;
 
             const geminiResp = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${geminiApiKey}`,
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
               {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -234,9 +234,8 @@ Output a JSON array containing sections. Format:
 
         sendStatus('Qwen Vector Calculation', { progress: 80, msg: "Generating 1024-dimension vectors via Workers AI Qwen Model..." });
         
-        // Generate vectors for each section
-        const compiledSections = [];
-        for (const sec of sections) {
+        // Generate vectors for each section in parallel to avoid Vercel Hobby 10s timeouts
+        const compiledSections = await Promise.all(sections.map(async (sec) => {
           const vectorText = `${sec.title} ${sec.context} ${sec.synonyms.join(' ')}`;
           let vector = Array(1024).fill(0);
           
@@ -255,11 +254,12 @@ Output a JSON array containing sections. Format:
             throw new Error("Workers AI is not configured. Cannot generate embedding vectors. Check CLOUDFLARE_API_TOKEN environment variable.");
           }
 
-          compiledSections.push({
+          return {
             ...sec,
             masterVector: vector
-          });
-        }
+          };
+        }));
+
 
         sendStatus('Orama Compiling', { progress: 90, msg: "Compiling JSON index for local client-side syncing..." });
 
