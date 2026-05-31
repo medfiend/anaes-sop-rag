@@ -1,0 +1,9 @@
+.expo/
+node_modules/
+.vercel/
+.vercel
+package-lock.json
+.env.local
+.next/
+dist/
+*.log

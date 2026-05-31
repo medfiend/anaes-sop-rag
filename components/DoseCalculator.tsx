@@ -203,20 +203,20 @@ export default function DoseCalculator({ schema, isSandbox = false, onApprove, i
                   key={calc.id} 
                   style={[
                     styles.resultRow, 
-                    isSpecial && styles.resultRowSpecial,
-                    isAvoid && { backgroundColor: '#fef2f2', borderLeftColor: '#ef4444', borderLeftWidth: 3 }
+                    isSpecial ? styles.resultRowSpecial : null,
+                    isAvoid ? { backgroundColor: '#fef2f2', borderLeftColor: '#ef4444', borderLeftWidth: 3 } : null
                   ]}
                 >
                   <Text style={[
                     styles.resultLabel, 
-                    isSpecial && styles.resultLabelSpecial,
-                    isAvoid && { color: '#991b1b', fontWeight: '700' }
+                    isSpecial ? styles.resultLabelSpecial : null,
+                    isAvoid ? { color: '#991b1b', fontWeight: '700' } : null
                   ]}>{calc.label}</Text>
                   <View style={styles.resultValueContainer}>
                     <Text style={[
                       styles.resultValue, 
-                      isSpecial && styles.resultValueSpecial,
-                      isAvoid && { color: '#ef4444', fontSize: 16, fontWeight: '800' }
+                      isSpecial ? styles.resultValueSpecial : null,
+                      isAvoid ? { color: '#ef4444', fontSize: 16, fontWeight: '800' } : null
                     ]}>
                       {results[calc.id] !== undefined ? results[calc.id] : '—'}
                     </Text>

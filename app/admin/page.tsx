@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { 
   FileText, Upload, Calendar, AlertTriangle, ShieldCheck, Mail, 
-  Trash2, User, Clock, CheckCircle, HelpCircle, ChevronRight, Calculator 
+  Trash2, User, Clock, CheckCircle, HelpCircle, ChevronRight, Calculator, Activity
 } from 'lucide-react';
 import DoseCalculator from '../../components/DoseCalculator';
 import { mockGuidelines, mockCalculator } from '../../lib/supabaseClient';
@@ -20,6 +20,19 @@ export default function AdminDashboard() {
   const [isEmergency, setIsEmergency] = useState(false);
   const [isReplacement, setIsReplacement] = useState(false);
   const [supersedesId, setSupersedesId] = useState('');
+
+  // Upload/Ingestion telemetry & progress tracking states
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadStep, setUploadStep] = useState<string>('');
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [uploadMsg, setUploadMsg] = useState<string>('');
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [telemetry, setTelemetry] = useState<{
+    inputTokens: number;
+    outputTokens: number;
+    neurons: number;
+    costGbp: number;
+  } | null>(null);
 
   // Sandbox state
   const [calculatorState, setCalculatorState] = useState({
@@ -42,17 +55,81 @@ export default function AdminDashboard() {
     { id: 3, email: "robert.jones@nhs.net", category: "Bug Report", feedback: "On the Malignant Hyperthermia aid, the cooling rate displays in Fahrenheit in one text section but Celsius in the main algorithm. Can we double check?", date: "2026-05-20" }
   ]);
 
-  const handleUploadSubmit = (e: React.FormEvent) => {
+  const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`File uploaded successfully! Background parsing triggered.\nDocument: ${docName}\nSupersedes ID: ${supersedesId || "None"}\nStatus set to 'Draft'. You will find the AI-scaffolded calculator in the 'Calculator Sandbox' tab.`);
-    
-    // Clear form
-    setDocName('');
-    setChangelog('');
-    setOwnerEmail('');
-    setNextReview('');
-    setIsReplacement(false);
-    setSupersedesId('');
+    if (!uploadFile) {
+      alert("Please select a guideline PDF file first.");
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadStep('R2 Upload');
+    setUploadMsg('Initializing network streaming...');
+    setTelemetry(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', uploadFile);
+      formData.append('docName', docName);
+      formData.append('version', version);
+      formData.append('ownerEmail', ownerEmail);
+      formData.append('changelog', changelog);
+      formData.append('nextReview', nextReview);
+      formData.append('isEmergency', isEmergency ? 'true' : 'false');
+      formData.append('isReplacement', isReplacement ? 'true' : 'false');
+      formData.append('supersedesId', supersedesId);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.body) {
+        throw new Error("Failed to initialize server streaming response.");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const data = JSON.parse(line);
+            if (data.error) {
+              throw new Error(data.error);
+            }
+            if (data.step) {
+              setUploadStep(data.step);
+              if (data.progress !== undefined) setUploadProgress(data.progress);
+              if (data.msg) setUploadMsg(data.msg);
+              if (data.telemetry) {
+                setTelemetry(data.telemetry);
+              }
+            }
+          } catch (jsonErr) {
+            console.error("NDJSON stream parsing error on line:", jsonErr);
+          }
+        }
+      }
+
+      // Ingestion successfully finished
+      setIsUploading(false);
+      
+    } catch (err: any) {
+      console.error(err);
+      alert(`Ingestion Pipeline Failure: ${err.message}`);
+      setIsUploading(false);
+    }
   };
 
   const handleApproveCalculator = () => {
@@ -324,20 +401,112 @@ export default function AdminDashboard() {
                   />
                 </div>
 
-                {/* PDF Drag Area */}
-                <div className="border-2 border-dashed border-slate-800 rounded-xl p-6 text-center hover:border-slate-700 transition-colors">
+                {/* PDF Drag / Select Area */}
+                <div className="border-2 border-dashed border-slate-800 rounded-xl p-6 text-center hover:border-slate-700 transition-colors relative cursor-pointer">
+                  <input 
+                    type="file"
+                    accept="application/pdf"
+                    required
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setUploadFile(e.target.files[0]);
+                      }
+                    }}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
                   <Upload className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                  <span className="text-xs font-semibold text-slate-300 block">Select guideline PDF</span>
-                  <span className="text-xxs text-slate-500 mt-0.5">Maximum file size: 50MB</span>
+                  <span className="text-xs font-semibold text-slate-300 block">
+                    {uploadFile ? uploadFile.name : "Select guideline PDF"}
+                  </span>
+                  <span className="text-xxs text-slate-500 mt-0.5">
+                    {uploadFile ? `${(uploadFile.size / 1024 / 1024).toFixed(2)} MB` : "Maximum file size: 50MB"}
+                  </span>
                 </div>
 
                 <button 
                   type="submit"
-                  className="w-full bg-teal-500 hover:bg-teal-600 text-slate-950 font-bold p-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5"
+                  disabled={isUploading}
+                  className="w-full bg-teal-500 hover:bg-teal-600 disabled:bg-teal-800 disabled:text-slate-500 text-slate-950 font-bold p-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5"
                 >
-                  Publish & Parse Guideline <ArrowRight className="w-4 h-4" />
+                  {isUploading ? "Processing Guidelines Ingestion..." : "Publish & Parse Guideline"} <ArrowRight className="w-4 h-4" />
                 </button>
               </form>
+
+              {/* Linear Ingestion Progress Status Tracker */}
+              {isUploading && (
+                <div className="mt-6 border border-slate-800 bg-slate-950/80 rounded-xl p-5 space-y-4 animate-pulse-soft">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-bold text-teal-400 uppercase tracking-wide">Ingestion Step: {uploadStep}</span>
+                    <span className="text-slate-400 font-mono font-bold">{uploadProgress}%</span>
+                  </div>
+                  
+                  {/* Progress bar */}
+                  <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
+                    <div 
+                      className="bg-teal-500 h-full transition-all duration-300 rounded-full" 
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
+                  
+                  <p className="text-[10px] text-slate-400 italic leading-normal">{uploadMsg}</p>
+
+                  {/* Progressive indicator icons */}
+                  <div className="grid grid-cols-5 gap-1 text-center pt-2">
+                    {['R2 Upload', 'Multi-Register Extraction', 'Qwen Vector Calculation', 'Orama Compiling', 'Live'].map((step, idx) => {
+                      const stepNum = idx + 1;
+                      const stepsList = ['R2 Upload', 'Multi-Register Extraction', 'Qwen Vector Calculation', 'Orama Compiling', 'Live'];
+                      const currentStepIdx = stepsList.indexOf(uploadStep);
+                      const isActive = step === uploadStep;
+                      const isCompleted = idx < currentStepIdx || uploadStep === 'Live';
+                      return (
+                        <div key={step} className="flex flex-col items-center gap-1">
+                          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
+                            isCompleted 
+                              ? 'bg-teal-500 text-slate-950 shadow-md shadow-teal-500/10' 
+                              : isActive 
+                              ? 'bg-teal-500/20 text-teal-400 border border-teal-500/40 animate-pulse' 
+                              : 'bg-slate-900 text-slate-600 border border-slate-850'
+                          }`}>
+                            {isCompleted ? '✓' : stepNum}
+                          </div>
+                          <span className={`text-[8px] font-semibold tracking-tight transition-all ${
+                            isCompleted || isActive ? 'text-slate-300' : 'text-slate-600'
+                          }`}>
+                            {step.split(' ')[0]}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Edge Ingestion Telemetry Output Dashboard */}
+              {telemetry && (
+                <div className="mt-6 border border-teal-500/20 bg-teal-950/10 rounded-xl p-5 space-y-3">
+                  <h3 className="text-xs font-bold text-teal-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Activity className="w-4 h-4" /> Cloudflare Edge Telemetry
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                    <div className="bg-slate-950/40 border border-slate-850 rounded-lg p-2.5 text-center">
+                      <span className="text-[9px] text-slate-500 block uppercase font-bold tracking-tight">Input Tokens</span>
+                      <span className="text-xs font-bold text-slate-200">{telemetry.inputTokens}</span>
+                    </div>
+                    <div className="bg-slate-950/40 border border-slate-850 rounded-lg p-2.5 text-center">
+                      <span className="text-[9px] text-slate-500 block uppercase font-bold tracking-tight">Output Tokens</span>
+                      <span className="text-xs font-bold text-slate-200">{telemetry.outputTokens}</span>
+                    </div>
+                    <div className="bg-slate-950/40 border border-slate-850 rounded-lg p-2.5 text-center">
+                      <span className="text-[9px] text-slate-500 block uppercase font-bold tracking-tight">Neurons Used</span>
+                      <span className="text-xs font-bold text-slate-200">{telemetry.neurons.toFixed(4)}</span>
+                    </div>
+                    <div className="bg-slate-950/40 border border-slate-850 rounded-lg p-2.5 text-center">
+                      <span className="text-[9px] text-slate-500 block uppercase font-bold tracking-tight">Estimated Cost</span>
+                      <span className="text-xs font-bold text-teal-400 font-mono">£{telemetry.costGbp.toFixed(6)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

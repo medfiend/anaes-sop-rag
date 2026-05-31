@@ -8,8 +8,11 @@ import {
 import PdfViewer from '../components/PdfViewer';
 import DoseCalculator from '../components/DoseCalculator';
 import { mockGuidelines, mockChunks, mockCalculator } from '../lib/supabaseClient';
+import { useSearch } from './hooks/useSearch';
+import staticGuidelines from '../data/guidelines_db.json';
 
 export default function Home() {
+  const { executeSearch } = useSearch();
   // Auth state
   const [email, setEmail] = useState('');
   const [isOtpSent, setIsOtpSent] = useState(false);
@@ -32,6 +35,8 @@ export default function Home() {
   const [activePdfName, setActivePdfName] = useState<string>('');
   const [activePage, setActivePage] = useState<number>(1);
   const [activeHighlights, setActiveHighlights] = useState<any[]>([]);
+  const [activeGuidelineId, setActiveGuidelineId] = useState<string>('');
+  const [instantResults, setInstantResults] = useState<any[]>([]);
   
   // Mobile responsive layout
   const [mobileTab, setMobileTab] = useState<'search' | 'pdf'>('search');
@@ -47,11 +52,57 @@ export default function Home() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Run fast client-side instant search on query change
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) {
+      setInstantResults([]);
+      return;
+    }
+
+    const runInstantSearch = async () => {
+      try {
+        const res = await executeSearch(trimmed, true); // skip embedding for instant typing speed!
+        if (res && res.results && !res.isNegativeResult) {
+          setInstantResults(res.results.slice(0, 5)); // show top 5 matches
+        } else {
+          setInstantResults([]);
+        }
+      } catch (err) {
+        console.error("Instant search error:", err);
+      }
+    };
+
+    // Debounce search slightly to avoid excessive CPU load
+    const timer = setTimeout(runInstantSearch, 150);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   // Handler for emergency bypass guides
   const handleOpenEmergencyAid = (fileName: string, name: string) => {
-    setActivePdfUrl(`/assets/${fileName}`); // mock local path
+    // Map the mock filenames to the actual existing files in public folder
+    let targetFile = fileName;
+    let targetPage = 1;
+    let targetGuidelineId = '';
+    
+    if (fileName === 'la_toxicity_aagbi.pdf') {
+      targetFile = 'QRH_complete_June_2023.pdf';
+      targetPage = 23;
+      targetGuidelineId = 'la-toxicity';
+    } else if (fileName === 'malignant_hyperthermia.pdf') {
+      targetFile = 'QRH_complete_June_2023.pdf';
+      targetPage = 21;
+      targetGuidelineId = 'malignant-hyperthermia';
+    } else if (fileName === 'resus_als.pdf') {
+      targetFile = 'QRH_complete_June_2023.pdf';
+      targetPage = 6;
+      targetGuidelineId = 'resus-als';
+    }
+    
+    setActivePdfUrl(`/${targetFile}`); // served directly from root public folder
     setActivePdfName(name);
-    setActivePage(1);
+    setActivePage(targetPage);
+    setActiveGuidelineId(targetGuidelineId);
     setActiveHighlights([]);
     if (isMobile) {
       setMobileTab('pdf');
@@ -120,77 +171,118 @@ export default function Home() {
     setActivePdfUrl('');
   };
 
-  // RAG Search simulation (Pilot Grounding demonstration)
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  // RAG Search via local Orama index and Cloudflare query vectorizer
+  const handleSearchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
-    const query = searchQuery.toLowerCase();
-    
+    const query = searchQuery;
     // Add user query to chat history
-    setChatHistory(prev => [...prev, { sender: 'user', text: searchQuery }]);
+    setChatHistory(prev => [...prev, { sender: 'user', text: query }]);
     setIsSearching(true);
     setSearchQuery('');
 
-    // Simulate Streaming LLM Grounding
-    setTimeout(() => {
+    try {
+      const searchRes = await executeSearch(query);
       let botResponse = "";
       let citations: any[] = [];
 
-      const dexmedKeywords = ['dex', 'dexmed', 'afoi', 'sedation', 'intubation', 'weight', 'bmi', 'ibw', 'adjbw', 'abw', 'devine', 'dilute', 'ramsay', 'st george', 'fibreoptic', 'awake', 'infusion', 'loading', 'dose', 'regime', 'olivia', 'kourteli', 'soba', 'concentration'];
-      if (dexmedKeywords.some(kw => query.includes(kw) || kw.includes(query))) {
-        botResponse = "For **Awake Fibreoptic Intubation (AFOI)** using **Dexmedetomidine** sedation at St George's Hospital:\n\n" +
-          "1. **Infusion Setup:** Dilute Dexmedetomidine 200mcg in 50ml 0.9% NaCl, giving a final concentration of **4mcg/ml** [Page 4].\n" +
-          "2. **Dosing Weight:** Weight-based dosing should use patient's actual body weight (ABW) if BMI < 30. If BMI > 30, Adjusted Body Weight (AdjBW) must be calculated using the Devine formula [Page 9].\n" +
-          "3. **Regime:** Give a **loading dose of 1mcg/kg** over 10 minutes, followed by a **maintenance infusion of 0.2 to 0.7 mcg/kg/h**, titrating to a Ramsay Sedation Scale (RSS) target score of 2 or 3 [Page 4].";
+      if (searchRes.isNegativeResult) {
+        botResponse = "I cannot find the answer to this question in the active departmental guidelines. Please refer directly to the official guidelines or check the Emergency Protocols panel.\n\n[Online AI Search](/ask-online-ai)";
+      } else {
+        const topMatch = searchRes.results[0];
         
-        citations = [
-          { docId: 'dexmed-sop-afoi-uuid', docName: 'Dexmed SOP for AFOI', page: 4, text: 'Dilute Dexmedetomidine 200mcg in 50ml 0.9% NaCl... concentration 4mcg/ml', highlight: { x0: 10, y0: 600, x1: 500, y1: 760 } },
-          { docId: 'dexmed-sop-afoi-uuid', docName: 'Dexmed SOP for AFOI', page: 9, text: 'Devine formula for Ideal Body Weight...', highlight: { x0: 10, y0: 250, x1: 500, y1: 450 } }
-        ];
+        // Structure a formatted output with confidence percentage
+        botResponse = `**Result from Guideline: ${topMatch.title}** (Confidence Match: **${topMatch.confidence}%**)\n\n${topMatch.context}`;
+        
+        if (searchRes.isLowConfidence) {
+          botResponse += `\n\n⚠️ **Low Confidence Match:** The local database matched this protocol with a confidence of ${topMatch.confidence}%. You may run a deep AI search on the server using the button below.\n\n[Online AI Search](/ask-online-ai)`;
+        }
 
-        // Auto load the Dexmed PDF in the viewer
-        setActivePdfUrl('Dexmed SOP for AFOI.KD..pdf');
-        setActivePdfName('Dexmed SOP for AFOI.KD..pdf');
-        setActivePage(4);
-        setActiveHighlights([{ x0: 10, y0: 600, x1: 500, y1: 760 }]);
-      } 
-      else if (query.includes('toxicity') || query.includes('intralipid') || query.includes('local anaesthetic')) {
-        botResponse = "In the event of **Local Anaesthetic Toxicity (LAST)**:\n\n" +
-          "1. **Immediate Action:** Stop injecting the local anaesthetic, call for help, and manage the airway with 100% oxygen [Page 1].\n" +
-          "2. **Fat Emulsion Therapy:** Administer **Intralipid 20%** lipid rescue:\n" +
-          "   - Give an immediate **IV bolus of 1.5 ml/kg** over 1 minute [Page 1].\n" +
-          "   - Start an **IV infusion of 15 ml/kg/h** [Page 1].\n" +
-          "   - Repeat bolus twice at 5-minute intervals if cardiovascular stability is not restored [Page 2].";
-        
-        citations = [
-          { docId: 'la-toxicity-guideline-uuid', docName: 'AAGBI LA Toxicity Guide', page: 1, text: 'Stop injecting LA... Give Intralipid 20% bolus 1.5 ml/kg', highlight: { x0: 20, y0: 300, x1: 480, y1: 450 } }
-        ];
-      } 
-      else if (query.includes('hyperthermia') || query.includes('malignant')) {
-        botResponse = "For **Malignant Hyperthermia Crisis** management:\n\n" +
-          "1. **Trigger Stop:** Discontinue all volatile anaesthetics and succinylcholine immediately. Hyperventilate with 100% oxygen at high flows [Page 1].\n" +
-          "2. **Antidote:** Administer **Dantrolene** immediately (2.5 mg/kg IV bolus, repeating as necessary up to 10 mg/kg) [Page 2].\n" +
-          "3. **Cooling:** Active cooling of patient using iced saline IV infusions, body cavity lavage, and surface ice packs [Page 3].";
-        
-        citations = [
-          { docId: 'malignant-hyperthermia-uuid', docName: 'AAGBI Malignant Hyperthermia Guide', page: 1, text: 'Stop volatile agents... Give Dantrolene', highlight: { x0: 15, y0: 200, x1: 490, y1: 350 } }
-        ];
-      } 
-      else {
-        // Falling back to "I don't know" - which triggers gap logging
-        botResponse = "I cannot find the answer to this question in the active departmental guidelines. Please refer directly to the official guidelines or check the Emergency Protocols panel.";
+        // Map matching guidelines to citations
+        citations = searchRes.results.slice(0, 3).map(match => ({
+          docId: match.docId,
+          docName: match.title,
+          pdfName: match.pdfName,
+          page: match.defaultPage || 1, // Jump to the correct page of the guideline!
+          highlight: { x0: 20, y0: 100, x1: 500, y1: 150 }
+        }));
+
+        // Auto load PDF for the top matched guideline
+        if (topMatch.pdfName) {
+          setActivePdfUrl(`/${topMatch.pdfName}`);
+          setActivePdfName(topMatch.title);
+          setActivePage(topMatch.defaultPage || 1); // Jump to the correct page of the guideline!
+          setActiveGuidelineId(topMatch.docId);
+          setActiveHighlights([]);
+        }
       }
 
-      setChatHistory(prev => [...prev, { sender: 'bot', text: botResponse, citations }]);
+      setChatHistory(prev => [...prev, { 
+        sender: 'bot', 
+        text: botResponse, 
+        citations,
+        queryText: query // Preserve query context to allow escalation
+      }]);
+    } catch (err: any) {
+      console.error("Local search engine execution error:", err);
+      setChatHistory(prev => [...prev, { sender: 'bot', text: `Search engine error: ${err.message}` }]);
+    } finally {
       setIsSearching(false);
-    }, 1200);
+    }
+  };
+
+  // Perform deeper search using frontier LLM (Gemini Pro) on the server
+  const handleOnlineSearch = async (queryText: string, chatIndex: number) => {
+    // Modify bot message to indicate processing state
+    setChatHistory(prev => {
+      const copy = [...prev];
+      copy[chatIndex] = {
+        sender: 'bot',
+        text: "⚡ Running deep online search against guidelines bucket via Cloudflare Workers AI & Gemini Pro... please stand by..."
+      };
+      return copy;
+    });
+
+    try {
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: queryText })
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP API error: ${response.statusText}`);
+      }
+      const data = await response.json();
+      
+      setChatHistory(prev => {
+        const copy = [...prev];
+        copy[chatIndex] = {
+          sender: 'bot',
+          text: data.text,
+          citations: data.citations
+        };
+        return copy;
+      });
+    } catch (err: any) {
+      console.error("Online escalation search failed:", err);
+      setChatHistory(prev => {
+        const copy = [...prev];
+        copy[chatIndex] = {
+          sender: 'bot',
+          text: `Online search failed: ${err.message}. Please verify network connection or consult hardcopy manuals.`
+        };
+        return copy;
+      });
+    }
   };
 
   const handleCitationClick = (cit: any) => {
-    setActivePdfUrl(cit.docId === 'dexmed-sop-afoi-uuid' ? 'Dexmed SOP for AFOI.KD..pdf' : cit.docName + '.pdf');
+    const targetFile = cit.pdfName || 'QRH_complete_June_2023.pdf';
+    setActivePdfUrl(`/${targetFile}`);
     setActivePdfName(cit.docName);
     setActivePage(cit.page);
+    setActiveGuidelineId(cit.docId);
     setActiveHighlights([cit.highlight]);
     
     if (isMobile) {
@@ -386,16 +478,34 @@ export default function Home() {
 
             {/* Emergency PDF Backdrop if active */}
             {activePdfUrl && (
-              <div className="fixed inset-0 bg-slate-950/90 z-40 flex items-center justify-center p-4">
-                <div className="w-full max-w-4xl h-[85vh] rounded-2xl overflow-hidden flex flex-col relative">
-                  <button 
-                    onClick={() => setActivePdfUrl('')}
-                    className="absolute top-4 right-4 bg-red-600 hover:bg-red-750 text-white px-3 py-1 rounded text-xs font-bold z-50 transition-colors"
-                  >
-                    Close Emergency Aid
-                  </button>
-                  <div className="flex-1">
-                    <PdfViewer fileUrl={activePdfUrl} pageNumber={activePage} highlights={activeHighlights} fileName={activePdfName} />
+              <div className="fixed inset-0 bg-slate-950/95 z-40 flex items-center justify-center p-4">
+                <div className="w-full max-w-5xl h-[90vh] rounded-2xl overflow-hidden flex flex-col bg-slate-900 border border-slate-700 shadow-2xl">
+                  {/* Modal Header */}
+                  <div className="bg-slate-950 px-4 py-3 flex items-center justify-between border-b border-slate-800 shrink-0">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+                      <span className="text-red-500 font-bold text-xxs uppercase tracking-wider">
+                        CRITICAL EMERGENCY AID PANEL
+                      </span>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        setActivePdfUrl('');
+                        setActiveGuidelineId('');
+                      }}
+                      className="bg-red-600 hover:bg-red-750 active:scale-95 text-white px-3.5 py-1.5 rounded-lg text-xxs font-bold transition-all shadow-md shadow-red-600/20"
+                    >
+                      Close Emergency Aid
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <PdfViewer 
+                      fileUrl={activePdfUrl} 
+                      pageNumber={activePage} 
+                      highlights={activeHighlights} 
+                      fileName={activePdfName}
+                      onPageChange={(p) => setActivePage(p)}
+                    />
                   </div>
                 </div>
               </div>
@@ -413,7 +523,7 @@ export default function Home() {
             }`}>
               
               {/* Search Bar Block */}
-              <div className="bg-slate-950 p-4 border-b border-slate-800 shrink-0">
+              <div className="bg-slate-950 p-4 border-b border-slate-800 shrink-0 relative z-30">
                 <form onSubmit={handleSearchSubmit} className="relative">
                   <input
                     type="text"
@@ -431,6 +541,51 @@ export default function Home() {
                   >
                     {isSearching ? "Searching..." : <Send className="w-3.5 h-3.5" />}
                   </button>
+
+                  {/* Instant Dropdown Search Results */}
+                  {instantResults.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-2 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl z-40 overflow-hidden max-h-60 overflow-y-auto">
+                      <div className="bg-slate-900 px-3 py-2 border-b border-slate-800 text-[10px] text-slate-500 font-bold uppercase tracking-wider flex justify-between">
+                        <span>Matching SOP Guidelines</span>
+                        <span>Instant Search</span>
+                      </div>
+                      <div className="divide-y divide-slate-900">
+                        {instantResults.map((match) => (
+                          <button
+                            key={match.docId}
+                            type="button"
+                            onClick={() => {
+                              if (match.pdfName) {
+                                setActivePdfUrl(`/${match.pdfName}`);
+                                setActivePdfName(match.title);
+                                setActivePage(match.defaultPage || 1);
+                                setActiveGuidelineId(match.docId);
+                                setActiveHighlights([]);
+                                if (isMobile) {
+                                  setMobileTab('pdf');
+                                }
+                              }
+                              setInstantResults([]);
+                              setSearchQuery('');
+                            }}
+                            className="w-full text-left px-4 py-3 hover:bg-slate-900/80 transition-colors flex items-center justify-between text-xs text-slate-200 group border-b border-slate-900"
+                          >
+                            <div className="flex flex-col gap-0.5 truncate pr-4">
+                              <span className="font-semibold text-slate-200 group-hover:text-teal-400 transition-colors truncate">
+                                {match.title}
+                              </span>
+                              <span className="text-[10px] text-slate-500 truncate">
+                                {match.context.substring(0, 80)}...
+                              </span>
+                            </div>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-400 font-medium shrink-0">
+                              {match.confidence}%
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </form>
               </div>
 
@@ -447,14 +602,21 @@ export default function Home() {
                   >
                     {/* Render text with basic markdown tags */}
                     <div 
-                      className="space-y-2 whitespace-pre-line"
+                      className="space-y-2 whitespace-pre-line font-sans"
                       dangerouslySetInnerHTML={{ 
                         __html: msg.text
                           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                           .replace(/\[Page (.*?)\]/g, '<span class="text-teal-400 font-bold underline cursor-pointer">[Pg $1]</span>')
+                          .replace(/\[Online AI Search\]\(\/ask-online-ai\)/g, '<button class="bg-teal-500 hover:bg-teal-600 active:scale-95 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xxs mt-2 transition-all block online-search-btn shadow-md shadow-teal-500/10">Run Edge LLM Search ⚡</button>')
                       }}
                       onClick={(e) => {
                         const target = e.target as HTMLElement;
+                        if (target.classList.contains('online-search-btn')) {
+                          if (msg.queryText) {
+                            handleOnlineSearch(msg.queryText, index);
+                          }
+                          return;
+                        }
                         if (target.tagName === 'SPAN') {
                           const page = parseInt(target.textContent?.replace(/[^\d]/g, '') || '1');
                           // Link target PDF depending on context
@@ -491,16 +653,24 @@ export default function Home() {
                 ))}
               </div>
 
-              {/* Bottom: Dynamic Calculator Mount (Triggered when guideline is active) */}
-              {activePdfUrl === 'Dexmed SOP for AFOI.KD..pdf' && (
-                <div className="p-4 bg-slate-950 border-t border-slate-800 shrink-0">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <Calculator className="w-4 h-4 text-teal-400" />
-                    <span className="text-xxs font-bold text-slate-400 uppercase tracking-wider">Interactive Dose Calculator Linked</span>
-                  </div>
-                  <DoseCalculator schema={mockCalculator.schema} isApproved={true} />
-                </div>
-              )}
+              {/* Bottom: Dynamic Calculator Mount (Triggered when guideline is active and has a calculator schema) */}
+              {(() => {
+                const activeGuideline = staticGuidelines.find(g => g.protocol_id === activeGuidelineId);
+                if (activeGuideline && activeGuideline.calculator) {
+                  return (
+                    <div className="p-4 bg-slate-950 border-t border-slate-800 shrink-0">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Calculator className="w-4 h-4 text-teal-400" />
+                        <span className="text-xxs font-bold text-slate-400 uppercase tracking-wider">
+                          Interactive Dose Calculator: {activeGuideline.calculator.calculator_name}
+                        </span>
+                      </div>
+                      <DoseCalculator schema={activeGuideline.calculator as any} isApproved={true} />
+                    </div>
+                  );
+                }
+                return null;
+              })()}
 
               {/* Mobile View Tab Controls (Only shown on small screens) */}
               {isMobile && (

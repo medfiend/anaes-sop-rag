@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Loader2, ZoomIn, ZoomOut, AlertCircle } from 'lucide-react';
+import { Loader2, ZoomIn, ZoomOut, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface BoundingBox {
   x0: number;
@@ -13,9 +13,10 @@ interface PdfViewerProps {
   pageNumber: number; // 1-indexed page to show
   highlights?: BoundingBox[]; // Bounding boxes to highlight
   fileName?: string; // Optional nice name
+  onPageChange?: (page: number) => void;
 }
 
-export default function PdfViewer({ fileUrl, pageNumber, highlights = [], fileName }: PdfViewerProps) {
+export default function PdfViewer({ fileUrl, pageNumber, highlights = [], fileName, onPageChange }: PdfViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
@@ -23,6 +24,20 @@ export default function PdfViewer({ fileUrl, pageNumber, highlights = [], fileNa
   const [scale, setScale] = useState(1.2);
   const [pdfDoc, setPdfDoc] = useState<any>(null);
   const [pageViewport, setPageViewport] = useState<{ width: number; height: number } | null>(null);
+  const [currentPage, setCurrentPage] = useState(pageNumber);
+
+  // Sync currentPage state when pageNumber prop changes
+  useEffect(() => {
+    setCurrentPage(pageNumber);
+  }, [pageNumber]);
+
+  // Notify parent if page changes locally
+  const updatePage = (newPage: number) => {
+    setCurrentPage(newPage);
+    if (onPageChange) {
+      onPageChange(newPage);
+    }
+  };
 
   // Initialize PDF.js
   useEffect(() => {
@@ -51,13 +66,15 @@ export default function PdfViewer({ fileUrl, pageNumber, highlights = [], fileNa
     loadPdf();
   }, [fileUrl]);
 
-  // Render page when pdfDoc, pageNumber, or scale changes
+  // Render page when pdfDoc, currentPage, or scale changes
   useEffect(() => {
     if (!pdfDoc) return;
 
+    let renderTask: any = null;
+
     const renderPage = async () => {
       try {
-        const page = await pdfDoc.getPage(pageNumber);
+        const page = await pdfDoc.getPage(currentPage);
         const viewport = page.getViewport({ scale });
         setPageViewport({ width: viewport.width, height: viewport.height });
 
@@ -75,14 +92,37 @@ export default function PdfViewer({ fileUrl, pageNumber, highlights = [], fileNa
           viewport: viewport,
         };
 
-        await page.render(renderContext).promise;
-      } catch (err) {
+        renderTask = page.render(renderContext);
+        await renderTask.promise;
+      } catch (err: any) {
+        if (err.name === 'RenderingCancelledException' || err.message?.includes('cancelled')) {
+          // Ignore rendering cancellations
+          return;
+        }
         console.error("Error rendering PDF page:", err);
       }
     };
 
     renderPage();
-  }, [pdfDoc, pageNumber, scale]);
+
+    return () => {
+      if (renderTask) {
+        renderTask.cancel();
+      }
+    };
+  }, [pdfDoc, currentPage, scale]);
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      updatePage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (pdfDoc && currentPage < pdfDoc.numPages) {
+      updatePage(currentPage + 1);
+    }
+  };
 
   const handleZoomIn = () => setScale(prev => Math.min(prev + 0.2, 2.5));
   const handleZoomOut = () => setScale(prev => Math.max(prev - 0.2, 0.6));
@@ -129,10 +169,35 @@ export default function PdfViewer({ fileUrl, pageNumber, highlights = [], fileNa
   return (
     <div className="flex flex-col h-full bg-slate-900 border-l border-slate-700">
       {/* Top bar controls */}
-      <div className="bg-slate-800 border-b border-slate-700 px-4 py-2 flex items-center justify-between text-white shrink-0 text-xs">
-        <span className="font-semibold text-slate-300 truncate max-w-xs">
-          📄 {fileName || "Reference Document"} (Page {pageNumber})
+      <div className="bg-slate-800 border-b border-slate-700 px-4 py-2 flex flex-col sm:flex-row items-center justify-between text-white shrink-0 text-xs gap-2">
+        <span className="font-semibold text-slate-300 truncate max-w-xs" title={fileName || "Reference Document"}>
+          📄 {fileName || "Reference Document"}
         </span>
+        
+        {/* Page navigation controls */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handlePrevPage}
+            disabled={currentPage <= 1}
+            className="p-1 hover:bg-slate-700 rounded disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-slate-300 hover:text-white"
+            title="Previous Page"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <span className="font-medium min-w-[5rem] text-center text-slate-300">
+            Page {currentPage} of {pdfDoc ? pdfDoc.numPages : '?'}
+          </span>
+          <button
+            onClick={handleNextPage}
+            disabled={pdfDoc && currentPage >= pdfDoc.numPages}
+            className="p-1 hover:bg-slate-700 rounded disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-slate-300 hover:text-white"
+            title="Next Page"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Zoom controls */}
         <div className="flex items-center gap-3">
           <button 
             onClick={handleZoomOut} 
@@ -176,8 +241,8 @@ export default function PdfViewer({ fileUrl, pageNumber, highlights = [], fileNa
             <div className="bg-slate-800 rounded-lg p-4 border border-slate-700 text-left text-xs max-w-md mt-4">
               <span className="font-bold text-teal-400 uppercase tracking-wider block mb-2 text-xxs">Simulated Page View:</span>
               <div className="text-slate-300 leading-relaxed space-y-3">
-                <p className="font-bold border-b border-slate-700 pb-1 text-slate-100">Dexmedetomidine SOP (Page {pageNumber})</p>
-                {pageNumber === 4 && (
+                <p className="font-bold border-b border-slate-700 pb-1 text-slate-100">Dexmedetomidine SOP (Page {currentPage})</p>
+                {currentPage === 4 && (
                   <>
                     <p className="bg-teal-500/10 border-l-2 border-teal-500 p-2 rounded text-slate-200">
                       <strong>Section 2.3:</strong> Dilute Dexmedetomidine 200mcg in 50ml 0.9% Sodium Chloride. <strong>Final concentration: 4mcg/ml.</strong> Dosing criteria: BMI &lt;30 use Actual Body Weight (ABW); BMI &gt;30 use Adjusted Body Weight (AdjBW).
@@ -187,7 +252,7 @@ export default function PdfViewer({ fileUrl, pageNumber, highlights = [], fileNa
                     </p>
                   </>
                 )}
-                {pageNumber === 9 && (
+                {currentPage === 9 && (
                   <p className="bg-teal-500/10 border-l-2 border-teal-500 p-2 rounded text-slate-200">
                     <strong>Section 4.4:</strong> Devine Formula for Ideal Body Weight (IBW): <br />
                     - Males: <code>IBW = 50kg + 0.9kg × (height in cm - 152cm)</code> <br />
@@ -195,8 +260,8 @@ export default function PdfViewer({ fileUrl, pageNumber, highlights = [], fileNa
                     Adjusted Body Weight (AdjBW): <code>AdjBW = IBW + 0.4 × (ABW - IBW)</code>.
                   </p>
                 )}
-                {pageNumber !== 4 && pageNumber !== 9 && (
-                  <p className="text-slate-400 italic">Showing standard section text for page {pageNumber}. Please consult the index tabs.</p>
+                {currentPage !== 4 && currentPage !== 9 && (
+                  <p className="text-slate-400 italic">Showing standard section text for page {currentPage}. Please consult the index tabs.</p>
                 )}
               </div>
             </div>

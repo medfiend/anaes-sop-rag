@@ -172,11 +172,11 @@ export default function Home() {
               {['Dexmed', 'AFOI', 'Sedation', 'Emergency', 'Toxicity', 'Paediatric', 'Renal'].map(tag => (
                 <TouchableOpacity
                   key={tag}
-                  style={[styles.badge, searchQuery.toLowerCase() === tag.toLowerCase() && styles.badgeActive]}
+                  style={[styles.badge, searchQuery.toLowerCase() === tag.toLowerCase() ? styles.badgeActive : null]}
                   onPress={() => handleQuickSearch(tag)}
                   activeOpacity={0.7}
                 >
-                  <Text style={[styles.badgeText, searchQuery.toLowerCase() === tag.toLowerCase() && styles.badgeTextActive]}>
+                  <Text style={[styles.badgeText, searchQuery.toLowerCase() === tag.toLowerCase() ? styles.badgeTextActive : null]}>
                     {tag}
                   </Text>
                 </TouchableOpacity>
@@ -226,7 +226,7 @@ export default function Home() {
                   key={doc.protocol_id}
                   style={[
                     styles.protocolCard,
-                    isLowConfidence && styles.protocolCardWarning
+                    isLowConfidence ? styles.protocolCardWarning : null
                   ]}
                   onPress={() => handleProtocolPress(doc.protocol_id)}
                   activeOpacity={0.8}
@@ -251,11 +251,11 @@ export default function Home() {
                   {/* Local site information overlay */}
                   <View style={[
                     styles.siteInfoOverlay,
-                    isLowConfidence && styles.siteInfoOverlayWarning
+                    isLowConfidence ? styles.siteInfoOverlayWarning : null
                   ]}>
                     <Text style={[
                       styles.overlayLabel,
-                      isLowConfidence && styles.overlayLabelWarning
+                      isLowConfidence ? styles.overlayLabelWarning : null
                     ]}>
                       LOCAL STOCK LOCATION ({activeSite.shortName}):
                     </Text>
