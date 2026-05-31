@@ -21,7 +21,7 @@ export async function POST(req: Request) {
 
       try {
         // Read form data
-        const formData = await req.formData();
+        const formData = (await req.formData()) as any;
         const file = formData.get('file') as File;
         const docName = formData.get('docName') as string;
         const version = formData.get('version') as string;
@@ -113,13 +113,8 @@ export async function POST(req: Request) {
         let completionTokens = 0;
         let neuronsConsumed = 0;
         
-        let sections: Array<{
-          title: string;
-          context: string;
-          summaryText: string;
-          synonyms: string[];
-          breadcrumbs: string[];
-        }> = [];
+        let sections: any[] = [];
+        let calculator: any = null;
 
         // 1. Try to parse using Gemini if API key is present
         const geminiApiKey = process.env.GEMINI_API_KEY || '';
@@ -128,17 +123,57 @@ export async function POST(req: Request) {
             sendStatus('Multi-Register Extraction', { progress: 65, msg: "Invoking Gemini 1.5 Flash parser to extract clinical sections from PDF..." });
             const base64Pdf = buffer.toString('base64');
             
-            const compilationPrompt = `You are a clinical database compiler. Parse this PDF clinical guideline and compile it into a structured JSON array of sections.
+            const compilationPrompt = `You are a clinical database compiler. Parse this PDF clinical guideline and compile it into a structured JSON object.
 Strictly capture ALL clinical guidelines, steps, algorithms, contraindications, and drug dosing instructions.
-Each section in the array MUST have this format:
+
+Your output JSON object MUST follow this schema:
 {
-  "title": "Clean, descriptive title of this clinical section or step",
-  "context": "Detailed clinical instructions, formulas, parameters, dosages, or checklist items exactly as written in the PDF.",
-  "summaryText": "A brief 1-2 sentence clinical summary of this specific section.",
-  "synonyms": ["abbreviation", "clinical synonyms", "search keywords", "drug names"],
-  "breadcrumbs": ["${docName}", "Section Name"]
+  "records": [
+    {
+      "title": "Clean, descriptive title of this clinical section or step",
+      "context": "Detailed clinical instructions, formulas, parameters, dosages, or checklist items exactly as written in the PDF.",
+      "summaryText": "A brief 1-2 sentence clinical summary of this specific section.",
+      "synonyms": ["abbreviation", "clinical synonyms", "search keywords", "drug names"],
+      "breadcrumbs": ["${docName}", "Section Name"]
+    }
+  ],
+  "calculator": null
 }
-Output only the raw JSON array. Do not include markdown tags.`;
+
+If the guideline specifies demographic-based drug dosing guidelines or calculations (e.g. weight-based or age-based adjustments for drugs like paracetamol, ibuprofen, diclofenac, morphine, dihydrocodeine, omeprazole, ondansetron, oromorph, etc.), you MUST dynamically generate an interactive calculator schema under the "calculator" field instead of null.
+The calculator schema MUST have this structure:
+{
+  "calculator_name": "Descriptive title of the dose calculator (e.g., Paediatric Posterior Fossa Post-Op Analgesia Calculator)",
+  "inputs": [
+    {
+      "id": "weight",
+      "label": "Actual Body Weight (kg)",
+      "type": "number",
+      "defaultValue": 15,
+      "min": 2,
+      "max": 120
+    },
+    {
+      "id": "age",
+      "label": "Age (years)",
+      "type": "number",
+      "defaultValue": 4,
+      "min": 0,
+      "max": 18
+    }
+  ],
+  "calculations": [
+    {
+      "id": "ondansetron_dose",
+      "label": "Ondansetron IV Dose (0.1 mg/kg TDS)",
+      "formula": "weight * 0.1",
+      "unit": "mg"
+    }
+  ]
+}
+
+Ensure all formulas are valid, safe JavaScript mathematical expressions using ONLY input variables from the inputs array (like 'weight', 'age', etc.), standard operators (+, -, *, /), Math methods (like Math.ceil, Math.round), and ternary condition statements (like 'weight >= 20 ? 20 : 10'). No complex scripts.
+Output only the raw JSON. Do not wrap in markdown code blocks.`;
 
             const geminiResp = await fetch(
               `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
@@ -172,11 +207,14 @@ Output only the raw JSON array. Do not include markdown tags.`;
             if (geminiResp.ok) {
               const resData = await geminiResp.json();
               const rawJsonText = resData.candidates?.[0]?.content?.parts?.[0]?.text || '';
-              sections = JSON.parse(rawJsonText);
+              const cleanJson = rawJsonText.trim().replace(/^```json\s*/i, '').replace(/```$/, '');
+              const parsed = JSON.parse(cleanJson);
+              sections = parsed.records || [];
+              calculator = parsed.calculator || null;
               promptTokens += Math.round(base64Pdf.length / 4);
               completionTokens += Math.round(rawJsonText.length / 4);
               neuronsConsumed += 1.5; // tracking units
-              sendStatus('Multi-Register Extraction', { progress: 70, msg: `Successfully parsed ${sections.length} sections using Gemini.` });
+              sendStatus('Multi-Register Extraction', { progress: 70, msg: `Successfully parsed ${sections.length} sections and structured calculator using Gemini.` });
             } else {
               console.error("Gemini PDF parsing failed:", await geminiResp.text());
             }
@@ -211,8 +249,10 @@ Output a JSON array containing sections. Format:
 
           if (aiResponse.success && aiResponse.result?.response) {
             try {
-              const cleaned = aiResponse.result.response.match(/\[[\s\S]*\]/)?.[0] || '[]';
-              sections = JSON.parse(cleaned);
+              const cleaned = aiResponse.result.response.match(/\{[\s\S]*\}/)?.[0] || '{}';
+              const parsed = JSON.parse(cleaned);
+              sections = parsed.records || [];
+              calculator = parsed.calculator || null;
               neuronsConsumed += aiResponse.neurons || 0.45;
               promptTokens += Math.round(systemPrompt.length / 4 + textExcerpt.length / 4);
               completionTokens += Math.round(aiResponse.result.response.length / 4);
@@ -274,7 +314,8 @@ Output a JSON array containing sections. Format:
           isEmergency,
           fileKey,
           compiledAt: new Date().toISOString(),
-          records: compiledSections
+          records: compiledSections,
+          calculator: calculator
         };
 
         // Write compiled JSON back to R2

@@ -164,6 +164,21 @@ export default function Home() {
     }
   };
 
+  const formatMessageText = (text: string) => {
+    if (!text) return "";
+    return text
+      // Replace bold markdown
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="text-slate-100 font-semibold">$1</strong>')
+      // Replace page markdown references
+      .replace(/\[Page (.*?)\]/g, '<span class="text-teal-400 font-bold underline cursor-pointer hover:text-teal-350">[Pg $1]</span>')
+      // Replace online search button link format
+      .replace(/\[Online AI Search\]\(\/ask-online-ai\)/g, '<button class="bg-teal-500 hover:bg-teal-650 active:scale-95 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xxs mt-2 transition-all block online-search-btn shadow-md shadow-teal-500/10">Run Edge LLM Search ⚡</button>')
+      // Format bullet lists (lines starting with -, *, or •)
+      .replace(/^(?:-|•|\*)\s+(.+)$/gm, '<div class="flex items-start gap-2 my-1.5 ml-2 text-slate-300"><span class="text-teal-400 mt-1.5 shrink-0 w-1.5 h-1.5 rounded-full bg-teal-400"></span><span class="flex-1">$1</span></div>')
+      // Format numbered lists (lines starting with number followed by dot)
+      .replace(/^(\d+)\.\s+(.+)$/gm, '<div class="flex items-start gap-2 my-1.5 ml-2 text-slate-300"><span class="text-teal-400 font-bold shrink-0 font-mono">$1.</span><span class="flex-1">$2</span></div>');
+  };
+
   const handleLogout = async () => {
     await signOut();
     setChatHistory([]);
@@ -566,16 +581,23 @@ export default function Home() {
                             key={match.docId}
                             type="button"
                             onClick={() => {
-                              if (match.pdfName) {
-                                setActivePdfUrl(getPdfUrl(match.pdfName));
-                                setActivePdfName(match.title);
-                                setActivePage(match.defaultPage || 1);
-                                setActiveGuidelineId(match.docId);
-                                setActiveHighlights([]);
-                                if (isMobile) {
-                                  setMobileTab('pdf');
-                                }
-                              }
+                              const botResponse = `**Result from Guideline: ${match.title}** (Confidence Match: **100%**)\n\n${match.context}`;
+                              
+                              const citations = match.pdfName ? [{
+                                docId: match.docId,
+                                docName: match.title,
+                                pdfName: match.pdfName,
+                                page: match.defaultPage || 1,
+                                highlight: { x0: 20, y0: 100, x1: 500, y1: 150 }
+                              }] : [];
+
+                              setChatHistory(prev => [
+                                ...prev,
+                                { sender: 'user', text: `Selected guideline: ${match.title}` },
+                                { sender: 'bot', text: botResponse, citations }
+                              ]);
+
+                              setActiveGuidelineId(match.docId);
                               setInstantResults([]);
                               setSearchQuery('');
                             }}
@@ -615,10 +637,7 @@ export default function Home() {
                     <div 
                       className="space-y-2 whitespace-pre-line font-sans"
                       dangerouslySetInnerHTML={{ 
-                        __html: msg.text
-                          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                          .replace(/\[Page (.*?)\]/g, '<span class="text-teal-400 font-bold underline cursor-pointer">[Pg $1]</span>')
-                          .replace(/\[Online AI Search\]\(\/ask-online-ai\)/g, '<button class="bg-teal-500 hover:bg-teal-600 active:scale-95 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xxs mt-2 transition-all block online-search-btn shadow-md shadow-teal-500/10">Run Edge LLM Search ⚡</button>')
+                        __html: formatMessageText(msg.text)
                       }}
                       onClick={(e) => {
                         const target = e.target as HTMLElement;

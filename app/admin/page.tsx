@@ -180,6 +180,7 @@ export default function AdminDashboard() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
+      let streamError = null;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -194,7 +195,8 @@ export default function AdminDashboard() {
           try {
             const data = JSON.parse(line);
             if (data.error) {
-              throw new Error(data.error);
+              streamError = data.error;
+              break;
             }
             if (data.step) {
               setUploadStep(data.step);
@@ -207,6 +209,10 @@ export default function AdminDashboard() {
           } catch (jsonErr) {
             console.error("NDJSON stream parsing error on line:", jsonErr);
           }
+        }
+        
+        if (streamError) {
+          throw new Error(streamError);
         }
       }
 
@@ -775,7 +781,7 @@ export default function AdminDashboard() {
                 {/* Right: Dynamic Interactive Sandbox widget */}
                 <div className="lg:col-span-2">
                   <DoseCalculator 
-                    schema={calculatorState.schema} 
+                    schema={calculatorState.schema as any} 
                     isSandbox={true} 
                     onApprove={handleApproveCalculator}
                     isApproved={calculatorState.isApproved}
