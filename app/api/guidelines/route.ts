@@ -24,6 +24,11 @@ export async function GET() {
 
       if (customGuides && customGuides.length > 0) {
         customGuides.forEach((g: any) => {
+          // Skip uncompleted/failed uploads from older code runs
+          if (g.status === 'uploading' || g.status === 'vectorizing') {
+            return;
+          }
+
           // If the custom guideline is a replacement and is live, mark the superseded guideline as superseded in the runtime list
           if (g.status === 'live' && g.supersedes_id) {
             const index = mergedGuidelines.findIndex(mg => mg.id === g.supersedes_id);
@@ -31,6 +36,7 @@ export async function GET() {
               mergedGuidelines[index].status = 'superseded';
             }
           }
+
 
           mergedGuidelines.push({
             id: g.id,
