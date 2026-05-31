@@ -16,13 +16,11 @@ async function streamToString(stream: any): Promise<string> {
 
 export async function POST(req: Request) {
   try {
-    // Auth guard — temporarily commented out to resolve browser cookie-sync blocks on Vercel dev instances
-    /*
+    // Auth guard
     const authResult = await requireAuth();
     if (authResult instanceof NextResponse) {
       return authResult;
     }
-    */
 
     const { query } = await req.json();
     if (!query) {

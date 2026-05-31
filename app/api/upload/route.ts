@@ -19,13 +19,11 @@ async function extractTextFromPdfBuffer(buffer: Buffer): Promise<string> {
 }
 
 export async function POST(req: Request) {
-  // Admin auth guard — temporarily commented out to resolve browser cookie-sync blocks on Vercel dev instances
-  /*
+  // Admin auth guard — check BEFORE starting the stream
   const authResult = await requireAdmin();
   if (authResult instanceof NextResponse) {
     return authResult;
   }
-  */
 
   const encoder = new TextEncoder();
   
