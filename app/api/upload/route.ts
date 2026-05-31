@@ -12,6 +12,13 @@ const generateUUID = () => {
 
 async function extractTextFromPdfBuffer(buffer: Buffer): Promise<string> {
   const pdfjs = require('pdfjs-dist');
+  
+  // Set up CDN worker fallback to resolve bundling issues on serverless functions
+  if (!pdfjs.GlobalWorkerOptions.workerSrc) {
+    const version = pdfjs.version || '4.0.3';
+    pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.mjs`;
+  }
+
   const uint8Array = new Uint8Array(buffer);
   const loadingTask = pdfjs.getDocument({ data: uint8Array });
   const pdf = await loadingTask.promise;
