@@ -13,11 +13,8 @@ const generateUUID = () => {
 };
 
 async function extractTextFromPdfBuffer(buffer: Buffer): Promise<string> {
-  const { PDFParse } = require('pdf-parse');
-  const parser = new PDFParse({ data: buffer });
-  await parser.load();
-  const result = await parser.getText();
-  await parser.destroy();
+  const pdf = require('pdf-parse');
+  const result = await pdf(buffer);
   return result.text || '';
 }
 
