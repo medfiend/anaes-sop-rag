@@ -18,9 +18,10 @@ export async function requireAuth(): Promise<{ email: string } | NextResponse> {
     }
     const email = (sessionClaims?.email as string) || (sessionClaims as any)?.email_address || 'authenticated-user';
     return { email };
-  } catch {
+  } catch (err: any) {
+    console.error("Clerk requireAuth error:", err);
     return NextResponse.json(
-      { error: 'Authentication required. Please sign in.' },
+      { error: `Authentication error: ${err.message || String(err)}` },
       { status: 401 }
     );
   }
