@@ -10,6 +10,21 @@ const generateUUID = () => {
     : Math.random().toString(36).substring(2, 15);
 };
 
+async function extractTextFromPdfBuffer(buffer: Buffer): Promise<string> {
+  const pdfjs = require('pdfjs-dist');
+  const uint8Array = new Uint8Array(buffer);
+  const loadingTask = pdfjs.getDocument({ data: uint8Array });
+  const pdf = await loadingTask.promise;
+  let rawText = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const textContent = await page.getTextContent();
+    const pageText = textContent.items.map((item: any) => item.str).join(' ');
+    rawText += pageText + '\n';
+  }
+  return rawText;
+}
+
 export async function POST(req: Request) {
   // Admin auth guard — check BEFORE starting the stream
   const authResult = await requireAdmin();
@@ -122,271 +137,52 @@ export async function POST(req: Request) {
           [generateUUID(), documentId, 'upload', ownerEmail, new Date().toISOString(), `File uploaded version: ${fileVersionId}`]
         );
 
-        sendStatus('Multi-Register Extraction', { progress: 55, msg: "Extracting file sections and parsing clinical registers..." });
+        sendStatus('AI Worker Compilation', { progress: 55, msg: "Extracting raw text from guideline PDF locally..." });
+        let rawText = "";
+        try {
+          rawText = await extractTextFromPdfBuffer(buffer);
+        } catch (parseErr: any) {
+          throw new Error(`PDF Text Extraction failed: ${parseErr.message}`);
+        }
 
-        let promptTokens = 0;
-        let completionTokens = 0;
-        let neuronsConsumed = 0;
+        sendStatus('AI Worker Compilation', { progress: 65, msg: "Invoking Cloudflare AI Worker to compile & vectorize on the edge..." });
         
-        let sections: any[] = [];
-        let calculator: any = null;
-
-        // 1. Try to parse using Gemini if API key is present
-        const geminiApiKey = process.env.GEMINI_API_KEY || '';
-        if (geminiApiKey) {
-          try {
-            sendStatus('Multi-Register Extraction', { progress: 65, msg: "Invoking Gemini 2.0 Flash parser to extract clinical sections from PDF..." });
-            const base64Pdf = buffer.toString('base64');
-            
-            const compilationPrompt = `You are a clinical database compiler. Parse this PDF clinical guideline and compile it into a structured JSON object.
-Strictly capture ALL clinical guidelines, steps, algorithms, contraindications, and drug dosing instructions.
-
-Your JSON structure MUST follow this schema:
-{
-  "records": [
-    {
-      "title": "Clean, descriptive title of this clinical section or step",
-      "context": "Detailed clinical instructions, formulas, parameters, dosages, or checklist items exactly as written in the PDF.",
-      "summaryText": "A brief 1-2 sentence clinical summary of this specific section.",
-      "synonyms": ["abbreviation", "clinical synonyms", "search keywords", "drug names"],
-      "breadcrumbs": ["${docName}", "Section Name"]
-    }
-  ],
-  "calculator": null
-}
-
-If the guideline specifies demographic-based drug dosing guidelines or calculations (e.g. weight-based or age-based adjustments for drugs like paracetamol, ibuprofen, diclofenac, morphine, dihydrocodeine, omeprazole, ondansetron, oromorph, etc.), you MUST dynamically generate an interactive calculator schema under the "calculator" field instead of null.
-The calculator schema MUST have this structure:
-{
-  "calculator_name": "Descriptive title of the dose calculator (e.g., Paediatric Posterior Fossa Post-Op Analgesia Calculator)",
-  "inputs": [
-    {
-      "id": "weight",
-      "label": "Actual Body Weight (kg)",
-      "type": "number",
-      "defaultValue": 15,
-      "min": 2,
-      "max": 120
-    },
-    {
-      "id": "age",
-      "label": "Age (years)",
-      "type": "number",
-      "defaultValue": 4,
-      "min": 0,
-      "max": 18
-    }
-  ],
-  "calculations": [
-    {
-      "id": "ondansetron_dose",
-      "label": "Ondansetron IV Dose (0.1 mg/kg TDS)",
-      "formula": "weight * 0.1",
-      "unit": "mg"
-    }
-  ]
-}
-
-Ensure all formulas are valid, safe JavaScript mathematical expressions using ONLY input variables from the inputs array (like 'weight', 'age', etc.), standard operators (+, -, *, /), Math methods (like Math.ceil, Math.round), and ternary condition statements (like 'weight >= 20 ? 20 : 10'). No complex scripts.
-Output only the raw JSON. Do not wrap in markdown code blocks.`;
-
-            const geminiResp = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
-              {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  contents: [
-                    {
-                      parts: [
-                        {
-                          inlineData: {
-                            mimeType: 'application/pdf',
-                            data: base64Pdf
-                          }
-                        },
-                        {
-                          text: compilationPrompt
-                        }
-                      ]
-                    }
-                  ],
-                  generationConfig: {
-                    temperature: 0.1,
-                    responseMimeType: "application/json"
-                  }
-                })
-              }
-            );
-
-            if (geminiResp.ok) {
-              const resData = await geminiResp.json();
-              const rawJsonText = resData.candidates?.[0]?.content?.parts?.[0]?.text || '';
-              const cleanJson = rawJsonText.trim().replace(/^```json\s*/i, '').replace(/```$/, '');
-              
-              // Safe JSON parse with explicit catch inside the block
-              try {
-                const parsed = JSON.parse(cleanJson);
-                sections = parsed.records || [];
-                calculator = parsed.calculator || null;
-              } catch (parseErr) {
-                console.error("Failed to parse Gemini output as JSON:", parseErr, "Raw output:", cleanJson);
-                throw new Error("Failed to parse LLM structured output. Re-trying with fallback.");
-              }
-              
-              promptTokens += Math.round(base64Pdf.length / 4);
-              completionTokens += Math.round(rawJsonText.length / 4);
-              neuronsConsumed += 1.5; // tracking units
-              sendStatus('Multi-Register Extraction', { progress: 70, msg: `Successfully parsed ${sections.length} sections and structured calculator using Gemini.` });
-            } else {
-              console.error("Gemini PDF parsing failed:", await geminiResp.text());
-            }
-          } catch (geminiErr) {
-            console.error("Gemini parsing error:", geminiErr);
-          }
-        }
-
-        // 2. Fallback to Cloudflare Workers AI if Gemini is not available or failed
-        if (sections.length === 0 && isCloudflareApiConfigured) {
-          sendStatus('Multi-Register Extraction', { progress: 72, msg: "Using Cloudflare Workers LLM as fallback parser..." });
-          
-          const textExcerpt = `Guideline: ${docName}. Review date: ${nextReview}. Version: ${version}. Section: Standard operating procedure details.`;
-          const systemPrompt = `You are a clinical database parser. Take this text section and structure it into registers.
-Output a JSON array containing sections. Format:
-[
-  {
-    "title": "Topic Title",
-    "context": "Technical details",
-    "summaryText": "Brief summary",
-    "synonyms": ["abbreviation", "synonym"],
-    "breadcrumbs": ["${docName}", "Topic"]
-  }
-]`;
-
-          const aiResponse = await runWorkersAI('@cf/meta/llama-3-8b-instruct', {
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: textExcerpt }
-            ]
-          });
-
-          if (aiResponse.success && aiResponse.result?.response) {
-            try {
-              const cleaned = aiResponse.result.response.match(/\{[\s\S]*\}/)?.[0] || '{}';
-              const parsed = JSON.parse(cleaned);
-              sections = parsed.records || [];
-              calculator = parsed.calculator || null;
-              neuronsConsumed += aiResponse.neurons || 0.45;
-              promptTokens += Math.round(systemPrompt.length / 4 + textExcerpt.length / 4);
-              completionTokens += Math.round(aiResponse.result.response.length / 4);
-            } catch (err) {
-              console.warn("Could not parse Workers AI JSON output");
-            }
-          }
-        }
-
-        if (sections.length === 0) {
-          throw new Error("Guideline Parsing Error: Could not extract structured sections using Gemini or Workers AI. Check GEMINI_API_KEY or CLOUDFLARE_API_TOKEN configuration.");
-        }
-
-        sendStatus('Qwen Vector Calculation', { progress: 75, msg: "Updating status to 'vectorizing'..." });
-        await queryD1(
-          `UPDATE guidelines_meta SET status = ? WHERE id = ?`,
-          ['vectorizing', documentId]
-        );
-
-        sendStatus('Qwen Vector Calculation', { progress: 80, msg: "Generating 1024-dimension vectors via Workers AI Qwen Model..." });
+        const workerUrl = process.env.CLOUDFLARE_WORKER_URL || "https://anaessop-ai-worker.raja-parashar.workers.dev";
         
-        // Generate vectors for each section in parallel to avoid Vercel Hobby 10s timeouts
-        const compiledSections = await Promise.all(sections.map(async (sec) => {
-          const vectorText = `${sec.title} ${sec.context} ${sec.synonyms.join(' ')}`;
-          let vector = Array(1024).fill(0);
-          
-          if (isCloudflareApiConfigured) {
-            const embedResponse = await runWorkersAI('@cf/qwen/qwen3-embedding-0.6b', {
-              text: [vectorText]
-            });
-            if (embedResponse.success && embedResponse.result?.data?.[0]) {
-              vector = embedResponse.result.data[0];
-              neuronsConsumed += embedResponse.neurons || 0.01;
-              promptTokens += Math.round(vectorText.length / 4);
-            } else {
-              throw new Error(`Workers AI embedding failed: ${embedResponse.error || 'Unknown error'}`);
-            }
-          } else {
-            throw new Error("Workers AI is not configured. Cannot generate embedding vectors. Check CLOUDFLARE_API_TOKEN environment variable.");
-          }
+        const workerResponse = await fetch(`${workerUrl.replace(/\/$/, '')}/ingest`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            documentId,
+            name: docName,
+            version,
+            ownerEmail,
+            changelog,
+            nextReview,
+            isEmergency,
+            isReplacement,
+            supersedesId,
+            fileKey,
+            rawText
+          })
+        });
 
-          return {
-            ...sec,
-            masterVector: vector
-          };
-        }));
-
-        sendStatus('Orama Compiling', { progress: 90, msg: "Compiling JSON index for local client-side syncing..." });
-
-        // Build master guidelines payload containing metadata + parsed vector records
-        const guidelinesMaster = {
-          documentId,
-          name: docName,
-          version,
-          ownerEmail,
-          changelog,
-          nextReview,
-          isEmergency,
-          fileKey,
-          compiledAt: new Date().toISOString(),
-          records: compiledSections,
-          calculator: calculator
-        };
-
-        // Write compiled JSON back to R2
-        if (!isR2Configured || !r2Client) {
-          throw new Error("Cloudflare R2 is not configured. Cannot save compiled master JSON index.");
+        if (!workerResponse.ok) {
+          const workerError = await workerResponse.text();
+          throw new Error(`Cloudflare AI Worker edge compilation failed: ${workerError}`);
         }
-
-        const r2ResponseJson = await r2Client.send(new PutObjectCommand({
-          Bucket: R2_BUCKET,
-          Key: `index/${documentId}_master.json`,
-          Body: JSON.stringify(guidelinesMaster),
-          ContentType: 'application/json',
-        }));
-        const compiledR2Version = r2ResponseJson.VersionId || 'json_v1';
-
-        // Calculate Cost Telemetry
-        const estimatedCostGbp = neuronsConsumed * 0.000008;
-
-        // Set status to 'live' in database and record telemetry metrics
-        sendStatus('Live', { progress: 95, msg: "Finalizing metadata records & setting status to 'live'..." });
-        await queryD1(
-          `UPDATE guidelines_meta 
-           SET status = ?, input_tokens = ?, output_tokens = ?, neurons_consumed = ?, api_cost = ?, updated_at = ? 
-           WHERE id = ?`,
-          ['live', promptTokens, completionTokens, neuronsConsumed, estimatedCostGbp, new Date().toISOString(), documentId]
-        );
-
-        if (isReplacement && supersedesId) {
-          await queryD1(
-            `UPDATE guidelines_meta SET status = 'superseded' WHERE id = ?`,
-            [supersedesId]
-          );
-        }
-
-        await queryD1(
-          `INSERT INTO audit_logs (id, document_id, action, user_email, timestamp, details)
-           VALUES (?, ?, ?, ?, ?, ?)`,
-          [generateUUID(), documentId, 'publish', ownerEmail, new Date().toISOString(), `Published Master Index file. Neurons: ${neuronsConsumed.toFixed(4)}, Cost: £${estimatedCostGbp.toFixed(6)}`]
-        );
-
+        
+        const workerResult = await workerResponse.json();
+        
         // Completion telemetry block
         sendStatus('Live', {
           progress: 100,
-          msg: "Guideline successfully uploaded, vectorized, and live on the network!",
+          msg: "Guideline successfully uploaded, compiled, and registered live on R2/D1 via the Cloudflare AI Worker!",
           telemetry: {
-            inputTokens: promptTokens,
-            outputTokens: completionTokens,
-            neurons: neuronsConsumed,
-            costGbp: estimatedCostGbp
+            inputTokens: 0,
+            outputTokens: 0,
+            neurons: 0,
+            costGbp: 0
           }
         });
         

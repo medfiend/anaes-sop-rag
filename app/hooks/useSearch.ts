@@ -19,19 +19,25 @@ export function useSearch() {
   const [oramaDb, setOramaDb] = useState<Orama<any> | null>(null);
   const [indexing, setIndexing] = useState(true);
 
-  // Initialize Orama search engine
+  // Initialize Orama search engine with Stale-While-Revalidate LocalStorage caching
   useEffect(() => {
     async function initOrama() {
       try {
-        // Fetch guidelines dynamically from backend endpoint
-        const resp = await fetch('/api/guidelines');
-        const data = await resp.json();
+        let loadedGuidelines: any[] = [];
         
-        let loadedGuidelines = [];
-        if (data.success && data.guidelines) {
-          loadedGuidelines = data.guidelines;
-        } else {
-          // Fallback to static mapping if API is unavailable
+        // 1. Try to load from LocalStorage first for instant startup
+        const localCached = typeof window !== 'undefined' ? localStorage.getItem('cached_guidelines_master') : null;
+        if (localCached) {
+          try {
+            loadedGuidelines = JSON.parse(localCached);
+            setGuidelines(loadedGuidelines);
+          } catch (e) {
+            console.error("Failed to parse cached guidelines:", e);
+          }
+        }
+
+        // If no cache, use static guidelines as a base initial state
+        if (loadedGuidelines.length === 0) {
           loadedGuidelines = [...staticGuidelines].map((g: any) => ({
             id: g.protocol_id,
             name: g.clinical.title,
@@ -43,15 +49,16 @@ export function useSearch() {
             date_next_review: g.metadata?.review_due_at || '2027-06-01T00:00:00Z',
             is_emergency: g.protocol_id === 'la-toxicity' || g.protocol_id === 'malignant-hyperthermia' || g.protocol_id === 'resus-als',
             clinical: g.clinical,
-            search_tags: g.search_tags,
+            search_tags: g.search_tags || [],
             pdf_name: g.pdf_name,
             default_page: g.default_page,
-            calculator: g.calculator
+            calculator: g.calculator,
+            summaryText: g.clinical?.steps ? g.clinical.steps.map((s: any) => s.text).join(' ') : "NHS clinical guideline"
           }));
+          setGuidelines(loadedGuidelines);
         }
 
-        setGuidelines(loadedGuidelines);
-
+        // Build database instance
         const db = await create({
           schema: {
             title: 'string',
@@ -66,65 +73,159 @@ export function useSearch() {
           }
         });
 
-        // Insert guidelines into Orama
-        for (const doc of loadedGuidelines) {
-          // Skip superseded guidelines so they don't pollute current clinical searches
-          if (doc.status === 'superseded' || doc.status === 'Superseded') {
-            continue;
-          }
+        // Helper to index guidelines into Orama
+        const indexGuidelines = async (list: any[]) => {
+          for (const doc of list) {
+            // Skip superseded guidelines
+            if (doc.status === 'superseded' || doc.status === 'Superseded') {
+              continue;
+            }
 
-          if (doc.records && doc.records.length > 0) {
-            // Custom dynamic guideline: Index each parsed segment separately using pre-computed vectors
-            for (const rec of doc.records) {
+            if (doc.records && doc.records.length > 0) {
+              // Custom Dynamic Guideline (Full records loaded): Index each segment separately
+              for (const rec of doc.records) {
+                await insert(db as any, {
+                  title: rec.title || doc.name,
+                  context: rec.context || '',
+                  summaryText: rec.summaryText || doc.name,
+                  synonyms: rec.synonyms || [],
+                  breadcrumbs: rec.breadcrumbs || [doc.name],
+                  docId: doc.id,
+                  masterVector: rec.masterVector || Array(1024).fill(0),
+                  pdfName: doc.pdf_name || '',
+                  defaultPage: 1
+                } as any);
+              }
+            } else {
+              // Lightweight Guideline Summary OR Static Guideline: Index as a single document block
+              const title = doc.name || '';
+              const context = doc.summaryText || doc.clinical?.steps?.map((s: any) => s.text).join(' ') || '';
+              const summaryText = doc.summaryText || title;
+              const synonyms = doc.search_tags || [];
+              const breadcrumbs = [title];
+              
+              // Generate a deterministic mock vector for text searches
+              const vectorText = `${title} ${context} ${synonyms.join(' ')}`;
+              const mockVector = Array(1024).fill(0).map((_, i) => {
+                let hash = 0;
+                for (let charIndex = 0; charIndex < vectorText.length; charIndex++) {
+                  hash = vectorText.charCodeAt(charIndex) + ((hash << 5) - hash);
+                }
+                return Math.sin(hash + i) * 0.1;
+              });
+
               await insert(db as any, {
-                title: rec.title || doc.name,
-                context: rec.context || '',
-                summaryText: rec.summaryText || doc.name,
-                synonyms: rec.synonyms || [],
-                breadcrumbs: rec.breadcrumbs || [doc.name],
+                title,
+                context,
+                summaryText,
+                synonyms,
+                breadcrumbs,
                 docId: doc.id,
-                masterVector: rec.masterVector || Array(1024).fill(0),
+                masterVector: mockVector,
                 pdfName: doc.pdf_name || '',
-                defaultPage: 1
+                defaultPage: doc.default_page || 1
               } as any);
             }
-          } else {
-            // Static guideline: Index as a single document block
-            const title = doc.name || '';
-            const context = doc.clinical?.steps ? doc.clinical.steps.map((s: any) => s.text).join(' ') : '';
-            const summaryText = doc.name || '';
-            const synonyms = doc.search_tags || [];
-            const breadcrumbs = [doc.name];
-            
-            // Generate a deterministic mock vector for static guidelines
-            const vectorText = `${title} ${context} ${synonyms.join(' ')}`;
-            const mockVector = Array(1024).fill(0).map((_, i) => {
-              let hash = 0;
-              for (let charIndex = 0; charIndex < vectorText.length; charIndex++) {
-                hash = vectorText.charCodeAt(charIndex) + ((hash << 5) - hash);
-              }
-              return Math.sin(hash + i) * 0.1;
-            });
-
-            await insert(db as any, {
-              title,
-              context,
-              summaryText,
-              synonyms,
-              breadcrumbs,
-              docId: doc.id,
-              masterVector: mockVector,
-              pdfName: doc.pdf_name || '',
-              defaultPage: doc.default_page || 1
-            } as any);
           }
+        };
+
+        // Perform initial indexing
+        await indexGuidelines(loadedGuidelines);
+        setOramaDb(db);
+        setIndexing(false);
+
+        // 2. Fetch in background (SWR) from network
+        try {
+          const resp = await fetch('/api/guidelines');
+          const data = await resp.json();
+          if (data.success && data.guidelines) {
+            const freshGuidelines = data.guidelines;
+            const newGuidelinesStr = JSON.stringify(freshGuidelines);
+            
+            if (newGuidelinesStr !== localCached) {
+              // Update local cache
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('cached_guidelines_master', newGuidelinesStr);
+              }
+              setGuidelines(freshGuidelines);
+              
+              // Recreate and re-index database with fresh contents
+              const freshDb = await create({
+                schema: {
+                  title: 'string',
+                  context: 'string',
+                  summaryText: 'string',
+                  synonyms: 'string[]',
+                  masterVector: 'vector[1024]',
+                  docId: 'string',
+                  breadcrumbs: 'string[]',
+                  pdfName: 'string',
+                  defaultPage: 'number'
+                }
+              });
+              
+              // Helper to index guidelines into fresh Orama instance
+              const reindexGuidelines = async (list: any[]) => {
+                for (const doc of list) {
+                  if (doc.status === 'superseded' || doc.status === 'Superseded') {
+                    continue;
+                  }
+
+                  if (doc.records && doc.records.length > 0) {
+                    for (const rec of doc.records) {
+                      await insert(freshDb as any, {
+                        title: rec.title || doc.name,
+                        context: rec.context || '',
+                        summaryText: rec.summaryText || doc.name,
+                        synonyms: rec.synonyms || [],
+                        breadcrumbs: rec.breadcrumbs || [doc.name],
+                        docId: doc.id,
+                        masterVector: rec.masterVector || Array(1024).fill(0),
+                        pdfName: doc.pdf_name || '',
+                        defaultPage: 1
+                      } as any);
+                    }
+                  } else {
+                    const title = doc.name || '';
+                    const context = doc.summaryText || doc.clinical?.steps?.map((s: any) => s.text).join(' ') || '';
+                    const summaryText = doc.summaryText || title;
+                    const synonyms = doc.search_tags || [];
+                    const breadcrumbs = [title];
+                    
+                    const vectorText = `${title} ${context} ${synonyms.join(' ')}`;
+                    const mockVector = Array(1024).fill(0).map((_, i) => {
+                      let hash = 0;
+                      for (let charIndex = 0; charIndex < vectorText.length; charIndex++) {
+                        hash = vectorText.charCodeAt(charIndex) + ((hash << 5) - hash);
+                      }
+                      return Math.sin(hash + i) * 0.1;
+                    });
+
+                    await insert(freshDb as any, {
+                      title,
+                      context,
+                      summaryText,
+                      synonyms,
+                      breadcrumbs,
+                      docId: doc.id,
+                      masterVector: mockVector,
+                      pdfName: doc.pdf_name || '',
+                      defaultPage: doc.default_page || 1
+                    } as any);
+                  }
+                }
+              };
+              
+              await reindexGuidelines(freshGuidelines);
+              setOramaDb(freshDb);
+            }
+          }
+        } catch (fetchErr) {
+          console.warn("SWR background fetch failed, using local offline guidelines:", fetchErr);
         }
 
-        setOramaDb(db);
       } catch (err) {
         console.error("Failed to initialize Orama database:", err);
-      } finally {
-        setIndexing(false);
       }
     }
 
@@ -254,6 +355,7 @@ export function useSearch() {
   return {
     indexing,
     executeSearch,
-    guidelines
+    guidelines,
+    setGuidelines
   };
 }
