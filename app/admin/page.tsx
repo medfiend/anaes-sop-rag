@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useUser, useClerk } from '@clerk/nextjs';
+import { useUser, useClerk, useAuth } from '@clerk/nextjs';
 import { 
   FileText, Upload, Calendar, AlertTriangle, ShieldCheck, Mail, 
   Trash2, User, Clock, CheckCircle, HelpCircle, ChevronRight, Calculator, Activity,
@@ -13,6 +13,7 @@ import { mockGuidelines, mockCalculator } from '../../lib/supabaseClient';
 export default function AdminDashboard() {
   const { user: clerkUser, isLoaded } = useUser();
   const { signOut } = useClerk();
+  const { getToken } = useAuth();
 
   const rawEmail = clerkUser?.primaryEmailAddress?.emailAddress || '';
   const isAdmin = rawEmail === 'audit.lead@nhs.net' || rawEmail === 's.parashar1@nhs.net';
@@ -168,8 +169,15 @@ export default function AdminDashboard() {
       formData.append('isReplacement', isReplacement ? 'true' : 'false');
       formData.append('supersedesId', supersedesId);
 
+      const token = await getToken();
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch('/api/upload', {
         method: 'POST',
+        headers,
         body: formData
       });
 
