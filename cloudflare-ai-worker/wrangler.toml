@@ -1,0 +1,15 @@
+name = "anaessop-ai-worker"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[ai]
+binding = "AI"
+
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "anaessop-guidelines"
+
+[[d1_databases]]
+binding = "D1_DATABASE"
+database_name = "anaessop-db"
+database_id = "1333324d-38ed-417c-b6fb-0ce490580f60"
