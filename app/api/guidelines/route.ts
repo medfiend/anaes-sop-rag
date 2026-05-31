@@ -48,10 +48,14 @@ export async function GET() {
               }));
               if (r2Object && r2Object.Body) {
                 const r2Text = await r2Object.Body.transformToString();
-                const masterData = JSON.parse(r2Text);
-                records = masterData.records || [];
-                fileKey = masterData.fileKey || fileKey;
-                calculator = masterData.calculator || null;
+                try {
+                  const masterData = JSON.parse(r2Text);
+                  records = masterData.records || [];
+                  fileKey = masterData.fileKey || fileKey;
+                  calculator = masterData.calculator || null;
+                } catch (parseErr) {
+                  console.error(`JSON parse error on guidelines index for ${g.id}:`, parseErr);
+                }
               }
             } catch (r2Err) {
               console.warn(`Could not load index for guideline ${g.id} from R2:`, r2Err);
@@ -98,7 +102,27 @@ export async function GET() {
     return NextResponse.json({ success: true, guidelines: mergedGuidelines });
   } catch (error: any) {
     console.error("GET guidelines error:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    // Safe fallback state: Return at least the static guidelines array even if the entire logic fails
+    try {
+      const fallbackGuidelines = [...staticGuidelines].map((g: any) => ({
+        id: g.protocol_id,
+        name: g.clinical.title,
+        version: g.metadata?.version_hash?.substring(0, 8) || 'v1.0.0',
+        owner_email: g.metadata?.owner_email || 'audit.lead@nhs.net',
+        status: g.status || 'Active',
+        changelog: g.metadata?.changelog || 'Initial release',
+        date_published: g.metadata?.compiled_at || '2025-06-01T00:00:00Z',
+        date_next_review: g.metadata?.review_due_at || '2027-06-01T00:00:00Z',
+        is_emergency: g.protocol_id === 'la-toxicity' || g.protocol_id === 'malignant-hyperthermia' || g.protocol_id === 'resus-als',
+        clinical: g.clinical,
+        search_tags: g.search_tags,
+        pdf_name: g.pdf_name,
+        default_page: g.default_page,
+        calculator: g.calculator
+      }));
+      return NextResponse.json({ success: true, guidelines: fallbackGuidelines, fallback: true });
+    } catch (fallbackErr) {
+      return NextResponse.json({ success: false, error: 'Failed to load guidelines. Please refresh the page.' }, { status: 500 });
+    }
   }
 }
-

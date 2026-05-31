@@ -1,11 +1,22 @@
 import { NextResponse } from 'next/server';
 import { runWorkersAI } from '../../../lib/cloudflare';
+import { requireAuth } from '../../../lib/authGuard';
 
 export async function POST(req: Request) {
   try {
+    // Auth guard
+    const authResult = await requireAuth();
+    if (authResult instanceof NextResponse) {
+      return authResult;
+    }
+
     const { query } = await req.json();
     if (!query) {
       return NextResponse.json({ error: "Missing query parameter" }, { status: 400 });
+    }
+
+    if (typeof query !== 'string' || query.length > 500) {
+      return NextResponse.json({ error: 'Query must be a string under 500 characters.' }, { status: 400 });
     }
     
     // Call Cloudflare Workers AI embedding model
@@ -46,6 +57,6 @@ export async function POST(req: Request) {
     });
   } catch (error: any) {
     console.error("Embedding API error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Embedding service encountered an error.' }, { status: 500 });
   }
 }

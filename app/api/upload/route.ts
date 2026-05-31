@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { r2Client, R2_BUCKET, queryD1, runWorkersAI, isR2Configured, isCloudflareApiConfigured } from '../../../lib/cloudflare';
+import { requireAdmin } from '../../../lib/authGuard';
 
 // Helper to generate IDs
 const generateUUID = () => {
@@ -10,6 +11,12 @@ const generateUUID = () => {
 };
 
 export async function POST(req: Request) {
+  // Admin auth guard — check BEFORE starting the stream
+  const authResult = await requireAdmin();
+  if (authResult instanceof NextResponse) {
+    return authResult;
+  }
+
   const encoder = new TextEncoder();
   
   // Set up streaming response
@@ -34,6 +41,18 @@ export async function POST(req: Request) {
 
         if (!file) {
           throw new Error("No PDF file provided in the upload request.");
+        }
+
+        // File validation
+        const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+        if (file.size > MAX_FILE_SIZE) {
+          throw new Error('File size exceeds 25MB limit.');
+        }
+        if (!file.type || !file.type.includes('pdf')) {
+          throw new Error('Only PDF files are accepted.');
+        }
+        if (!docName || typeof docName !== 'string' || docName.trim().length === 0) {
+          throw new Error('Document name is required.');
         }
 
         const documentId = generateUUID();
@@ -77,11 +96,7 @@ export async function POST(req: Request) {
         sendStatus('R2 Upload', { progress: 30, msg: `Uploading '${file.name}' to Cloudflare R2 bucket with versioning...` });
 
         if (!isR2Configured || !r2Client) {
-          const missing = [];
-          if (!process.env.CLOUDFLARE_ACCOUNT_ID) missing.push('CLOUDFLARE_ACCOUNT_ID');
-          if (!process.env.R2_ACCESS_KEY_ID) missing.push('R2_ACCESS_KEY_ID');
-          if (!process.env.R2_SECRET_ACCESS_KEY) missing.push('R2_SECRET_ACCESS_KEY');
-          throw new Error(`Cloudflare R2 is not configured. Missing environment variables: ${missing.join(', ')}`);
+          throw new Error("File storage service is not configured. Contact your administrator.");
         }
 
         const buffer = Buffer.from(await file.arrayBuffer());
@@ -120,13 +135,13 @@ export async function POST(req: Request) {
         const geminiApiKey = process.env.GEMINI_API_KEY || '';
         if (geminiApiKey) {
           try {
-            sendStatus('Multi-Register Extraction', { progress: 65, msg: "Invoking Gemini 1.5 Flash parser to extract clinical sections from PDF..." });
+            sendStatus('Multi-Register Extraction', { progress: 65, msg: "Invoking Gemini 2.0 Flash parser to extract clinical sections from PDF..." });
             const base64Pdf = buffer.toString('base64');
             
             const compilationPrompt = `You are a clinical database compiler. Parse this PDF clinical guideline and compile it into a structured JSON object.
 Strictly capture ALL clinical guidelines, steps, algorithms, contraindications, and drug dosing instructions.
 
-Your output JSON object MUST follow this schema:
+Your JSON structure MUST follow this schema:
 {
   "records": [
     {
@@ -208,9 +223,17 @@ Output only the raw JSON. Do not wrap in markdown code blocks.`;
               const resData = await geminiResp.json();
               const rawJsonText = resData.candidates?.[0]?.content?.parts?.[0]?.text || '';
               const cleanJson = rawJsonText.trim().replace(/^```json\s*/i, '').replace(/```$/, '');
-              const parsed = JSON.parse(cleanJson);
-              sections = parsed.records || [];
-              calculator = parsed.calculator || null;
+              
+              // Safe JSON parse with explicit catch inside the block
+              try {
+                const parsed = JSON.parse(cleanJson);
+                sections = parsed.records || [];
+                calculator = parsed.calculator || null;
+              } catch (parseErr) {
+                console.error("Failed to parse Gemini output as JSON:", parseErr, "Raw output:", cleanJson);
+                throw new Error("Failed to parse LLM structured output. Re-trying with fallback.");
+              }
+              
               promptTokens += Math.round(base64Pdf.length / 4);
               completionTokens += Math.round(rawJsonText.length / 4);
               neuronsConsumed += 1.5; // tracking units
@@ -300,7 +323,6 @@ Output a JSON array containing sections. Format:
           };
         }));
 
-
         sendStatus('Orama Compiling', { progress: 90, msg: "Compiling JSON index for local client-side syncing..." });
 
         // Build master guidelines payload containing metadata + parsed vector records
@@ -371,7 +393,10 @@ Output a JSON array containing sections. Format:
         controller.close();
       } catch (err: any) {
         console.error("Ingestion endpoint stream failure:", err);
-        controller.enqueue(encoder.encode(JSON.stringify({ error: err.message }) + '\n'));
+        const safeError = (err.message || 'Upload processing failed.')
+          .replace(/Missing environment variables?:.*$/i, 'Service configuration error.')
+          .replace(/CLOUDFLARE_[A-Z_]+|GEMINI_[A-Z_]+|R2_[A-Z_]+|D1_[A-Z_]+/g, '[REDACTED]');
+        controller.enqueue(encoder.encode(JSON.stringify({ error: safeError }) + '\n'));
         controller.close();
       }
 

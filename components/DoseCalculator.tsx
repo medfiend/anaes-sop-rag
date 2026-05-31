@@ -238,25 +238,27 @@ export default function DoseCalculator({ schema, isSandbox = false, onApprove, i
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#0b1329', // Dark slate blue
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#1e293b', // Slate 800
     overflow: 'hidden',
     marginVertical: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   header: {
-    backgroundColor: '#1e293b', // Slate 800
+    backgroundColor: '#020617', // Slate 950
     paddingVertical: 12,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: '#1e293b',
   },
   headerTitleRow: {
     flexDirection: 'row',
@@ -269,9 +271,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   headerTitle: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
-    color: '#ffffff',
+    color: '#2dd4bf', // Teal 400
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
@@ -299,19 +301,21 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    flexDirection: 'column',
-    gap: 20,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
   },
   inputSection: {
     flex: 1,
+    minWidth: 240,
   },
   sectionHeader: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#64748b',
+    color: '#0d9488', // Teal 600
     letterSpacing: 1,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: '#1e293b',
     paddingBottom: 6,
     marginBottom: 12,
   },
@@ -321,16 +325,16 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#475569',
+    color: '#94a3b8', // Slate 400
     marginBottom: 6,
   },
   segmentContainer: {
     flexDirection: 'row',
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#090f1e', // Very dark slate
     borderRadius: 8,
     padding: 3,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#1e293b',
   },
   segmentButton: {
     flex: 1,
@@ -339,10 +343,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   segmentButtonActive: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#1e293b', // Slate 800
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 1,
   },
@@ -352,16 +356,16 @@ const styles = StyleSheet.create({
     color: '#64748b',
   },
   segmentTextActive: {
-    color: '#0f172a',
+    color: '#2dd4bf', // Teal 400
     fontWeight: '600',
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#cbd5e1',
+    borderColor: '#1e293b',
     borderRadius: 8,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#090f1e',
     overflow: 'hidden',
   },
   numericInput: {
@@ -369,19 +373,19 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     fontSize: 14,
-    color: '#0f172a',
+    color: '#ffffff',
   },
   unitText: {
     paddingHorizontal: 12,
     fontSize: 12,
     fontWeight: '600',
-    color: '#94a3b8',
+    color: '#2dd4bf', // Teal 400
   },
   warningContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fffbeb', // Amber 50
+    backgroundColor: '#78350f15', // Amber 900 translucent
     borderWidth: 1,
-    borderColor: '#fde68a', // Amber 200
+    borderColor: '#b4530940', // Amber 700 translucent
     borderRadius: 8,
     padding: 10,
     marginTop: 12,
@@ -397,7 +401,7 @@ const styles = StyleSheet.create({
   warningTitle: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#b45309', // Amber 700
+    color: '#f59e0b', // Amber 500
     marginBottom: 2,
   },
   warningText: {
@@ -406,11 +410,13 @@ const styles = StyleSheet.create({
     lineHeight: 14,
   },
   resultsSection: {
-    backgroundColor: '#f8fafc',
+    flex: 1,
+    minWidth: 240,
+    backgroundColor: '#020617', // Slate 950
     borderRadius: 8,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#1e293b',
   },
   resultsList: {
     gap: 8,
@@ -424,17 +430,17 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   resultRowSpecial: {
-    backgroundColor: '#e6f4f1', // Teal tint
+    backgroundColor: '#0d948810', // Teal 600 translucent
     borderLeftWidth: 3,
     borderLeftColor: '#0d9488',
   },
   resultLabel: {
     fontSize: 12,
-    color: '#475569',
+    color: '#94a3b8',
   },
   resultLabelSpecial: {
     fontWeight: '600',
-    color: '#0f3a38',
+    color: '#e2e8f0',
   },
   resultValueContainer: {
     flexDirection: 'row',
@@ -444,27 +450,27 @@ const styles = StyleSheet.create({
   resultValue: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#0f172a',
+    color: '#f8fafc',
   },
   resultValueSpecial: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0f766e', // Teal 700
+    color: '#2dd4bf', // Teal 400
   },
   resultUnit: {
     fontSize: 10,
-    color: '#94a3b8',
+    color: '#64748b',
   },
   footerRow: {
     marginTop: 12,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+    borderTopColor: '#1e293b',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   footerText: {
     fontSize: 10,
-    color: '#94a3b8',
+    color: '#475569',
   }
 });

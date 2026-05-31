@@ -1,11 +1,18 @@
 import { NextResponse } from 'next/server';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { r2Client, R2_BUCKET, isR2Configured } from '../../../lib/cloudflare';
+import { requireAuth } from '../../../lib/authGuard';
 import fs from 'fs';
 import path from 'path';
 
 export async function GET(req: Request) {
   try {
+    // 1. Authenticate Request
+    const authResult = await requireAuth();
+    if (authResult instanceof NextResponse) {
+      return authResult;
+    }
+
     const { searchParams } = new URL(req.url);
     const file = searchParams.get('file');
 
@@ -13,7 +20,12 @@ export async function GET(req: Request) {
       return new Response("Missing file parameter", { status: 400 });
     }
 
-    // 1. Check if the file exists locally in the public folder
+    // Path traversal protection
+    if (file.includes('..') || file.includes('/') || file.includes('\\')) {
+      return new Response("Invalid file path", { status: 400 });
+    }
+
+    // 2. Check if the file exists locally in the public folder
     const publicFilePath = path.join(process.cwd(), 'public', file);
     const altPublicFilePath = path.join(process.cwd(), 'public', `guidelines/${file}`);
     
@@ -35,15 +47,11 @@ export async function GET(req: Request) {
       });
     }
 
-    // 2. Fetch from Cloudflare R2 for custom uploaded guidelines
+    // 3. Fetch from Cloudflare R2 for custom uploaded guidelines
     if (!isR2Configured || !r2Client) {
-      const missing = [];
-      if (!process.env.CLOUDFLARE_ACCOUNT_ID) missing.push('CLOUDFLARE_ACCOUNT_ID');
-      if (!process.env.R2_ACCESS_KEY_ID) missing.push('R2_ACCESS_KEY_ID');
-      if (!process.env.R2_SECRET_ACCESS_KEY) missing.push('R2_SECRET_ACCESS_KEY');
       return new Response(
-        `Cloudflare R2 is not configured. Missing environment variables: ${missing.join(', ')}. Cannot serve custom file: ${file}`, 
-        { status: 500 }
+        "File storage service is temporarily unavailable. Please try again later.", 
+        { status: 503 }
       );
     }
 
@@ -64,7 +72,7 @@ export async function GET(req: Request) {
         }));
       } catch (err2) {
         console.error(`File '${file}' not found in R2 bucket under direct or guidelines/ prefix.`);
-        return new Response(`File '${file}' not found in Cloudflare R2 bucket.`, { status: 404 });
+        return new Response(`File '${file}' not found.`, { status: 404 });
       }
     }
 
@@ -85,7 +93,6 @@ export async function GET(req: Request) {
 
   } catch (error: any) {
     console.error("Error streaming PDF:", error);
-    return new Response(`Server error loading PDF: ${error.message}`, { status: 500 });
+    return new Response("An error occurred loading this file.", { status: 500 });
   }
 }
-

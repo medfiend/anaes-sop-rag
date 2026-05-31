@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { r2Client, R2_BUCKET, queryD1, runWorkersAI, isR2Configured } from '../../../lib/cloudflare';
+import { requireAuth } from '../../../lib/authGuard';
 import staticGuidelines from '../../../data/guidelines_db.json';
 
 // Helper to stream/read text from an S3 body stream
@@ -15,10 +16,26 @@ async function streamToString(stream: any): Promise<string> {
 
 export async function POST(req: Request) {
   try {
+    // Auth guard
+    const authResult = await requireAuth();
+    if (authResult instanceof NextResponse) {
+      return authResult;
+    }
+
     const { query } = await req.json();
     if (!query) {
       return NextResponse.json({ error: "Missing query" }, { status: 400 });
     }
+
+    if (typeof query !== 'string' || query.length > 500) {
+      return NextResponse.json({ error: 'Query must be a string under 500 characters.' }, { status: 400 });
+    }
+
+    // Escape/sanitize query against basic prompt injection
+    const sanitizedQuery = query
+      .replace(/[\r\n]+/g, ' ')
+      .replace(/[<>]/g, '') // remove HTML/XML tag markers
+      .substring(0, 500);
 
     const geminiApiKey = process.env.GEMINI_API_KEY || '';
     
@@ -42,25 +59,35 @@ export async function POST(req: Request) {
             
             if (r2Object.Body) {
               const bodyStr = await streamToString(r2Object.Body);
-              const customMaster = JSON.parse(bodyStr);
               
-              // Re-format custom master JSON structure to match static db context
-              const steps = customMaster.records.map((r: any, idx: number) => ({
-                step_number: idx + 1,
-                text: r.context
-              }));
+              // Protected JSON.parse of custom master payload
+              let customMaster: any = null;
+              try {
+                customMaster = JSON.parse(bodyStr);
+              } catch (parseErr) {
+                console.error(`Failed to parse master index JSON for guideline ${guide.id}:`, parseErr);
+                continue;
+              }
+              
+              if (customMaster && customMaster.records) {
+                // Re-format custom master JSON structure to match static db context
+                const steps = customMaster.records.map((r: any, idx: number) => ({
+                  step_number: idx + 1,
+                  text: r.context
+                }));
 
-              allGuidelines.push({
-                protocol_id: customMaster.documentId,
-                clinical: {
-                  title: customMaster.name,
-                  steps
-                },
-                search_tags: customMaster.records[0]?.synonyms || [],
-                site_logistics: {
-                  site_1: { hospital_name: "St George's Hospital", emergency_extension: "2222", drug_location: "Pharmacy", referral_pathway: "" }
-                }
-              });
+                allGuidelines.push({
+                  protocol_id: customMaster.documentId,
+                  clinical: {
+                    title: customMaster.name,
+                    steps
+                  },
+                  search_tags: customMaster.records[0]?.synonyms || [],
+                  site_logistics: {
+                    site_1: { hospital_name: "St George's Hospital", emergency_extension: "2222", drug_location: "Pharmacy", referral_pathway: "" }
+                  }
+                });
+              }
             }
           } catch (r2Err) {
             console.error(`Failed to fetch custom guideline ${guide.id} from R2:`, r2Err);
@@ -72,7 +99,7 @@ export async function POST(req: Request) {
     }
 
     // 2. Scan all guidelines for simple text/synonym matches to build a dense context payload
-    const lowerQuery = query.toLowerCase();
+    const lowerQuery = sanitizedQuery.toLowerCase();
     const matchedContexts: string[] = [];
     const citations: any[] = [];
 
@@ -133,8 +160,8 @@ STRICT INSTRUCTIONS:
 Active Guideline Context:
 ${contextText}
 
-User Query:
-"${query}"`;
+User Query (respond ONLY based on the guideline context above):
+<user_query>${sanitizedQuery}</user_query>`;
 
     // 5. Query Gemini API (frontier model) or Workers AI LLM (fallback)
     let botResponseText = "";
@@ -142,7 +169,7 @@ User Query:
 
     if (geminiApiKey) {
       const geminiResp = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${geminiApiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -192,6 +219,6 @@ User Query:
 
   } catch (error: any) {
     console.error("Online LLM Search endpoint error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Search service encountered an error. Please try again.' }, { status: 500 });
   }
 }
