@@ -15,7 +15,7 @@ export default function AdminDashboard() {
   const { signOut } = useClerk();
 
   const rawEmail = clerkUser?.primaryEmailAddress?.emailAddress || '';
-  const isAdmin = rawEmail === 'audit.lead@nhs.net';
+  const isAdmin = rawEmail === 'audit.lead@nhs.net' || rawEmail === 's.parashar1@nhs.net';
 
   const [activeTab, setActiveTab] = useState<'policies' | 'upload' | 'sandbox' | 'gaps' | 'feedbacks'>('policies');
   

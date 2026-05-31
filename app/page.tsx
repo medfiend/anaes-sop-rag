@@ -19,11 +19,12 @@ export default function Home() {
   const { signOut } = useClerk();
 
   const rawEmail = clerkUser?.primaryEmailAddress?.emailAddress || '';
-  const isNhsEmail = rawEmail.endsWith('@nhs.net') || rawEmail.endsWith('.nhs.uk') || rawEmail === 'audit.lead@nhs.net';
+  const isNhsEmail = rawEmail.endsWith('@nhs.net') || rawEmail.endsWith('.nhs.uk') || rawEmail === 'audit.lead@nhs.net' || rawEmail === 's.parashar1@nhs.net';
+  const isAdminEmail = rawEmail === 'audit.lead@nhs.net' || rawEmail === 's.parashar1@nhs.net';
 
   const user = clerkUser && isNhsEmail ? {
     email: rawEmail,
-    role: (rawEmail === 'audit.lead@nhs.net' ? 'Admin' : 'Clinician') as 'Clinician' | 'Admin'
+    role: (isAdminEmail ? 'Admin' : 'Clinician') as 'Clinician' | 'Admin'
   } : null;
   
   // Feedback state
@@ -307,6 +308,14 @@ export default function Home() {
         <div className="flex items-center gap-3">
           {user ? (
             <div className="flex items-center gap-3">
+              {user.role === 'Admin' && (
+                <a 
+                  href="/admin"
+                  className="bg-teal-500 hover:bg-teal-650 active:scale-95 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 transition-all shadow-md shadow-teal-500/10 animate-fade-in"
+                >
+                  Admin Panel
+                </a>
+              )}
               <button 
                 onClick={() => setIsFeedbackOpen(true)}
                 className="bg-slate-900 hover:bg-slate-850 border border-slate-800 text-teal-400 hover:text-teal-300 text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
@@ -443,10 +452,10 @@ export default function Home() {
                           variables: {
                             colorPrimary: '#0d9488',
                             colorBackground: 'transparent',
-                            colorText: '#f1f5f9',
-                            colorTextSecondary: '#94a3b8',
-                            colorInputBackground: '#0f172a',
-                            colorInputText: '#ffffff',
+                            colorForeground: '#f1f5f9',
+                            colorMutedForeground: '#94a3b8',
+                            colorInput: '#0f172a',
+                            colorInputForeground: '#ffffff',
                             colorBorder: '#1e293b',
                           },
                           elements: {
@@ -466,6 +475,10 @@ export default function Home() {
                             formFieldErrorText: 'text-red-400 text-xxs mt-1',
                             alert: 'bg-red-500/10 border border-red-500/20 text-red-200 text-xxs rounded-lg p-3',
                             alertText: 'text-red-400 text-xxs',
+                            // Custom targets to enforce high-contrast readable style on OTP input digit blocks
+                            formFieldInputCode: 'bg-slate-900 border border-slate-800 text-white font-mono text-center text-lg rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 w-10 h-10',
+                            formFieldInput__code: 'bg-slate-900 border border-slate-800 text-white font-mono text-center text-lg rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 w-10 h-10',
+                            formFieldInputShowCode: 'text-white bg-slate-900 border border-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500',
                           }
                         }}
                       />
