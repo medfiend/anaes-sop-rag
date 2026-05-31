@@ -207,14 +207,8 @@ export default function Home() {
           highlight: { x0: 20, y0: 100, x1: 500, y1: 150 }
         }));
 
-        // Auto load PDF for the top matched guideline
-        if (topMatch.pdfName) {
-          setActivePdfUrl(getPdfUrl(topMatch.pdfName));
-          setActivePdfName(topMatch.title);
-          setActivePage(topMatch.defaultPage || 1); // Jump to the correct page of the guideline!
-          setActiveGuidelineId(topMatch.docId);
-          setActiveHighlights([]);
-        }
+        // Auto select the active guideline for the calculator widget, but do not retrieve/load the heavy PDF URL yet
+        setActiveGuidelineId(topMatch.docId);
       }
 
       setChatHistory(prev => [...prev, { 
