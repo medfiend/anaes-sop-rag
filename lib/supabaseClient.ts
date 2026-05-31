@@ -1,14 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
-// Initialize real Supabase client if keys are present
-export const supabase = supabaseUrl && supabaseAnonKey 
-  ? createClient(supabaseUrl, supabaseAnonKey) 
-  : null;
-
-// Mock database values for pilot demo when Supabase isn't connected yet
+// Mock database values for pilot demo
 export const mockGuidelines = [
   {
     id: "dexmed-sop-afoi-uuid",
