@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { r2Client, R2_BUCKET, isR2Configured } from '../../../lib/cloudflare';
+import fs from 'fs';
+import path from 'path';
 
 export async function GET(req: Request) {
   try {
@@ -11,13 +13,40 @@ export async function GET(req: Request) {
       return new Response("Missing file parameter", { status: 400 });
     }
 
-    if (!isR2Configured || !r2Client) {
-      return new Response("Cloudflare R2 storage is not configured on the server", { status: 500 });
+    // 1. Check if the file exists locally in the public folder
+    const publicFilePath = path.join(process.cwd(), 'public', file);
+    const altPublicFilePath = path.join(process.cwd(), 'public', `guidelines/${file}`);
+    
+    let localPath = '';
+    if (fs.existsSync(publicFilePath)) {
+      localPath = publicFilePath;
+    } else if (fs.existsSync(altPublicFilePath)) {
+      localPath = altPublicFilePath;
     }
 
-    // Try common keys in the R2 bucket:
-    // 1. Check if the file is stored under its exact name (e.g., "Dexmed SOP for AFOI.KD..pdf")
-    // 2. Check if the file is stored in the "guidelines/" folder (e.g., "guidelines/Dexmed SOP for AFOI.KD..pdf")
+    if (localPath) {
+      const fileBuffer = fs.readFileSync(localPath);
+      return new Response(fileBuffer, {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `inline; filename="${encodeURIComponent(file)}"`,
+          'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
+        }
+      });
+    }
+
+    // 2. Fetch from Cloudflare R2 for custom uploaded guidelines
+    if (!isR2Configured || !r2Client) {
+      const missing = [];
+      if (!process.env.CLOUDFLARE_ACCOUNT_ID) missing.push('CLOUDFLARE_ACCOUNT_ID');
+      if (!process.env.R2_ACCESS_KEY_ID) missing.push('R2_ACCESS_KEY_ID');
+      if (!process.env.R2_SECRET_ACCESS_KEY) missing.push('R2_SECRET_ACCESS_KEY');
+      return new Response(
+        `Cloudflare R2 is not configured. Missing environment variables: ${missing.join(', ')}. Cannot serve custom file: ${file}`, 
+        { status: 500 }
+      );
+    }
+
     let r2Object: any = null;
     let fileKey = file;
 
@@ -55,7 +84,8 @@ export async function GET(req: Request) {
     });
 
   } catch (error: any) {
-    console.error("Error streaming PDF from R2:", error);
-    return new Response(`Server error loading PDF from R2: ${error.message}`, { status: 500 });
+    console.error("Error streaming PDF:", error);
+    return new Response(`Server error loading PDF: ${error.message}`, { status: 500 });
   }
 }
+
