@@ -141,7 +141,7 @@ Each section in the array MUST have this format:
 Output only the raw JSON array. Do not include markdown tags.`;
 
             const geminiResp = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
               {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
