@@ -76,21 +76,22 @@ export async function POST(req: Request) {
 
         sendStatus('R2 Upload', { progress: 30, msg: `Uploading '${file.name}' to Cloudflare R2 bucket with versioning...` });
 
-        // Save file to R2 if configured, otherwise simulate
-        let fileVersionId = 'mock_ver_123';
-        if (isR2Configured && r2Client) {
-          const buffer = Buffer.from(await file.arrayBuffer());
-          const r2Response = await r2Client.send(new PutObjectCommand({
-            Bucket: R2_BUCKET,
-            Key: fileKey,
-            Body: buffer,
-            ContentType: file.contentType || 'application/pdf',
-          }));
-          fileVersionId = r2Response.VersionId || 'v1';
-        } else {
-          // Delay to simulate network upload in pilot mode
-          await new Promise(r => setTimeout(r, 1000));
+        if (!isR2Configured || !r2Client) {
+          const missing = [];
+          if (!process.env.CLOUDFLARE_ACCOUNT_ID) missing.push('CLOUDFLARE_ACCOUNT_ID');
+          if (!process.env.R2_ACCESS_KEY_ID) missing.push('R2_ACCESS_KEY_ID');
+          if (!process.env.R2_SECRET_ACCESS_KEY) missing.push('R2_SECRET_ACCESS_KEY');
+          throw new Error(`Cloudflare R2 is not configured. Missing environment variables: ${missing.join(', ')}`);
         }
+
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const r2Response = await r2Client.send(new PutObjectCommand({
+          Bucket: R2_BUCKET,
+          Key: fileKey,
+          Body: buffer,
+          ContentType: file.type || 'application/pdf',
+        }));
+        const fileVersionId = r2Response.VersionId || 'v1';
 
         // Log upload status to D1 database
         sendStatus('R2 Upload', { progress: 50, msg: "Writing metadata trace to D1 Database..." });
@@ -108,9 +109,6 @@ export async function POST(req: Request) {
 
         sendStatus('Multi-Register Extraction', { progress: 55, msg: "Extracting file sections and parsing clinical registers..." });
 
-        // Simulate or perform LLM extraction
-        // In real execution, we parse the text out of the PDF file and run LLM structured generation
-        // To build a premium user experience, we generate rich register objects:
         let promptTokens = 0;
         let completionTokens = 0;
         let neuronsConsumed = 0;
@@ -123,12 +121,75 @@ export async function POST(req: Request) {
           breadcrumbs: string[];
         }> = [];
 
-        if (isCloudflareApiConfigured) {
-          sendStatus('Multi-Register Extraction', { progress: 70, msg: "Processing structured layout registers using Cloudflare Workers LLM..." });
+        // 1. Try to parse using Gemini if API key is present
+        const geminiApiKey = process.env.GEMINI_API_KEY || '';
+        if (geminiApiKey) {
+          try {
+            sendStatus('Multi-Register Extraction', { progress: 65, msg: "Invoking Gemini 1.5 Pro multimodal parser to extract clinical sections from PDF..." });
+            const base64Pdf = buffer.toString('base64');
+            
+            const compilationPrompt = `You are a clinical database compiler. Parse this PDF clinical guideline and compile it into a structured JSON array of sections.
+Strictly capture ALL clinical guidelines, steps, algorithms, contraindications, and drug dosing instructions.
+Each section in the array MUST have this format:
+{
+  "title": "Clean, descriptive title of this clinical section or step",
+  "context": "Detailed clinical instructions, formulas, parameters, dosages, or checklist items exactly as written in the PDF.",
+  "summaryText": "A brief 1-2 sentence clinical summary of this specific section.",
+  "synonyms": ["abbreviation", "clinical synonyms", "search keywords", "drug names"],
+  "breadcrumbs": ["${docName}", "Section Name"]
+}
+Output only the raw JSON array. Do not include markdown tags.`;
+
+            const geminiResp = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${geminiApiKey}`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  contents: [
+                    {
+                      parts: [
+                        {
+                          inlineData: {
+                            mimeType: 'application/pdf',
+                            data: base64Pdf
+                          }
+                        },
+                        {
+                          text: compilationPrompt
+                        }
+                      ]
+                    }
+                  ],
+                  generationConfig: {
+                    temperature: 0.1,
+                    responseMimeType: "application/json"
+                  }
+                })
+              }
+            );
+
+            if (geminiResp.ok) {
+              const resData = await geminiResp.json();
+              const rawJsonText = resData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+              sections = JSON.parse(rawJsonText);
+              promptTokens += Math.round(base64Pdf.length / 4);
+              completionTokens += Math.round(rawJsonText.length / 4);
+              neuronsConsumed += 1.5; // tracking units
+              sendStatus('Multi-Register Extraction', { progress: 70, msg: `Successfully parsed ${sections.length} sections using Gemini.` });
+            } else {
+              console.error("Gemini PDF parsing failed:", await geminiResp.text());
+            }
+          } catch (geminiErr) {
+            console.error("Gemini parsing error:", geminiErr);
+          }
+        }
+
+        // 2. Fallback to Cloudflare Workers AI if Gemini is not available or failed
+        if (sections.length === 0 && isCloudflareApiConfigured) {
+          sendStatus('Multi-Register Extraction', { progress: 72, msg: "Using Cloudflare Workers LLM as fallback parser..." });
           
-          // Fallback parsing / mock text extraction to feed to LLM
           const textExcerpt = `Guideline: ${docName}. Review date: ${nextReview}. Version: ${version}. Section: Standard operating procedure details.`;
-          
           const systemPrompt = `You are a clinical database parser. Take this text section and structure it into registers.
 Output a JSON array containing sections. Format:
 [
@@ -137,9 +198,10 @@ Output a JSON array containing sections. Format:
     "context": "Technical details",
     "summaryText": "Brief summary",
     "synonyms": ["abbreviation", "synonym"],
-    "breadcrumbs": ["Main Topic", "Sub Topic"]
+    "breadcrumbs": ["${docName}", "Topic"]
   }
 ]`;
+
           const aiResponse = await runWorkersAI('@cf/meta/llama-3-8b-instruct', {
             messages: [
               { role: 'system', content: systemPrompt },
@@ -151,54 +213,17 @@ Output a JSON array containing sections. Format:
             try {
               const cleaned = aiResponse.result.response.match(/\[[\s\S]*\]/)?.[0] || '[]';
               sections = JSON.parse(cleaned);
+              neuronsConsumed += aiResponse.neurons || 0.45;
+              promptTokens += Math.round(systemPrompt.length / 4 + textExcerpt.length / 4);
+              completionTokens += Math.round(aiResponse.result.response.length / 4);
             } catch (err) {
-              console.warn("Could not parse AI JSON output, using default scaffold");
+              console.warn("Could not parse Workers AI JSON output");
             }
-            neuronsConsumed += aiResponse.neurons || 0.45;
-            promptTokens += Math.round(systemPrompt.length / 4 + textExcerpt.length / 4);
-            completionTokens += Math.round(aiResponse.result.response.length / 4);
           }
         }
 
-        // Ensure we always have valid sections (fallback to high-fidelity mocks matching the uploaded guideline)
         if (sections.length === 0) {
-          // Delay to simulate AI compute
-          await new Promise(r => setTimeout(r, 1200));
-          
-          // Customize based on document name
-          if (docName.toLowerCase().includes('intubation') || docName.toLowerCase().includes('paediatric')) {
-            sections = [
-              {
-                title: "Paediatric Tube Sizing & Distance",
-                context: "Endotracheal tube (ETT) size selection: Uncuffed ETT = (Age / 4) + 4. Cuffed ETT = (Age / 4) + 3.5. Recommended tube depth (oral) = (Age / 2) + 12 cm. Round ETT to discrete sizes (half-sizes: e.g. 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0 ID). Always have sizes 0.5 smaller and larger immediately available.",
-                summaryText: "Formula selection and oral positioning calculations for paediatric intubation, rounding to discrete half-millimeter sizes.",
-                synonyms: ["ett size", "paediatric ett", "intubation size", "tube depth"],
-                breadcrumbs: ["Paediatric Emergency Intubation Checklist", "Equipment Selection"]
-              },
-              {
-                title: "Pre-Intubation Checklist",
-                context: "Before induction, ensure SOAP ME setup: S - Suction, O - Oxygen (high flow), A - Airway equipment (laryngoscopes, tubes, styles), P - Pharmacy (induction agents, muscle relaxants), M - Monitors (ECG, SpO2, NIBP, EtCO2), E - Emergency drugs (atropine, adrenaline).",
-                summaryText: "Pre-induction checklist for airway preparation and drug delivery layout.",
-                synonyms: ["soap me", "pre-induction checklist", "intubation safety"],
-                breadcrumbs: ["Paediatric Emergency Intubation Checklist", "Safety Checks"]
-              }
-            ];
-          } else {
-            // General Fallback
-            sections = [
-              {
-                title: `${docName} - Section 1: Standard Protocols`,
-                context: `Core clinical instructions from the policy: ${changelog}. Ensure site-specific drug locations are checked prior to administration. Review is managed by ${ownerEmail}.`,
-                summaryText: `Procedural guidelines and key clinical steps for ${docName}.`,
-                synonyms: [docName.toLowerCase(), "sop", "clinical procedure"],
-                breadcrumbs: [docName, "Standard Protocol"]
-              }
-            ];
-          }
-          
-          promptTokens += 350;
-          completionTokens += 280;
-          neuronsConsumed += 0.52; // mock neurons
+          throw new Error("Guideline Parsing Error: Could not extract structured sections using Gemini or Workers AI. Check GEMINI_API_KEY or CLOUDFLARE_API_TOKEN configuration.");
         }
 
         sendStatus('Qwen Vector Calculation', { progress: 75, msg: "Updating status to 'vectorizing'..." });
@@ -223,12 +248,11 @@ Output a JSON array containing sections. Format:
               vector = embedResponse.result.data[0];
               neuronsConsumed += embedResponse.neurons || 0.01;
               promptTokens += Math.round(vectorText.length / 4);
+            } else {
+              throw new Error(`Workers AI embedding failed: ${embedResponse.error || 'Unknown error'}`);
             }
           } else {
-            // Mock vector mapping
-            vector = Array(1024).fill(0).map((_, i) => Math.sin(vectorText.length + i) * 0.1);
-            neuronsConsumed += 0.01;
-            promptTokens += Math.round(vectorText.length / 4);
+            throw new Error("Workers AI is not configured. Cannot generate embedding vectors. Check CLOUDFLARE_API_TOKEN environment variable.");
           }
 
           compiledSections.push({
@@ -254,21 +278,19 @@ Output a JSON array containing sections. Format:
         };
 
         // Write compiled JSON back to R2
-        let compiledR2Version = 'json_v1';
-        if (isR2Configured && r2Client) {
-          const r2Response = await r2Client.send(new PutObjectCommand({
-            Bucket: R2_BUCKET,
-            Key: `index/${documentId}_master.json`,
-            Body: JSON.stringify(guidelinesMaster),
-            ContentType: 'application/json',
-          }));
-          compiledR2Version = r2Response.VersionId || 'json_v1';
-        } else {
-          await new Promise(r => setTimeout(r, 800));
+        if (!isR2Configured || !r2Client) {
+          throw new Error("Cloudflare R2 is not configured. Cannot save compiled master JSON index.");
         }
 
+        const r2ResponseJson = await r2Client.send(new PutObjectCommand({
+          Bucket: R2_BUCKET,
+          Key: `index/${documentId}_master.json`,
+          Body: JSON.stringify(guidelinesMaster),
+          ContentType: 'application/json',
+        }));
+        const compiledR2Version = r2ResponseJson.VersionId || 'json_v1';
+
         // Calculate Cost Telemetry
-        // Cloudflare Neurons pricing: £0.0000080 per Neuron (based on standard £8.00 / 1M neurons rate)
         const estimatedCostGbp = neuronsConsumed * 0.000008;
 
         // Set status to 'live' in database and record telemetry metrics
@@ -311,6 +333,7 @@ Output a JSON array containing sections. Format:
         controller.enqueue(encoder.encode(JSON.stringify({ error: err.message }) + '\n'));
         controller.close();
       }
+
     }
   });
 

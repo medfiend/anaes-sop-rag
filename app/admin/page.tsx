@@ -73,6 +73,16 @@ export default function AdminDashboard() {
     costGbp: number;
   } | null>(null);
 
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast(null);
+    }, 5000);
+  };
+
+
   // Sandbox state
   const [calculatorState, setCalculatorState] = useState({
     isApproved: false,
@@ -97,7 +107,7 @@ export default function AdminDashboard() {
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadFile) {
-      alert("Please select a guideline PDF file first.");
+      showToast("Please select a guideline PDF file first.", "error");
       return;
     }
 
@@ -165,16 +175,29 @@ export default function AdminDashboard() {
       setIsUploading(false);
       fetchGuidelines(); // Refresh list to reflect updates and replacement states!
       
+      // Show Success Toast
+      showToast("Guideline successfully uploaded, parsed and published live!", "success");
+      
+      // Reset Form State to blank for new guideline uploads
+      setDocName('');
+      setVersion('v1.0.0');
+      setChangelog('');
+      setNextReview('');
+      setIsEmergency(false);
+      setIsReplacement(false);
+      setSupersedesId('');
+      setUploadFile(null);
+      
     } catch (err: any) {
       console.error(err);
-      alert(`Ingestion Pipeline Failure: ${err.message}`);
+      showToast(`Ingestion Pipeline Failure: ${err.message}`, "error");
       setIsUploading(false);
     }
   };
 
   const handleApproveCalculator = () => {
     setCalculatorState(prev => ({ ...prev, isApproved: true }));
-    alert("Dose Calculator Approved & Published! Clinicians will now see the calculator widget when viewing this guideline.");
+    showToast("Dose Calculator Approved & Published! Clinicians will now see the calculator widget when viewing this guideline.", "success");
   };
 
   if (!isLoaded) {
@@ -717,7 +740,7 @@ export default function AdminDashboard() {
                         <td className="p-4 text-right">
                           <button 
                             onClick={() => {
-                              alert(`Setting up a shell guideline for "${gap.query}". Directing to upload tab.`);
+                              showToast(`Setting up upload parameters for "${gap.query}"...`, "success");
                               setActiveTab('upload');
                               setDocName(gap.query.replace(/\b\w/g, c => c.toUpperCase()));
                             }}
@@ -779,6 +802,17 @@ export default function AdminDashboard() {
         </div>
 
       </div>
+
+      {toast && (
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3.5 rounded-xl border shadow-2xl transition-all duration-300 transform translate-y-0 animate-slide-in ${
+          toast.type === 'success'
+            ? 'bg-teal-950/95 border-teal-500/30 text-teal-200 shadow-teal-950/50'
+            : 'bg-red-950/95 border-red-500/30 text-red-200 shadow-red-950/50'
+        }`}>
+          <div className={`w-2.5 h-2.5 rounded-full ${toast.type === 'success' ? 'bg-teal-400 animate-pulse' : 'bg-red-400 animate-pulse'}`}></div>
+          <span className="text-xs font-semibold">{toast.message}</span>
+        </div>
+      )}
     </div>
   );
 }

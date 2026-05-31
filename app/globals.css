@@ -40,9 +40,19 @@ body {
   50% { opacity: 0.85; transform: scale(0.98); }
 }
 
+@keyframes slide-in {
+  0% { transform: translateY(1rem) scale(0.95); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
 .animate-pulse-soft {
   animation: pulse-soft 3s infinite ease-in-out;
 }
+
+.animate-slide-in {
+  animation: slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 
 /* PDF highlighting styling */
 .pdf-highlight-box {

@@ -33,9 +33,11 @@ export const isCloudflareApiConfigured = !!(clAccountId && clApiToken);
  */
 export async function queryD1(sql: string, params: any[] = []): Promise<{ success: boolean; results?: any[]; error?: string }> {
   if (!isCloudflareApiConfigured || !d1DatabaseId) {
-    console.log(`[D1 MOCK QUERY] ${sql} | Params: ${JSON.stringify(params)}`);
-    // Return dummy success structure
-    return { success: true, results: [] };
+    const missing = [];
+    if (!clAccountId) missing.push('CLOUDFLARE_ACCOUNT_ID');
+    if (!clApiToken) missing.push('CLOUDFLARE_API_TOKEN');
+    if (!d1DatabaseId) missing.push('D1_DATABASE_ID');
+    throw new Error(`Cloudflare D1 is not configured. Missing environment variables: ${missing.join(', ')}`);
   }
 
   try {
@@ -56,7 +58,7 @@ export async function queryD1(sql: string, params: any[] = []): Promise<{ succes
 
     if (!response.ok) {
       const errorText = await response.text();
-      return { success: false, error: `D1 API Error: ${errorText}` };
+      throw new Error(`D1 API Error (HTTP ${response.status}): ${errorText}`);
     }
 
     const data = await response.json();
@@ -65,25 +67,27 @@ export async function queryD1(sql: string, params: any[] = []): Promise<{ succes
       const results = data.result?.[0]?.results || [];
       return { success: true, results };
     } else {
-      return { success: false, error: data.errors?.[0]?.message || 'Query failed' };
+      throw new Error(data.errors?.[0]?.message || 'Query failed');
     }
   } catch (error: any) {
     console.error("D1 Query execution failure:", error);
-    return { success: false, error: error.message };
+    throw error;
   }
 }
 
 /**
  * Call Workers AI models via HTTP API.
- * Falls back to mock outputs if keys are not set.
+ * Throws errors if keys are not set.
  */
 export async function runWorkersAI(
   model: string,
   input: any
 ): Promise<{ success: boolean; result?: any; error?: string; neurons?: number }> {
   if (!isCloudflareApiConfigured) {
-    console.log(`[WORKERS AI MOCK] Running model: ${model}`);
-    return { success: true, result: null };
+    const missing = [];
+    if (!clAccountId) missing.push('CLOUDFLARE_ACCOUNT_ID');
+    if (!clApiToken) missing.push('CLOUDFLARE_API_TOKEN');
+    throw new Error(`Workers AI is not configured. Missing environment variables: ${missing.join(', ')}`);
   }
 
   try {
@@ -101,23 +105,23 @@ export async function runWorkersAI(
 
     if (!response.ok) {
       const errorText = await response.text();
-      return { success: false, error: `AI API Error: ${errorText}` };
+      throw new Error(`AI API Error (HTTP ${response.status}): ${errorText}`);
     }
 
     const data = await response.json();
     if (data.success) {
       // Cloudflare returns Neurons consumed in response headers/meta if available, or we estimate
-      // Let's grab neurons if available, or return the standard response
       return { 
         success: true, 
         result: data.result,
         neurons: data.result?.meta?.neurons || 0
       };
     } else {
-      return { success: false, error: data.errors?.[0]?.message || 'AI generation failed' };
+      throw new Error(data.errors?.[0]?.message || 'AI generation failed');
     }
   } catch (error: any) {
     console.error("Workers AI failure:", error);
-    return { success: false, error: error.message };
+    throw error;
   }
 }
+
