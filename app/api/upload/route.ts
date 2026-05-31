@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { r2Client, R2_BUCKET, queryD1, runWorkersAI, isR2Configured, isCloudflareApiConfigured } from '../../../lib/cloudflare';
 import { requireAdmin } from '../../../lib/authGuard';
+import path from 'path';
+import url from 'url';
 
 // Helper to generate IDs
 const generateUUID = () => {
@@ -13,10 +15,10 @@ const generateUUID = () => {
 async function extractTextFromPdfBuffer(buffer: Buffer): Promise<string> {
   const pdfjs = require('pdfjs-dist');
   
-  // Set up CDN worker fallback to resolve bundling issues on serverless functions
+  // Set up file:// worker fallback to resolve bundling issues on serverless functions
   if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-    const version = pdfjs.version || '4.0.3';
-    pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.mjs`;
+    const workerPath = path.join(process.cwd(), 'node_modules/pdfjs-dist/build/pdf.worker.mjs');
+    pdfjs.GlobalWorkerOptions.workerSrc = url.pathToFileURL(workerPath).toString();
   }
 
   const uint8Array = new Uint8Array(buffer);
