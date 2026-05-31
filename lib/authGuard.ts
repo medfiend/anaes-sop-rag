@@ -6,22 +6,30 @@ const ADMIN_EMAILS = ['audit.lead@nhs.net', 's.parashar1@nhs.net'];
 /**
  * Verify the request is from an authenticated Clerk user.
  * Returns the user's email if authenticated, or a 401 NextResponse if not.
+ *
+ * Uses acceptsToken: 'any' so Clerk checks BOTH the session cookie
+ * (sent automatically by the browser) AND the Authorization: Bearer header
+ * (sent explicitly by the admin upload form). Either one is sufficient.
  */
 export async function requireAuth(): Promise<{ email: string } | NextResponse> {
   try {
-    const { userId, sessionClaims } = await auth();
+    const { userId, sessionClaims } = await auth({ acceptsToken: 'any' });
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required. Please sign in.' },
         { status: 401 }
       );
     }
-    const email = (sessionClaims?.email as string) || (sessionClaims as any)?.email_address || 'authenticated-user';
+    const email =
+      (sessionClaims?.email as string) ||
+      (sessionClaims as any)?.email_address ||
+      'authenticated-user';
     return { email };
   } catch (err: any) {
-    console.error("Clerk requireAuth error:", err);
+    const msg = err?.message || String(err);
+    console.error('Clerk requireAuth error:', msg);
     return NextResponse.json(
-      { error: `Authentication error: ${err.message || String(err)}` },
+      { error: `Authentication error: ${msg}` },
       { status: 401 }
     );
   }
@@ -34,7 +42,7 @@ export async function requireAuth(): Promise<{ email: string } | NextResponse> {
 export async function requireAdmin(): Promise<{ email: string } | NextResponse> {
   const result = await requireAuth();
   if (result instanceof NextResponse) return result;
-  
+
   if (!ADMIN_EMAILS.includes(result.email)) {
     return NextResponse.json(
       { error: 'Access denied. Admin privileges required.' },
