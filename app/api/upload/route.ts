@@ -13,25 +13,12 @@ const generateUUID = () => {
 };
 
 async function extractTextFromPdfBuffer(buffer: Buffer): Promise<string> {
-  const pdfjs = require('pdfjs-dist');
-  
-  // Set up file:// worker fallback to resolve bundling issues on serverless functions
-  if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-    const workerPath = path.join(process.cwd(), 'node_modules/pdfjs-dist/build/pdf.worker.mjs');
-    pdfjs.GlobalWorkerOptions.workerSrc = url.pathToFileURL(workerPath).toString();
-  }
-
-  const uint8Array = new Uint8Array(buffer);
-  const loadingTask = pdfjs.getDocument({ data: uint8Array });
-  const pdf = await loadingTask.promise;
-  let rawText = '';
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const textContent = await page.getTextContent();
-    const pageText = textContent.items.map((item: any) => item.str).join(' ');
-    rawText += pageText + '\n';
-  }
-  return rawText;
+  const { PDFParse } = require('pdf-parse');
+  const parser = new PDFParse({ data: buffer });
+  await parser.load();
+  const result = await parser.getText();
+  await parser.destroy();
+  return result.text || '';
 }
 
 export async function POST(req: Request) {
