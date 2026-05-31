@@ -1,5 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import { ClerkProvider } from '@clerk/nextjs';
 
 export const metadata: Metadata = {
   title: 'AnaesSOP - Anaesthetic Clinical Governance Database',
@@ -13,10 +14,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="antialiased min-h-screen bg-slate-900 text-slate-100 selection:bg-teal-500/30 selection:text-teal-200">
-        {children}
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body className="antialiased min-h-screen bg-slate-900 text-slate-100 selection:bg-teal-500/30 selection:text-teal-200">
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

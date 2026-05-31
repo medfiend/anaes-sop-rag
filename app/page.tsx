@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useUser, useClerk, SignIn } from '@clerk/nextjs';
 import { 
   Search, ShieldAlert, FileText, UserCheck, LogOut, ArrowRight, 
   Menu, HelpCircle, Activity, Sparkles, Send, Calculator, History, ChevronRight 
@@ -13,11 +14,17 @@ import staticGuidelines from '../data/guidelines_db.json';
 
 export default function Home() {
   const { executeSearch } = useSearch();
-  // Auth state
-  const [email, setEmail] = useState('');
-  const [isOtpSent, setIsOtpSent] = useState(false);
-  const [otpCode, setOtpCode] = useState('');
-  const [user, setUser] = useState<{ email: string; role: 'Clinician' | 'Admin' } | null>(null);
+  // Clerk Auth state
+  const { user: clerkUser } = useUser();
+  const { signOut } = useClerk();
+
+  const rawEmail = clerkUser?.primaryEmailAddress?.emailAddress || '';
+  const isNhsEmail = rawEmail.endsWith('@nhs.net') || rawEmail.endsWith('.nhs.uk') || rawEmail === 'audit.lead@nhs.net';
+
+  const user = clerkUser && isNhsEmail ? {
+    email: rawEmail,
+    role: (rawEmail === 'audit.lead@nhs.net' ? 'Admin' : 'Clinician') as 'Clinician' | 'Admin'
+  } : null;
   
   // Feedback state
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
@@ -29,6 +36,18 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [chatHistory, setChatHistory] = useState<Array<{ sender: 'user' | 'bot'; text: string; citations?: any[] }>>([]);
+
+  // Seed welcome message when user logs in
+  useEffect(() => {
+    if (user && chatHistory.length === 0) {
+      setChatHistory([
+        {
+          sender: 'bot',
+          text: `Welcome to **AnaesSOP** clinical governance database. Search or query active guidelines above. For high-stress events, you can access the emergency aid buttons anytime.`
+        }
+      ]);
+    }
+  }, [user, chatHistory.length]);
   
   // PDF / Citations synchronization
   const [activePdfUrl, setActivePdfUrl] = useState<string>('');
@@ -117,33 +136,7 @@ export default function Home() {
     }
   };
 
-  // Mock Login Handler
-  const handleSendOtp = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email.endsWith('@nhs.net') || email.endsWith('.nhs.uk') || email === 'audit.lead@nhs.net') {
-      setIsOtpSent(true);
-    } else {
-      alert("Invalid domain. Access restricted strictly to NHS email domains.");
-    }
-  };
-
-  const handleVerifyOtp = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (otpCode === '123456') {
-      const role = email === 'audit.lead@nhs.net' ? 'Admin' : 'Clinician';
-      setUser({ email, role });
-      
-      // Seed welcome message
-      setChatHistory([
-        {
-          sender: 'bot',
-          text: `Welcome to **AnaesSOP** clinical governance database. Search or query active guidelines above. For high-stress events, you can access the emergency aid buttons anytime.`
-        }
-      ]);
-    } else {
-      alert("Invalid OTP code. For pilot testing, use '123456'.");
-    }
-  };
+  // Clerk handles sending and verifying OTP codes natively.
 
   const handleFeedbackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,11 +163,8 @@ export default function Home() {
     }
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    setEmail('');
-    setIsOtpSent(false);
-    setOtpCode('');
+  const handleLogout = async () => {
+    await signOut();
     setChatHistory([]);
     setActivePdfUrl('');
   };
@@ -415,70 +405,76 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Right Column: Secure NHS Authentication Portal */}
+              {/* Right Column: Secure NHS Authentication Portal / Access Denied */}
               <div className="bg-slate-950/40 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <UserCheck className="w-5 h-5 text-teal-400" />
-                    <h2 className="text-base font-bold text-slate-100 uppercase tracking-wide">NHS Staff Login</h2>
+                {clerkUser && !isNhsEmail ? (
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <ShieldAlert className="w-5 h-5 text-red-500 animate-pulse" />
+                      <h2 className="text-base font-bold text-red-500 uppercase tracking-wide">Access Denied</h2>
+                    </div>
+                    <p className="text-xs text-slate-300 mb-4 leading-relaxed">
+                      Authentication was successful, but the account <strong className="text-white">{rawEmail}</strong> does not belong to a permitted NHS email domain.
+                    </p>
+                    <p className="text-xxs text-slate-400 mb-6 leading-relaxed">
+                      Access to the full clinical database and dose calculators is strictly restricted to NHS staff (domain ending with <code>@nhs.net</code> or <code>.nhs.uk</code>).
+                    </p>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white font-bold p-2.5 rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <LogOut className="w-3.5 h-3.5" /> Sign Out & Try Another Account
+                    </button>
                   </div>
-                  <p className="text-xxs text-slate-400 mb-6 leading-relaxed">
-                    Log in with your NHS email domain to access full semantic guidelines searching, custom dosing calculators, and administrative uploads.
-                  </p>
+                ) : (
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <UserCheck className="w-5 h-5 text-teal-400" />
+                      <h2 className="text-base font-bold text-slate-100 uppercase tracking-wide">NHS Staff Login</h2>
+                    </div>
+                    <p className="text-xxs text-slate-400 mb-6 leading-relaxed">
+                      Sign in with your NHS email to access full semantic guidelines searching, custom dosing calculators, and administrative uploads.
+                    </p>
+                    
+                    <div className="flex justify-center cl-override">
+                      <SignIn 
+                        routing="hash"
+                        appearance={{
+                          variables: {
+                            colorPrimary: '#0d9488',
+                            colorBackground: 'transparent',
+                            colorText: '#f1f5f9',
+                            colorTextSecondary: '#94a3b8',
+                            colorInputBackground: '#0f172a',
+                            colorInputText: '#ffffff',
+                            colorBorder: '#1e293b',
+                          },
+                          elements: {
+                            card: 'shadow-none border-0 bg-transparent p-0 w-full max-w-sm',
+                            header: 'hidden',
+                            formButtonPrimary: 'w-full bg-teal-500 hover:bg-teal-600 text-slate-950 font-bold p-2.5 rounded-lg text-xs transition-colors shadow-none',
+                            formFieldInput: 'bg-slate-900 border border-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 text-white rounded-lg p-2.5 text-xs transition-colors',
+                            footer: 'bg-transparent',
+                            footerActionText: 'text-slate-400 text-xxs',
+                            footerActionLink: 'text-teal-400 hover:text-teal-300 text-xxs font-bold',
+                            identityPreviewText: 'text-slate-100',
+                            formFieldLabel: 'text-slate-400 text-[10px] font-semibold uppercase tracking-wider mb-1',
+                            formFieldLabelRow: 'mb-1',
+                            formFieldAction: 'text-teal-400 hover:text-teal-300 text-[10px]',
+                            dividerText: 'text-slate-500 text-xxs',
+                            dividerLine: 'bg-slate-800',
+                            formFieldErrorText: 'text-red-400 text-xxs mt-1',
+                            alert: 'bg-red-500/10 border border-red-500/20 text-red-200 text-xxs rounded-lg p-3',
+                            alertText: 'text-red-400 text-xxs',
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
 
-                  {!isOtpSent ? (
-                    <form onSubmit={handleSendOtp} className="space-y-4">
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-xxs font-semibold text-slate-400 uppercase">NHS Email Address</label>
-                        <input 
-                          type="email"
-                          required
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="e.g. yourname@nhs.net"
-                          className="bg-slate-900 border border-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 text-white rounded-lg p-2.5 text-xs transition-colors"
-                        />
-                      </div>
-                      <button 
-                        type="submit"
-                        className="w-full bg-teal-500 hover:bg-teal-600 text-slate-950 font-bold p-2.5 rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        Request Passwordless OTP <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    </form>
-                  ) : (
-                    <form onSubmit={handleVerifyOtp} className="space-y-4">
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-xxs font-semibold text-slate-400 uppercase">6-Digit Verification Code</label>
-                        <input 
-                          type="text"
-                          required
-                          maxLength={6}
-                          value={otpCode}
-                          onChange={(e) => setOtpCode(e.target.value)}
-                          placeholder="Enter 123456 to test"
-                          className="bg-slate-900 border border-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 text-white rounded-lg p-2.5 text-xs text-center font-mono tracking-widest transition-colors"
-                        />
-                      </div>
-                      <button 
-                        type="submit"
-                        className="w-full bg-teal-500 hover:bg-teal-600 text-slate-950 font-bold p-2.5 rounded-lg text-xs transition-colors"
-                      >
-                        Verify & Access Database
-                      </button>
-                      <button 
-                        type="button" 
-                        onClick={() => setIsOtpSent(false)}
-                        className="w-full text-center text-xxs text-slate-500 hover:text-slate-400 transition-colors"
-                      >
-                        Change Email
-                      </button>
-                    </form>
-                  )}
-                </div>
-
-                <div className="text-slate-600 text-xxs leading-normal mt-6">
-                  * For the pilot verification sandbox, type any email ending in <code>@nhs.net</code> and verify with <code>123456</code>. To test Admin permissions, use <code>audit.lead@nhs.net</code>.
+                <div className="text-slate-600 text-xxs leading-normal mt-6 border-t border-slate-800/50 pt-4">
+                  * Access requires a secure passwordless OTP code sent to your verified NHS email.
                 </div>
               </div>
 
