@@ -19,6 +19,31 @@ export default function AdminDashboard() {
 
   const [activeTab, setActiveTab] = useState<'policies' | 'upload' | 'sandbox' | 'gaps' | 'feedbacks'>('policies');
   
+  // Guidelines state
+  const [guidelines, setGuidelines] = useState<any[]>([]);
+  const [isLoadingGuidelines, setIsLoadingGuidelines] = useState(false);
+
+  const fetchGuidelines = async () => {
+    setIsLoadingGuidelines(true);
+    try {
+      const res = await fetch('/api/guidelines');
+      const data = await res.json();
+      if (data.success && data.guidelines) {
+        setGuidelines(data.guidelines);
+      }
+    } catch (err) {
+      console.error("Failed to fetch guidelines:", err);
+    } finally {
+      setIsLoadingGuidelines(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetchGuidelines();
+    }
+  }, [isAdmin]);
+
   // State for upload form
   const [docName, setDocName] = useState('');
   const [version, setVersion] = useState('v1.0.0');
@@ -138,6 +163,7 @@ export default function AdminDashboard() {
 
       // Ingestion successfully finished
       setIsUploading(false);
+      fetchGuidelines(); // Refresh list to reflect updates and replacement states!
       
     } catch (err: any) {
       console.error(err);
@@ -287,63 +313,83 @@ export default function AdminDashboard() {
                 <h2 className="text-sm font-bold uppercase tracking-wider text-slate-200">Active Department Guidelines</h2>
                 <div className="flex gap-2">
                   <span className="bg-red-500/10 border border-red-500/20 text-red-500 px-2.5 py-1 rounded text-xxs font-medium flex items-center gap-1">
-                    0 Expired
+                    {guidelines.filter(g => g.status === 'superseded').length} Superseded
                   </span>
                   <span className="bg-amber-500/10 border border-amber-500/20 text-amber-500 px-2.5 py-1 rounded text-xxs font-medium flex items-center gap-1">
-                    1 Warning
+                    {guidelines.filter(g => g.id === 'la-toxicity-guideline-uuid').length} Warning
                   </span>
                 </div>
               </div>
 
               {/* Policy Table Grid */}
               <div className="grid grid-cols-1 gap-4">
-                {mockGuidelines.map(doc => {
-                  const isNearExpiry = doc.id === 'la-toxicity-guideline-uuid'; // mock warning
-                  return (
-                    <div 
-                      key={doc.id}
-                      className={`bg-slate-950/60 border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-all duration-200 ${
-                        isNearExpiry ? 'border-amber-500/30 bg-amber-500/5' : 'border-slate-800 hover:border-slate-700'
-                      }`}
-                    >
-                      <div className="flex gap-3 items-start">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                          doc.is_emergency ? 'bg-red-600 text-white font-bold' : 'bg-slate-800 text-teal-400'
-                        }`}>
-                          {doc.is_emergency ? '🚨' : '📄'}
+                {isLoadingGuidelines ? (
+                  <div className="text-center py-6 text-xs text-slate-500 animate-pulse">
+                    Loading policies from D1 database...
+                  </div>
+                ) : guidelines.length === 0 ? (
+                  <div className="text-center py-6 text-xs text-slate-500">
+                    No active clinical guidelines configured.
+                  </div>
+                ) : (
+                  guidelines.map(doc => {
+                    const isNearExpiry = doc.id === 'la-toxicity-guideline-uuid'; // mock warning
+                    const isSuperseded = doc.status === 'superseded';
+                    return (
+                      <div 
+                        key={doc.id}
+                        className={`bg-slate-950/60 border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-all duration-200 ${
+                          isSuperseded
+                            ? 'border-red-950/50 bg-red-950/5 opacity-60'
+                            : isNearExpiry 
+                            ? 'border-amber-500/30 bg-amber-500/5' 
+                            : 'border-slate-800 hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex gap-3 items-start">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                            doc.is_emergency ? 'bg-red-600 text-white font-bold' : 'bg-slate-800 text-teal-400'
+                          }`}>
+                            {doc.is_emergency ? '🚨' : '📄'}
+                          </div>
+                          <div>
+                            <h3 className="text-xs font-semibold text-slate-200 leading-snug">{doc.name}</h3>
+                            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-xxs text-slate-500 font-medium">
+                              <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> Version: {doc.version}</span>
+                              <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> Owner: {doc.owner_email}</span>
+                              {isSuperseded && <span className="text-red-400 font-bold bg-red-500/10 px-1 rounded uppercase tracking-wider text-[8px] border border-red-500/20">Superseded</span>}
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="text-xs font-semibold text-slate-200 leading-snug">{doc.name}</h3>
-                          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-xxs text-slate-500 font-medium">
-                            <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> Version: {doc.version}</span>
-                            <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> Owner: {doc.owner_email}</span>
+
+                        <div className="flex items-center gap-4 border-t border-slate-800 sm:border-0 pt-3 sm:pt-0 justify-between shrink-0">
+                          <div className="text-right">
+                            <span className="text-xxs text-slate-500 block uppercase">Review Required</span>
+                            <span className={`text-xs font-semibold ${isNearExpiry ? 'text-amber-500' : 'text-slate-300'}`}>
+                              {new Date(doc.date_next_review).toLocaleDateString()}
+                            </span>
+                          </div>
+
+                          <div>
+                            {isSuperseded ? (
+                              <span className="bg-red-500/10 border border-red-500/20 text-red-400 px-2.5 py-1.5 rounded-lg text-xxs font-medium flex items-center gap-1">
+                                🚫 Superseded
+                              </span>
+                            ) : isNearExpiry ? (
+                              <span className="bg-amber-500/10 border border-amber-500/20 text-amber-500 px-2.5 py-1.5 rounded-lg text-xxs font-medium flex items-center gap-1">
+                                ⚠️ Warning (T-30 Alert sent to Owner)
+                              </span>
+                            ) : (
+                              <span className="bg-teal-500/10 border border-teal-500/20 text-teal-400 px-2.5 py-1.5 rounded-lg text-xxs font-medium flex items-center gap-1">
+                                ✔️ Active {doc.status === 'Active' ? 'policies' : doc.status}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
-
-                      <div className="flex items-center gap-4 border-t border-slate-800 sm:border-0 pt-3 sm:pt-0 justify-between shrink-0">
-                        <div className="text-right">
-                          <span className="text-xxs text-slate-500 block uppercase">Review Required</span>
-                          <span className={`text-xs font-semibold ${isNearExpiry ? 'text-amber-500' : 'text-slate-300'}`}>
-                            {new Date(doc.date_next_review).toLocaleDateString()}
-                          </span>
-                        </div>
-
-                        <div>
-                          {isNearExpiry ? (
-                            <span className="bg-amber-500/10 border border-amber-500/20 text-amber-500 px-2.5 py-1.5 rounded-lg text-xxs font-medium flex items-center gap-1">
-                              ⚠️ Warning (T-30 Alert sent to Owner)
-                            </span>
-                          ) : (
-                            <span className="bg-teal-500/10 border border-teal-500/20 text-teal-400 px-2.5 py-1.5 rounded-lg text-xxs font-medium flex items-center gap-1">
-                              ✔️ Safe status
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
             </div>
           )}
@@ -429,7 +475,7 @@ export default function AdminDashboard() {
                         className="bg-slate-900 border border-slate-800 text-white rounded-lg p-2.5 text-xs focus:ring-1 focus:ring-teal-500"
                       >
                         <option value="">-- Choose Guideline to Mark as Superseded --</option>
-                        {mockGuidelines.map(g => (
+                        {guidelines.filter(g => g.status === 'live' || g.status === 'Active' || g.status === 'Active policies').map(g => (
                           <option key={g.id} value={g.id}>{g.name} ({g.version})</option>
                         ))}
                       </select>

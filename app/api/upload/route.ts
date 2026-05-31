@@ -280,6 +280,13 @@ Output a JSON array containing sections. Format:
           ['live', promptTokens, completionTokens, neuronsConsumed, estimatedCostGbp, new Date().toISOString(), documentId]
         );
 
+        if (isReplacement && supersedesId) {
+          await queryD1(
+            `UPDATE guidelines_meta SET status = 'superseded' WHERE id = ?`,
+            [supersedesId]
+          );
+        }
+
         await queryD1(
           `INSERT INTO audit_logs (id, document_id, action, user_email, timestamp, details)
            VALUES (?, ?, ?, ?, ?, ?)`,
