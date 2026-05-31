@@ -3,7 +3,9 @@ node_modules/
 .vercel/
 .vercel
 package-lock.json
+.env
 .env.local
+.env.*
 .next/
 dist/
 *.log

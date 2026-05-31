@@ -7,7 +7,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "build": "echo 'Static deployment'",
+    "build": "next build",
     "compile": "ts-node pipeline/run_compile.ts"
   },
   "dependencies": {
