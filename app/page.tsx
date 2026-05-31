@@ -78,6 +78,14 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // Helper to resolve PDF URL dynamically (QRH is served locally, others stream from R2)
+  const getPdfUrl = (filename: string) => {
+    if (filename === 'QRH_complete_June_2023.pdf') {
+      return '/QRH_complete_June_2023.pdf';
+    }
+    return `/api/pdf?file=${encodeURIComponent(filename)}`;
+  };
+
   // Handler for emergency bypass guides
   const handleOpenEmergencyAid = (fileName: string, name: string) => {
     // Map the mock filenames to the actual existing files in public folder
@@ -99,7 +107,7 @@ export default function Home() {
       targetGuidelineId = 'resus-als';
     }
     
-    setActivePdfUrl(`/${targetFile}`); // served directly from root public folder
+    setActivePdfUrl(getPdfUrl(targetFile));
     setActivePdfName(name);
     setActivePage(targetPage);
     setActiveGuidelineId(targetGuidelineId);
@@ -210,7 +218,7 @@ export default function Home() {
 
         // Auto load PDF for the top matched guideline
         if (topMatch.pdfName) {
-          setActivePdfUrl(`/${topMatch.pdfName}`);
+          setActivePdfUrl(getPdfUrl(topMatch.pdfName));
           setActivePdfName(topMatch.title);
           setActivePage(topMatch.defaultPage || 1); // Jump to the correct page of the guideline!
           setActiveGuidelineId(topMatch.docId);
@@ -279,7 +287,7 @@ export default function Home() {
 
   const handleCitationClick = (cit: any) => {
     const targetFile = cit.pdfName || 'QRH_complete_June_2023.pdf';
-    setActivePdfUrl(`/${targetFile}`);
+    setActivePdfUrl(getPdfUrl(targetFile));
     setActivePdfName(cit.docName);
     setActivePage(cit.page);
     setActiveGuidelineId(cit.docId);
@@ -556,7 +564,7 @@ export default function Home() {
                             type="button"
                             onClick={() => {
                               if (match.pdfName) {
-                                setActivePdfUrl(`/${match.pdfName}`);
+                                setActivePdfUrl(getPdfUrl(match.pdfName));
                                 setActivePdfName(match.title);
                                 setActivePage(match.defaultPage || 1);
                                 setActiveGuidelineId(match.docId);
