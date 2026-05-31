@@ -173,6 +173,18 @@ export default function AdminDashboard() {
         body: formData
       });
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMsg = "Failed to upload guideline.";
+        try {
+          const parsed = JSON.parse(errorText);
+          errorMsg = parsed.error || errorMsg;
+        } catch {
+          errorMsg = errorText || errorMsg;
+        }
+        throw new Error(errorMsg);
+      }
+
       if (!response.body) {
         throw new Error("Failed to initialize server streaming response.");
       }
