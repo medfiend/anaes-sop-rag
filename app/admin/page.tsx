@@ -1,14 +1,22 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useUser, useClerk } from '@clerk/nextjs';
 import { 
   FileText, Upload, Calendar, AlertTriangle, ShieldCheck, Mail, 
-  Trash2, User, Clock, CheckCircle, HelpCircle, ChevronRight, Calculator, Activity
+  Trash2, User, Clock, CheckCircle, HelpCircle, ChevronRight, Calculator, Activity,
+  LogOut, ArrowRight
 } from 'lucide-react';
 import DoseCalculator from '../../components/DoseCalculator';
 import { mockGuidelines, mockCalculator } from '../../lib/supabaseClient';
 
 export default function AdminDashboard() {
+  const { user: clerkUser, isLoaded } = useUser();
+  const { signOut } = useClerk();
+
+  const rawEmail = clerkUser?.primaryEmailAddress?.emailAddress || '';
+  const isAdmin = rawEmail === 'audit.lead@nhs.net';
+
   const [activeTab, setActiveTab] = useState<'policies' | 'upload' | 'sandbox' | 'gaps' | 'feedbacks'>('policies');
   
   // State for upload form
@@ -20,6 +28,12 @@ export default function AdminDashboard() {
   const [isEmergency, setIsEmergency] = useState(false);
   const [isReplacement, setIsReplacement] = useState(false);
   const [supersedesId, setSupersedesId] = useState('');
+
+  useEffect(() => {
+    if (rawEmail) {
+      setOwnerEmail(rawEmail);
+    }
+  }, [rawEmail]);
 
   // Upload/Ingestion telemetry & progress tracking states
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -137,6 +151,45 @@ export default function AdminDashboard() {
     alert("Dose Calculator Approved & Published! Clinicians will now see the calculator widget when viewing this guideline.");
   };
 
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <div className="text-teal-400 font-bold text-xs animate-pulse">
+          Loading Governance Session...
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoaded && (!clerkUser || !isAdmin)) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <div className="bg-slate-950/60 border border-slate-800 rounded-2xl w-full max-w-md p-6 text-center shadow-2xl">
+          <ShieldCheck className="w-12 h-12 text-red-500 mx-auto mb-4 animate-pulse" />
+          <h2 className="text-base font-bold text-red-500 uppercase tracking-wide mb-2">Access Denied</h2>
+          <p className="text-xs text-slate-300 mb-4 leading-relaxed">
+            You do not have the required permissions to view the clinical governance portal. Only the Governance Audit Lead (<strong>audit.lead@nhs.net</strong>) can access this page.
+          </p>
+          {clerkUser ? (
+            <button
+              onClick={() => signOut()}
+              className="w-full bg-red-600 hover:bg-red-750 text-white font-bold p-2.5 rounded-lg text-xs transition-colors"
+            >
+              Sign Out & Use Admin Account
+            </button>
+          ) : (
+            <a
+              href="/#"
+              className="w-full bg-teal-500 hover:bg-teal-600 text-slate-950 font-bold p-2.5 rounded-lg text-xs transition-colors block text-center"
+            >
+              Return to Homepage
+            </a>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans">
       {/* Header */}
@@ -151,9 +204,18 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 text-xs bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg">
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-teal-500"></span>
-          <span>Logged in as: <strong>audit.lead@nhs.net</strong> (Admin)</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 text-xs bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-teal-500"></span>
+            <span>Logged in as: <strong>{rawEmail}</strong> (Admin)</span>
+          </div>
+          <button 
+            onClick={() => signOut()}
+            className="p-2 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors border border-slate-800 flex items-center justify-center"
+            title="Log Out"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </header>
 
