@@ -248,19 +248,23 @@ export default function Home() {
         botResponse = `**Result from Guideline: ${topMatch.title}** (Confidence Match: **${topMatch.confidence}%**)\n\n`;
         
         if (activeGuideline) {
-          const records = activeGuideline.records || [];
-          if (records.length > 0) {
-            botResponse += `### Clinical Summary & SOP Steps\n\n`;
-            records.forEach((rec: any, idx: number) => {
-              botResponse += `### ${rec.title}\n${rec.context}\n\n`;
-            });
-          } else if (activeGuideline.clinical?.steps) {
-            botResponse += `### Clinical Steps & Actions\n\n`;
-            activeGuideline.clinical.steps.forEach((s: any) => {
-              botResponse += `**Step ${s.step_number}:** ${s.text}\n\n`;
-            });
+          if (activeGuideline.summaryText) {
+            botResponse += activeGuideline.summaryText;
           } else {
-            botResponse += topMatch.context;
+            const records = activeGuideline.records || [];
+            if (records.length > 0) {
+              botResponse += `### Clinical Summary & SOP Steps\n\n`;
+              records.forEach((rec: any, idx: number) => {
+                botResponse += `### ${rec.title}\n${rec.context}\n\n`;
+              });
+            } else if (activeGuideline.clinical?.steps) {
+              botResponse += `### Clinical Steps & Actions\n\n`;
+              activeGuideline.clinical.steps.forEach((s: any) => {
+                botResponse += `**Step ${s.step_number}:** ${s.text}\n\n`;
+              });
+            } else {
+              botResponse += topMatch.context;
+            }
           }
         } else {
           botResponse += topMatch.context;
@@ -643,19 +647,23 @@ export default function Home() {
                               let botResponse = `**Result from Guideline: ${match.title}** (Confidence Match: **100%**)\n\n`;
                               
                               if (activeGuideline) {
-                                const records = activeGuideline.records || [];
-                                if (records.length > 0) {
-                                  botResponse += `### Clinical Summary & SOP Steps\n\n`;
-                                  records.forEach((rec: any, idx: number) => {
-                                    botResponse += `### ${rec.title}\n${rec.context}\n\n`;
-                                  });
-                                } else if (activeGuideline.clinical?.steps) {
-                                  botResponse += `### Clinical Steps & Actions\n\n`;
-                                  activeGuideline.clinical.steps.forEach((s: any) => {
-                                    botResponse += `**Step ${s.step_number}:** ${s.text}\n\n`;
-                                  });
+                                if (activeGuideline.summaryText) {
+                                  botResponse += activeGuideline.summaryText;
                                 } else {
-                                  botResponse += match.context;
+                                  const records = activeGuideline.records || [];
+                                  if (records.length > 0) {
+                                    botResponse += `### Clinical Summary & SOP Steps\n\n`;
+                                    records.forEach((rec: any, idx: number) => {
+                                      botResponse += `### ${rec.title}\n${rec.context}\n\n`;
+                                    });
+                                  } else if (activeGuideline.clinical?.steps) {
+                                    botResponse += `### Clinical Steps & Actions\n\n`;
+                                    activeGuideline.clinical.steps.forEach((s: any) => {
+                                      botResponse += `**Step ${s.step_number}:** ${s.text}\n\n`;
+                                    });
+                                  } else {
+                                    botResponse += match.context;
+                                  }
                                 }
                               } else {
                                 botResponse += match.context;
