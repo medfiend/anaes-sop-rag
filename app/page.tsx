@@ -13,7 +13,7 @@ import { useSearch } from './hooks/useSearch';
 import staticGuidelines from '../data/guidelines_db.json';
 
 export default function Home() {
-  const { executeSearch } = useSearch();
+  const { executeSearch, guidelines } = useSearch();
   // Clerk Auth state
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
@@ -36,7 +36,7 @@ export default function Home() {
   // Workspace state
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [chatHistory, setChatHistory] = useState<Array<{ sender: 'user' | 'bot'; text: string; citations?: any[] }>>([]);
+  const [chatHistory, setChatHistory] = useState<Array<{ sender: 'user' | 'bot'; text: string; citations?: any[]; queryText?: string }>>([]);
 
   // Seed welcome message when user logs in
   useEffect(() => {
@@ -290,7 +290,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col font-sans">
+    <div className="h-screen bg-slate-900 flex flex-col font-sans overflow-hidden">
       {/* Global Clinical Header */}
       <header className="bg-slate-950 border-b border-slate-800 text-white px-4 py-3 flex items-center justify-between z-20 shrink-0">
         <div className="flex items-center gap-2">
@@ -672,14 +672,15 @@ export default function Home() {
 
               {/* Bottom: Dynamic Calculator Mount (Triggered when guideline is active and has a calculator schema) */}
               {(() => {
-                const activeGuideline = staticGuidelines.find(g => g.protocol_id === activeGuidelineId);
+                const activeGuideline = guidelines.find(g => g.id === activeGuidelineId);
                 if (activeGuideline && activeGuideline.calculator) {
+                  const calcName = activeGuideline.calculator.calculator_name || activeGuideline.calculator.calculatorName;
                   return (
                     <div className="p-4 bg-slate-950 border-t border-slate-800 shrink-0">
                       <div className="flex items-center gap-1.5 mb-2">
                         <Calculator className="w-4 h-4 text-teal-400" />
                         <span className="text-xxs font-bold text-slate-400 uppercase tracking-wider">
-                          Interactive Dose Calculator: {activeGuideline.calculator.calculator_name}
+                          Interactive Dose Calculator: {calcName}
                         </span>
                       </div>
                       <DoseCalculator schema={activeGuideline.calculator as any} isApproved={true} />

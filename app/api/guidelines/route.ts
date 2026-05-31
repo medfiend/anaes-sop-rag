@@ -1,19 +1,25 @@
 import { NextResponse } from 'next/server';
-import { queryD1 } from '../../../lib/cloudflare';
+import { GetObjectCommand } from '@aws-sdk/client-s3';
+import { queryD1, r2Client, R2_BUCKET, isR2Configured } from '../../../lib/cloudflare';
 import staticGuidelines from '../../../data/guidelines_db.json';
 
 export async function GET() {
   try {
-    let mergedGuidelines = [...staticGuidelines].map(g => ({
+    let mergedGuidelines = [...staticGuidelines].map((g: any) => ({
       id: g.protocol_id,
       name: g.clinical.title,
       version: g.metadata?.version_hash?.substring(0, 8) || 'v1.0.0',
       owner_email: g.metadata?.owner_email || 'audit.lead@nhs.net',
-      status: g.metadata?.status || 'Active',
+      status: g.status || 'Active',
       changelog: g.metadata?.changelog || 'Initial release',
       date_published: g.metadata?.compiled_at || '2025-06-01T00:00:00Z',
       date_next_review: g.metadata?.review_due_at || '2027-06-01T00:00:00Z',
-      is_emergency: g.protocol_id === 'la-toxicity' || g.protocol_id === 'malignant-hyperthermia' || g.protocol_id === 'resus-als'
+      is_emergency: g.protocol_id === 'la-toxicity' || g.protocol_id === 'malignant-hyperthermia' || g.protocol_id === 'resus-als',
+      clinical: g.clinical,
+      search_tags: g.search_tags,
+      pdf_name: g.pdf_name,
+      default_page: g.default_page,
+      calculator: g.calculator
     }));
 
     // Fetch custom guidelines from D1 database
@@ -23,22 +29,36 @@ export async function GET() {
       );
 
       if (customGuides && customGuides.length > 0) {
-        customGuides.forEach((g: any) => {
+        // Fetch R2 master index files in parallel to bypass timeouts
+        const customGuidelinesWithRecords = await Promise.all(customGuides.map(async (g: any) => {
           // Skip uncompleted/failed uploads from older code runs
           if (g.status === 'uploading' || g.status === 'vectorizing') {
-            return;
+            return null;
           }
 
-          // If the custom guideline is a replacement and is live, mark the superseded guideline as superseded in the runtime list
-          if (g.status === 'live' && g.supersedes_id) {
-            const index = mergedGuidelines.findIndex(mg => mg.id === g.supersedes_id);
-            if (index !== -1) {
-              mergedGuidelines[index].status = 'superseded';
+          let records = [];
+          let fileKey = `guidelines/${g.id}_guideline.pdf`; // fallback/default key
+          let calculator = null;
+
+          if (isR2Configured && r2Client) {
+            try {
+              const r2Object = await r2Client.send(new GetObjectCommand({
+                Bucket: R2_BUCKET,
+                Key: `index/${g.id}_master.json`
+              }));
+              if (r2Object && r2Object.Body) {
+                const r2Text = await r2Object.Body.transformToString();
+                const masterData = JSON.parse(r2Text);
+                records = masterData.records || [];
+                fileKey = masterData.fileKey || fileKey;
+                calculator = masterData.calculator || null;
+              }
+            } catch (r2Err) {
+              console.warn(`Could not load index for guideline ${g.id} from R2:`, r2Err);
             }
           }
 
-
-          mergedGuidelines.push({
+          return {
             id: g.id,
             name: g.name,
             version: g.version,
@@ -47,8 +67,28 @@ export async function GET() {
             changelog: g.changelog,
             date_published: g.created_at,
             date_next_review: g.next_review || '2028-01-01',
-            is_emergency: !!g.is_emergency
-          });
+            is_emergency: !!g.is_emergency,
+            pdf_name: fileKey.startsWith('guidelines/') ? fileKey.substring(11) : fileKey,
+            fileKey: fileKey,
+            records: records,
+            calculator: calculator,
+            supersedes_id: g.supersedes_id
+          };
+        }));
+
+        // Filter out null records and merge
+        const activeCustomGuides = customGuidelinesWithRecords.filter(Boolean) as any[];
+
+        activeCustomGuides.forEach(g => {
+          // If the custom guideline is a replacement and is live, mark the superseded guideline as superseded in the runtime list
+          if (g.status === 'live' && g.supersedes_id) {
+            const index = mergedGuidelines.findIndex(mg => mg.id === g.supersedes_id);
+            if (index !== -1) {
+              mergedGuidelines[index].status = 'superseded';
+            }
+          }
+
+          mergedGuidelines.push(g);
         });
       }
     } catch (d1Err) {
@@ -61,3 +101,4 @@ export async function GET() {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
