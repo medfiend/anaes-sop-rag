@@ -275,33 +275,8 @@ export default function Home() {
         botResponse = "I cannot find the answer to this question in the active departmental guidelines. Please refer directly to the official guidelines or check the Emergency Protocols panel.\n\n[Online AI Search](/ask-online-ai)";
       } else {
         const topMatch = searchRes.results[0];
-        const activeGuideline = guidelines.find(g => g.id === topMatch.docId);
         
-        // Structure a formatted output with confidence percentage
-        botResponse = `**Result from Guideline: ${topMatch.title}** (Confidence Match: **${topMatch.confidence}%**)\n\n`;
-        
-        if (activeGuideline) {
-          if (activeGuideline.summaryText) {
-            botResponse += activeGuideline.summaryText;
-          } else {
-            const records = activeGuideline.records || [];
-            if (records.length > 0) {
-              botResponse += `### Clinical Summary & SOP Steps\n\n`;
-              records.forEach((rec: any, idx: number) => {
-                botResponse += `### ${rec.title}\n${rec.context}\n\n`;
-              });
-            } else if (activeGuideline.clinical?.steps) {
-              botResponse += `### Clinical Steps & Actions\n\n`;
-              activeGuideline.clinical.steps.forEach((s: any) => {
-                botResponse += `**Step ${s.step_number}:** ${s.text}\n\n`;
-              });
-            } else {
-              botResponse += topMatch.context;
-            }
-          }
-        } else {
-          botResponse += topMatch.context;
-        }
+        botResponse = `**Result from Guideline: ${topMatch.title}** (Confidence Match: **${topMatch.confidence}%**)`;
         
         if (searchRes.isLowConfidence) {
           botResponse += `\n\n⚠️ **Low Confidence Match:** The local database matched this protocol with a confidence of ${topMatch.confidence}%. You may run a deep AI search on the server using the button below.\n\n[Online AI Search](/ask-online-ai)`;
@@ -316,7 +291,7 @@ export default function Home() {
           highlight: { x0: 20, y0: 100, x1: 500, y1: 150 }
         }));
 
-        // Auto select the active guideline for the calculator widget, but do not retrieve/load the heavy PDF URL yet
+        // Auto select the active guideline for the calculator widget
         setActiveGuidelineId(topMatch.docId);
       }
 
@@ -324,7 +299,8 @@ export default function Home() {
         sender: 'bot', 
         text: botResponse, 
         citations,
-        queryText: query // Preserve query context to allow escalation
+        queryText: query, // Preserve query context to allow escalation
+        guidelineId: searchRes.isNegativeResult ? undefined : searchRes.results[0].docId
       }]);
     } catch (err: any) {
       console.error("Local search engine execution error:", err);
@@ -710,31 +686,8 @@ export default function Home() {
                             type="button"
                             onClick={() => {
                               const targetId = match.docId;
-                              const activeGuideline = guidelines.find(g => g.id === targetId);
-                              let botResponse = `**Result from Guideline: ${match.title}** (Confidence Match: **100%**)\n\n`;
                               
-                              if (activeGuideline) {
-                                if (activeGuideline.summaryText) {
-                                  botResponse += activeGuideline.summaryText;
-                                } else {
-                                  const records = activeGuideline.records || [];
-                                  if (records.length > 0) {
-                                    botResponse += `### Clinical Summary & SOP Steps\n\n`;
-                                    records.forEach((rec: any, idx: number) => {
-                                      botResponse += `### ${rec.title}\n${rec.context}\n\n`;
-                                    });
-                                  } else if (activeGuideline.clinical?.steps) {
-                                    botResponse += `### Clinical Steps & Actions\n\n`;
-                                    activeGuideline.clinical.steps.forEach((s: any) => {
-                                      botResponse += `**Step ${s.step_number}:** ${s.text}\n\n`;
-                                    });
-                                  } else {
-                                    botResponse += match.context;
-                                  }
-                                }
-                              } else {
-                                botResponse += match.context;
-                              }
+                              const botResponse = `**Result from Guideline: ${match.title}** (Confidence Match: **100%**)`;
                               
                               const citations = match.pdfName ? [{
                                 docId: match.docId,
@@ -747,7 +700,12 @@ export default function Home() {
                               setChatHistory(prev => [
                                 ...prev,
                                 { sender: 'user', text: `Selected guideline: ${match.title}` },
-                                { sender: 'bot', text: botResponse, citations }
+                                { 
+                                  sender: 'bot', 
+                                  text: botResponse, 
+                                  citations,
+                                  guidelineId: match.docId
+                                }
                               ]);
 
                               setActiveGuidelineId(match.docId);
@@ -780,10 +738,10 @@ export default function Home() {
                 {chatHistory.map((msg, index) => (
                   <div 
                     key={index}
-                    className={`flex flex-col max-w-[85%] rounded-2xl p-4 text-xs leading-relaxed ${
+                    className={`flex flex-col rounded-2xl p-4 text-xs leading-relaxed ${
                       msg.sender === 'user' 
-                        ? 'bg-teal-500/10 border border-teal-500/20 text-teal-100 self-end ml-auto' 
-                        : 'bg-slate-950/80 border border-slate-850 text-slate-300 self-start mr-auto'
+                        ? 'bg-teal-500/10 border border-teal-500/20 text-teal-100 self-end ml-auto max-w-[85%]' 
+                        : 'bg-slate-950/80 border border-slate-850 text-slate-300 self-start mr-auto w-full max-w-[95%]'
                     }`}
                   >
                     {/* Render text with basic markdown tags */}
@@ -835,86 +793,81 @@ export default function Home() {
                         </div>
                       </div>
                     )}
+                    {/* Inline Guideline Widgets (Calculator + Key Considerations) */}
+                    {msg.guidelineId && (() => {
+                      if (pullingThroughGuidelineId === msg.guidelineId) {
+                        return (
+                          <div className="mt-4 pt-4 border-t border-slate-800 text-center flex flex-col items-center justify-center gap-2.5">
+                            <div className="w-4 h-4 rounded-full border-2 border-teal-500 border-t-transparent animate-spin"></div>
+                            <span className="text-[9px] font-bold text-teal-400 uppercase tracking-widest animate-pulse">
+                              Retrieving full clinical data & calculator from edge...
+                            </span>
+                          </div>
+                        );
+                      }
+
+                      const activeGuideline = guidelines.find(g => g.id === msg.guidelineId);
+                      if (!activeGuideline) return null;
+
+                      const hasCalc = !!activeGuideline.calculator;
+                      const calcSchema = activeGuideline.calculator;
+                      const considerations = activeGuideline.records 
+                        ? activeGuideline.records 
+                        : (activeGuideline.clinical?.steps?.map((s: any) => ({
+                            title: `Step ${s.step_number}`,
+                            context: s.text,
+                            summaryText: s.text
+                          })) || []);
+
+                      return (
+                        <div className="mt-4 pt-4 border-t border-slate-800 space-y-4">
+                          {/* Calculator Block */}
+                          {hasCalc && calcSchema && (
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-1.5 mb-2">
+                                <Calculator className="w-3.5 h-3.5 text-teal-400" />
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                  Dose Calculator: {calcSchema.calculator_name || calcSchema.calculatorName}
+                                </span>
+                              </div>
+                              <DoseCalculator schema={calcSchema as any} isApproved={true} />
+                            </div>
+                          )}
+
+                          {/* Considerations Block */}
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-1.5 mb-2">
+                              <FileText className="w-3.5 h-3.5 text-teal-400" />
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                Key Clinical SOP Considerations
+                              </span>
+                            </div>
+                            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-3 space-y-2.5 max-h-[320px] overflow-y-auto">
+                              {considerations.length > 0 ? (
+                                considerations.map((rec: any, idx: number) => (
+                                  <div key={idx} className="bg-slate-950/60 border border-slate-850 p-2.5 rounded-lg">
+                                    <h4 className="text-teal-450 font-bold text-xxs mb-1 flex items-center gap-1">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
+                                      {rec.title}
+                                    </h4>
+                                    <p className="text-slate-300 text-[10px] leading-relaxed whitespace-pre-line">
+                                      {rec.context}
+                                    </p>
+                                  </div>
+                                ))
+                              ) : (
+                                <p className="text-slate-500 text-xxs text-center py-2">No structured considerations available.</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 ))}
               </div>
 
-              {/* Bottom: Dynamic Calculator & Clinical Steps Mount */}
-              {(() => {
-                if (pullingThroughGuidelineId === activeGuidelineId) {
-                  return (
-                    <div className="p-6 bg-slate-950 border-t border-slate-800 shrink-0 text-center flex flex-col items-center justify-center gap-2.5">
-                      <div className="w-5 h-5 rounded-full border-2 border-teal-500 border-t-transparent animate-spin"></div>
-                      <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest animate-pulse">
-                        Retrieving full guideline clinical data & calculator from edge...
-                      </span>
-                    </div>
-                  );
-                }
 
-                const activeGuideline = guidelines.find(g => g.id === activeGuidelineId);
-                if (!activeGuideline) return null;
-                
-                const hasCalc = !!activeGuideline.calculator;
-                const calcSchema = activeGuideline.calculator;
-                
-                const considerations = activeGuideline.records 
-                  ? activeGuideline.records 
-                  : (activeGuideline.clinical?.steps?.map((s: any) => ({
-                      title: `Step ${s.step_number}`,
-                      context: s.text,
-                      summaryText: s.text
-                    })) || []);
-
-                return (
-                  <div className="p-4 bg-slate-950 border-t border-slate-800 shrink-0">
-                    <div className="flex flex-col lg:flex-row gap-4 max-h-[360px] overflow-y-auto pr-1">
-                      
-                      {/* Calculator Column */}
-                      {hasCalc && calcSchema && (
-                        <div className="flex-1 lg:w-1/2 flex flex-col">
-                          <div className="flex items-center gap-1.5 mb-2">
-                            <Calculator className="w-4 h-4 text-teal-400" />
-                            <span className="text-xxs font-bold text-slate-400 uppercase tracking-wider">
-                              Interactive Dose Calculator: {calcSchema.calculator_name || calcSchema.calculatorName}
-                            </span>
-                          </div>
-                          <DoseCalculator schema={calcSchema as any} isApproved={true} />
-                        </div>
-                      )}
-                      
-                      {/* Clinical Steps / Considerations Column */}
-                      <div className={`flex-1 ${hasCalc ? 'lg:w-1/2' : 'w-full'} flex flex-col`}>
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <FileText className="w-4 h-4 text-teal-400" />
-                          <span className="text-xxs font-bold text-slate-400 uppercase tracking-wider">
-                            Key Clinical SOP Considerations
-                          </span>
-                        </div>
-                        
-                        <div className="flex-1 bg-slate-900/40 border border-slate-800 rounded-xl p-3 space-y-2.5 overflow-y-auto max-h-[280px]">
-                          {considerations.length > 0 ? (
-                            considerations.map((rec: any, idx: number) => (
-                              <div key={idx} className="bg-slate-950/60 border border-slate-850 p-2.5 rounded-lg">
-                                <h4 className="text-teal-400 font-bold text-xxs mb-1 flex items-center gap-1">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
-                                  {rec.title}
-                                </h4>
-                                <p className="text-slate-300 text-[10px] leading-relaxed whitespace-pre-line">
-                                  {rec.context}
-                                </p>
-                              </div>
-                            ))
-                          ) : (
-                            <p className="text-slate-500 text-xxs text-center py-4">No structured considerations available.</p>
-                          )}
-                        </div>
-                      </div>
-
-                    </div>
-                  </div>
-                );
-              })()}
 
               {/* Mobile View Tab Controls (Only shown on small screens) */}
               {isMobile && (
