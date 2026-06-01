@@ -15,8 +15,32 @@ export default function AdminDashboard() {
   const { signOut } = useClerk();
   const { getToken } = useAuth();
 
-  const rawEmail = clerkUser?.primaryEmailAddress?.emailAddress || '';
-  const isAdmin = rawEmail === 'audit.lead@nhs.net' || rawEmail === 's.parashar1@nhs.net';
+  // Demo Mode state
+  const [demoAuth, setDemoAuth] = useState<boolean>(false);
+  const [isDemoLoaded, setIsDemoLoaded] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setDemoAuth(sessionStorage.getItem('demo-auth') === 'true');
+      setIsDemoLoaded(true);
+    }
+  }, []);
+
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+  const loaded = isDemoMode ? isDemoLoaded : isLoaded;
+
+  const rawEmail = clerkUser ? (clerkUser.primaryEmailAddress?.emailAddress || '') : (isDemoMode && demoAuth ? 'audit.lead@nhs.net' : '');
+  const isAdmin = (clerkUser && (rawEmail === 'audit.lead@nhs.net' || rawEmail === 's.parashar1@nhs.net')) || (isDemoMode && demoAuth);
+
+  const handleLogout = async () => {
+    if (isDemoMode) {
+      sessionStorage.removeItem('demo-auth');
+      document.cookie = 'demo_passcode=; path=/; Max-Age=0;';
+      window.location.href = '/';
+    } else {
+      await signOut();
+    }
+  };
 
   const [activeTab, setActiveTab] = useState<'policies' | 'upload' | 'sandbox' | 'gaps' | 'feedbacks'>('policies');
   
@@ -169,7 +193,13 @@ export default function AdminDashboard() {
       formData.append('isReplacement', isReplacement ? 'true' : 'false');
       formData.append('supersedesId', supersedesId);
 
-      const token = await getToken();
+      let token = null;
+      if (isDemoMode) {
+        const match = document.cookie.match(/(^|;)\s*demo_passcode\s*=\s*([^;]+)/);
+        token = match ? match[2] : null;
+      } else {
+        token = await getToken();
+      }
       const headers: HeadersInit = {};
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
@@ -265,7 +295,7 @@ export default function AdminDashboard() {
     showToast("Dose Calculator Approved & Published! Clinicians will now see the calculator widget when viewing this guideline.", "success");
   };
 
-  if (!isLoaded) {
+  if (!loaded) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
         <div className="text-teal-400 font-bold text-xs animate-pulse">
@@ -275,7 +305,7 @@ export default function AdminDashboard() {
     );
   }
 
-  if (isLoaded && (!clerkUser || !isAdmin)) {
+  if (loaded && !isAdmin) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
         <div className="bg-slate-950/60 border border-slate-800 rounded-2xl w-full max-w-md p-6 text-center shadow-2xl">
@@ -284,9 +314,9 @@ export default function AdminDashboard() {
           <p className="text-xs text-slate-300 mb-4 leading-relaxed">
             You do not have the required permissions to view the clinical governance portal. Only the Governance Audit Lead (<strong>audit.lead@nhs.net</strong>) can access this page.
           </p>
-          {clerkUser ? (
+          {clerkUser || isDemoMode ? (
             <button
-              onClick={() => signOut()}
+              onClick={handleLogout}
               className="w-full bg-red-600 hover:bg-red-750 text-white font-bold p-2.5 rounded-lg text-xs transition-colors"
             >
               Sign Out & Use Admin Account
@@ -294,7 +324,7 @@ export default function AdminDashboard() {
           ) : (
             <a
               href="/#"
-              className="w-full bg-teal-500 hover:bg-teal-600 text-slate-950 font-bold p-2.5 rounded-lg text-xs transition-colors block text-center"
+              className="w-full bg-teal-500 hover:bg-teal-650 text-slate-950 font-bold p-2.5 rounded-lg text-xs transition-colors block text-center"
             >
               Return to Homepage
             </a>
@@ -324,7 +354,7 @@ export default function AdminDashboard() {
             <span>Logged in as: <strong>{rawEmail}</strong> (Admin)</span>
           </div>
           <button 
-            onClick={() => signOut()}
+            onClick={handleLogout}
             className="p-2 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors border border-slate-800 flex items-center justify-center"
             title="Log Out"
           >

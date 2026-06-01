@@ -15,6 +15,20 @@ const ADMIN_EMAILS = ['audit.lead@nhs.net', 's.parashar1@nhs.net'];
  * 2. Fall back to auth() (cookie-based session) for any other route.
  */
 async function getVerifiedUser(req: Request): Promise<{ userId: string; email: string } | null> {
+  // --- Path 0: Demo Mode Bypass ---
+  if (process.env.DEMO_MODE === 'true' && process.env.DEMO_PASSCODE) {
+    const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
+    const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+    const cookieHeader = req.headers.get('cookie') || '';
+    // Look for demo_passcode=YOUR_PASSCODE in the cookie string
+    const hasDemoCookie = cookieHeader.includes(`demo_passcode=${process.env.DEMO_PASSCODE}`);
+
+    if (hasDemoCookie || bearerToken === process.env.DEMO_PASSCODE) {
+      return { userId: 'demo-user-id', email: 'audit.lead@nhs.net' };
+    }
+  }
+
   // --- Path 1: Bearer token from Authorization header ---
   const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
   const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;

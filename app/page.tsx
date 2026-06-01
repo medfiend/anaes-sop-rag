@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useUser, useClerk, SignIn } from '@clerk/nextjs';
 import { 
   Search, ShieldAlert, FileText, UserCheck, LogOut, ArrowRight, 
-  Menu, HelpCircle, Activity, Sparkles, Send, Calculator, History, ChevronRight 
+  Menu, HelpCircle, Activity, Sparkles, Send, Calculator, History, ChevronRight, X
 } from 'lucide-react';
 import PdfViewer from '../components/PdfViewer';
 import DoseCalculator from '../components/DoseCalculator';
@@ -15,18 +15,45 @@ import staticGuidelines from '../data/guidelines_db.json';
 export default function Home() {
   const { executeSearch, guidelines, setGuidelines } = useSearch();
   const [pullingThroughGuidelineId, setPullingThroughGuidelineId] = useState<string>('');
+  
   // Clerk Auth state
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
 
-  const rawEmail = clerkUser?.primaryEmailAddress?.emailAddress || '';
+  // Demo Mode state
+  const [demoAuth, setDemoAuth] = useState<boolean>(false);
+  const [demoPasscode, setDemoPasscode] = useState<string>('');
+  const [demoError, setDemoError] = useState<string>('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setDemoAuth(sessionStorage.getItem('demo-auth') === 'true');
+    }
+  }, []);
+
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+
+  const rawEmail = clerkUser?.primaryEmailAddress?.emailAddress || (isDemoMode && demoAuth ? 'audit.lead@nhs.net' : '');
   const isNhsEmail = rawEmail.endsWith('@nhs.net') || rawEmail.endsWith('.nhs.uk') || rawEmail === 'audit.lead@nhs.net' || rawEmail === 's.parashar1@nhs.net';
   const isAdminEmail = rawEmail === 'audit.lead@nhs.net' || rawEmail === 's.parashar1@nhs.net';
 
-  const user = clerkUser && isNhsEmail ? {
-    email: rawEmail,
-    role: (isAdminEmail ? 'Admin' : 'Clinician') as 'Clinician' | 'Admin'
+  const user = (clerkUser && isNhsEmail) || (isDemoMode && demoAuth) ? {
+    email: rawEmail || 'audit.lead@nhs.net',
+    role: (isAdminEmail || (isDemoMode && demoAuth) ? 'Admin' : 'Clinician') as 'Clinician' | 'Admin'
   } : null;
+
+  const handleDemoSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const expected = process.env.NEXT_PUBLIC_DEMO_PASSCODE || 'NHS2026';
+    if (demoPasscode === expected) {
+      sessionStorage.setItem('demo-auth', 'true');
+      document.cookie = `demo_passcode=${demoPasscode}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+      setDemoAuth(true);
+      setDemoError('');
+    } else {
+      setDemoError('Invalid passcode. Please try again.');
+    }
+  };
   
   // Feedback state
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
@@ -217,7 +244,13 @@ export default function Home() {
   };
 
   const handleLogout = async () => {
-    await signOut();
+    if (isDemoMode) {
+      sessionStorage.removeItem('demo-auth');
+      document.cookie = 'demo_passcode=; path=/; Max-Age=0;';
+      setDemoAuth(false);
+    } else {
+      await signOut();
+    }
     setChatHistory([]);
     setActivePdfUrl('');
   };
@@ -348,11 +381,11 @@ export default function Home() {
 
   const handleCitationClick = (cit: any) => {
     const targetFile = cit.pdfName || 'QRH_complete_June_2023.pdf';
-    setActivePdfUrl(getPdfUrl(targetFile));
-    setActivePdfName(cit.docName);
-    setActivePage(cit.page);
     setActiveGuidelineId(cit.docId);
-    setActiveHighlights([cit.highlight]);
+    
+    // Open native browser PDF viewer in a new tab at the exact page
+    const targetUrl = `${getPdfUrl(targetFile)}#page=${cit.page}`;
+    window.open(targetUrl, '_blank');
     
     if (isMobile) {
       setMobileTab('pdf');
@@ -504,6 +537,40 @@ export default function Home() {
                     >
                       <LogOut className="w-3.5 h-3.5" /> Sign Out & Try Another Account
                     </button>
+                  </div>
+                ) : isDemoMode ? (
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <UserCheck className="w-5 h-5 text-teal-400" />
+                      <h2 className="text-base font-bold text-slate-100 uppercase tracking-wide">NHS Demo Mode Portal</h2>
+                    </div>
+                    <p className="text-xxs text-slate-400 mb-6 leading-relaxed">
+                      This application is running in <strong>Demo Mode</strong>. Enter the pre-shared passcode to access search engines and calculators.
+                    </p>
+                    
+                    <form onSubmit={handleDemoSubmit} className="space-y-4">
+                      <div>
+                        <label className="text-slate-400 text-[10px] font-semibold uppercase tracking-wider mb-1 block">
+                          Passcode
+                        </label>
+                        <input
+                          type="password"
+                          value={demoPasscode}
+                          onChange={(e) => setDemoPasscode(e.target.value)}
+                          placeholder="Enter passcode..."
+                          className="w-full bg-slate-900 border border-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 text-white rounded-lg p-2.5 text-xs transition-colors"
+                        />
+                        {demoError && (
+                          <p className="text-red-400 text-xxs mt-1">{demoError}</p>
+                        )}
+                      </div>
+                      <button
+                        type="submit"
+                        className="w-full bg-teal-500 hover:bg-teal-650 text-slate-950 font-bold p-2.5 rounded-lg text-xs transition-colors shadow-md shadow-teal-500/10"
+                      >
+                        Access Demo
+                      </button>
+                    </form>
                   </div>
                 ) : (
                   <div>
@@ -740,8 +807,11 @@ export default function Home() {
                           if (cit) {
                             handleCitationClick(cit);
                           } else {
-                            setActivePage(page);
-                            if (isMobile) setMobileTab('pdf');
+                            const activeGuideline = guidelines.find(g => g.id === activeGuidelineId);
+                            if (activeGuideline?.pdf_name) {
+                              const targetUrl = `${getPdfUrl(activeGuideline.pdf_name)}#page=${page}`;
+                              window.open(targetUrl, '_blank');
+                            }
                           }
                         }
                       }}
@@ -858,50 +928,110 @@ export default function Home() {
                     Chat & Search
                   </button>
                   <button 
-                    disabled={!activePdfUrl}
+                    disabled={!activeGuidelineId}
                     onClick={() => setMobileTab('pdf')}
                     className={`flex-1 p-2 rounded-lg font-bold text-xs text-center transition-colors ${
-                      !activePdfUrl ? 'opacity-40' : (mobileTab === 'pdf' ? 'bg-teal-500 text-slate-950' : 'bg-slate-900 text-slate-400 border border-slate-800')
+                      !activeGuidelineId ? 'opacity-40' : (mobileTab === 'pdf' ? 'bg-teal-500 text-slate-950' : 'bg-slate-900 text-slate-400 border border-slate-800')
                     }`}
                   >
-                    Reference PDF
+                    Guideline Summary
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Split Screen Panel 2: Synchronized PDF.js Viewer */}
-            <div className={`flex-1 md:w-1/2 flex flex-col overflow-hidden relative ${
+            {/* Split Screen Panel 2: Guideline Summary & Details */}
+            <div className={`flex-1 md:w-1/2 flex flex-col overflow-hidden relative border-l border-slate-800 bg-slate-950 ${
               isMobile && mobileTab !== 'pdf' ? 'hidden' : 'flex'
             }`}>
-              {activePdfUrl ? (
-                <div className="flex-1 flex flex-col overflow-hidden">
-                  <PdfViewer 
-                    fileUrl={activePdfUrl} 
-                    pageNumber={activePage} 
-                    highlights={activeHighlights} 
-                    fileName={activePdfName} 
-                  />
-                  {isMobile && (
-                    <button 
-                      onClick={() => setMobileTab('search')}
-                      className="absolute bottom-6 right-6 bg-teal-500 hover:bg-teal-650 text-slate-950 font-bold px-4 py-2.5 rounded-full shadow-lg text-xs flex items-center gap-1 border border-teal-600 transition-transform active:scale-95"
-                    >
-                      ↩ Return to Search
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="flex-1 bg-slate-950 flex flex-col items-center justify-center p-6 text-center select-none text-slate-500">
-                  <FileText className="w-16 h-16 text-slate-800 mb-3" />
-                  <p className="font-medium text-slate-400 text-sm">Synchronized PDF Viewer</p>
-                  <p className="text-xxs text-slate-600 max-w-xs mt-1 leading-normal">
-                    Search and click a guideline reference. The source PDF will instantly load here, jump to the exact page, and highlight the citation bounding box.
-                  </p>
-                </div>
-              )}
-            </div>
+              {(() => {
+                const activeGuideline = guidelines.find(g => g.id === activeGuidelineId);
+                if (activeGuideline) {
+                  const summaryMarkdown = activeGuideline.summaryText 
+                    || activeGuideline.clinical?.summaryText
+                    || activeGuideline.clinical?.steps?.map((s: any) => `### Step ${s.step_number}\n${s.text}`).join('\n\n')
+                    || "No clinical summary available for this guideline.";
 
+                  return (
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                      {/* Header */}
+                      <div className="p-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between shrink-0">
+                        <div className="flex-1 min-w-0 pr-4">
+                          <h2 className="text-xs font-bold text-slate-100 truncate flex items-center gap-1.5">
+                            <Activity className="w-3.5 h-3.5 text-teal-400" />
+                            {activeGuideline.name || activeGuideline.clinical?.title}
+                          </h2>
+                          <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400">
+                            <span>Version: <strong className="text-slate-350">{activeGuideline.version || 'v1.0.0'}</strong></span>
+                            <span>•</span>
+                            <span>Review: <strong className="text-slate-350">{activeGuideline.date_next_review || activeGuideline.dateNextReview ? new Date(activeGuideline.date_next_review || activeGuideline.dateNextReview).toLocaleDateString() : 'N/A'}</strong></span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {activeGuideline.pdf_name && (
+                            <a
+                              href={getPdfUrl(activeGuideline.pdf_name)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="bg-slate-850 hover:bg-slate-750 text-teal-400 font-bold px-3 py-1.5 rounded-lg text-xxs flex items-center gap-1.5 transition-colors border border-slate-750 hover:border-teal-500/30 shadow-sm"
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                              Source PDF ↗
+                            </a>
+                          )}
+                          <button
+                            onClick={() => {
+                              setActiveGuidelineId('');
+                              setActivePdfUrl('');
+                            }}
+                            className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors border border-slate-800 flex items-center justify-center"
+                            title="Close Summary"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Summary Content */}
+                      <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                        <div className="prose prose-invert max-w-none text-xs leading-relaxed text-slate-350">
+                          <div className="flex items-center gap-2 mb-3 text-teal-405 border-b border-slate-800 pb-2">
+                            <Sparkles className="w-4 h-4 text-teal-400 animate-pulse-soft" />
+                            <h3 className="text-xxs font-bold uppercase tracking-wider">Clinical Guidance Summary</h3>
+                          </div>
+                          
+                          <div 
+                            className="space-y-3 whitespace-pre-line text-slate-300 markdown-summary font-sans text-xs"
+                            dangerouslySetInnerHTML={{ 
+                              __html: formatMessageText(summaryMarkdown) 
+                            }}
+                          />
+                        </div>
+                      </div>
+                      
+                      {isMobile && (
+                        <button 
+                          onClick={() => setMobileTab('search')}
+                          className="absolute bottom-6 right-6 bg-teal-500 hover:bg-teal-650 text-slate-950 font-bold px-4 py-2.5 rounded-full shadow-lg text-xs flex items-center gap-1 border border-teal-600 transition-transform active:scale-95 z-10"
+                        >
+                          ↩ Return to Search
+                        </button>
+                      )}
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="flex-1 bg-slate-950 flex flex-col items-center justify-center p-6 text-center select-none text-slate-500">
+                    <FileText className="w-16 h-16 text-slate-800 mb-3" />
+                    <p className="font-medium text-slate-400 text-sm">Clinical Guideline Summary Panel</p>
+                    <p className="text-xxs text-slate-600 max-w-xs mt-1 leading-normal">
+                      Search and click a guideline reference. The detailed clinical summary, warnings, and drug administration steps will load here.
+                    </p>
+                  </div>
+                );
+              })()}
+            </div>
           </div>
         )}
       </main>
