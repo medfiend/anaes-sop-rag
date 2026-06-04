@@ -20,7 +20,7 @@ self.addEventListener('install', (event) => {
 
 // Activate event — clean up old caches
 self.addEventListener('activate', (event) => {
-  const CURRENT_CACHES = [CACHE_NAME, STATIC_CACHE, API_CACHE];
+  const CURRENT_CACHES = [CACHE_NAME, STATIC_CACHE, API_CACHE, 'anaessop-pdf-v1'];
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -45,6 +45,16 @@ self.addEventListener('fetch', (event) => {
 
   // API requests: network-first with cache fallback
   if (url.pathname.startsWith('/api/')) {
+    // Intercept PDF requests with Cache-First strategy for rapid local offline performance
+    if (url.pathname === '/api/pdf') {
+      event.respondWith(
+        caches.match(request).then((cached) => {
+          return cached || fetch(request);
+        })
+      );
+      return;
+    }
+
     // Only cache the guidelines list endpoint
     if (url.pathname === '/api/guidelines') {
       event.respondWith(

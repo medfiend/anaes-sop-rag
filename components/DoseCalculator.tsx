@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
 
 interface InputField {
   id: string;
@@ -33,6 +33,8 @@ interface DoseCalculatorProps {
 }
 
 export default function DoseCalculator({ schema, isSandbox = false, onApprove, isApproved = false }: DoseCalculatorProps) {
+  const { width } = useWindowDimensions();
+  const isMobileWidth = width < 768;
   const [inputs, setInputs] = useState<Record<string, any>>({});
   const [results, setResults] = useState<Record<string, any>>({});
 
@@ -120,7 +122,7 @@ export default function DoseCalculator({ schema, isSandbox = false, onApprove, i
         )}
       </View>
 
-      <View style={styles.content}>
+      <View style={[styles.content, { flexDirection: isMobileWidth ? 'column' : 'row' }]}>
         {/* Left: Input Panel */}
         <View style={styles.inputSection}>
           <Text style={styles.sectionHeader}>PATIENT PARAMETERS</Text>
