@@ -35,6 +35,22 @@
       "purpose": "maskable"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "AnaesSOP mobile search and dose calculator"
+    },
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "AnaesSOP desktop split-screen workspace"
+    }
+  ],
   "categories": ["medical", "health"],
   "lang": "en-GB",
   "dir": "ltr"
