@@ -142,6 +142,27 @@ export default function Home() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const [isKeyboardActive, setIsKeyboardActive] = useState(false);
+
+  useEffect(() => {
+    const handleFocusChange = () => {
+      const activeEl = document.activeElement;
+      const isInput = activeEl && (
+        activeEl.tagName === 'INPUT' || 
+        activeEl.tagName === 'TEXTAREA' || 
+        activeEl.getAttribute('contenteditable') === 'true'
+      );
+      setIsKeyboardActive(!!isInput);
+    };
+
+    document.addEventListener('focusin', handleFocusChange);
+    document.addEventListener('focusout', handleFocusChange);
+    return () => {
+      document.removeEventListener('focusin', handleFocusChange);
+      document.removeEventListener('focusout', handleFocusChange);
+    };
+  }, []);
+
   // Run fast client-side instant search on query change
   useEffect(() => {
     const trimmed = searchQuery.trim();
@@ -431,26 +452,30 @@ export default function Home() {
             <h1 className="text-sm font-bold leading-none tracking-wide text-slate-100 flex items-center gap-1">
               AnaesSOP <span className="text-xxs px-1.5 py-0.5 rounded bg-teal-500/20 text-teal-400 font-normal border border-teal-500/30">PILOT</span>
             </h1>
-            <span className="text-xxs text-slate-400">Anaesthetic Clinical Governance Database</span>
+            <span className="text-xxs text-slate-400 hidden sm:block">Anaesthetic Clinical Governance Database</span>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           {user ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               {user.role === 'Admin' && (
                 <a 
                   href="/admin"
-                  className="bg-teal-500 hover:bg-teal-650 active:scale-95 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 transition-all shadow-md shadow-teal-500/10 animate-fade-in"
+                  className="bg-teal-500 hover:bg-teal-650 active:scale-95 text-slate-950 font-bold text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all shadow-md shadow-teal-500/10 animate-fade-in"
+                  title="Admin Panel"
                 >
-                  Admin Panel
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Admin Panel</span>
                 </a>
               )}
               <button 
                 onClick={() => setIsFeedbackOpen(true)}
-                className="bg-slate-900 hover:bg-slate-850 border border-slate-800 text-teal-400 hover:text-teal-300 text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
+                className="bg-slate-900 hover:bg-slate-850 border border-slate-800 text-teal-400 hover:text-teal-300 text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
+                title="Feedback"
               >
-                <Sparkles className="w-3.5 h-3.5" /> Feedback
+                <Sparkles className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Feedback</span>
               </button>
               <div className="hidden sm:flex flex-col text-right">
                 <span className="text-xs font-semibold text-slate-300">{user.email}</span>
@@ -700,7 +725,7 @@ export default function Home() {
             
             {/* Split Screen Panel 1: RAG Chat & Calculators */}
             <div className={`flex-1 md:w-1/2 flex flex-col overflow-hidden border-r border-slate-800 ${
-              isMobile && mobileTab !== 'search' ? 'hidden' : 'flex'
+              mobileTab !== 'search' ? 'hidden md:flex' : 'flex'
             }`}>
               
               {/* Search Bar Block */}
@@ -990,32 +1015,32 @@ export default function Home() {
 
 
               {/* Mobile View Tab Controls (Only shown on small screens) */}
-              {isMobile && (
-                <div className="bg-slate-950 border-t border-slate-800 p-3 flex gap-2 shrink-0">
-                  <button 
-                    onClick={() => setMobileTab('search')}
-                    className={`flex-1 p-2 rounded-lg font-bold text-xs text-center transition-colors ${
-                      mobileTab === 'search' ? 'bg-teal-500 text-slate-950' : 'bg-slate-900 text-slate-400 border border-slate-800'
-                    }`}
-                  >
-                    Chat & Search
-                  </button>
-                  <button 
-                    disabled={!activeGuidelineId}
-                    onClick={() => setMobileTab('pdf')}
-                    className={`flex-1 p-2 rounded-lg font-bold text-xs text-center transition-colors ${
-                      !activeGuidelineId ? 'opacity-40' : (mobileTab === 'pdf' ? 'bg-teal-500 text-slate-950' : 'bg-slate-900 text-slate-400 border border-slate-800')
-                    }`}
-                  >
-                    Guideline Summary
-                  </button>
-                </div>
-              )}
+              <div className={`flex md:hidden bg-slate-950 border-t border-slate-800 p-3 gap-2 shrink-0 ${
+                isKeyboardActive ? 'hidden' : ''
+              }`}>
+                <button 
+                  onClick={() => setMobileTab('search')}
+                  className={`flex-1 p-2 rounded-lg font-bold text-xs text-center transition-colors ${
+                    mobileTab === 'search' ? 'bg-teal-500 text-slate-950' : 'bg-slate-900 text-slate-400 border border-slate-800'
+                  }`}
+                >
+                  Chat & Search
+                </button>
+                <button 
+                  disabled={!activeGuidelineId}
+                  onClick={() => setMobileTab('pdf')}
+                  className={`flex-1 p-2 rounded-lg font-bold text-xs text-center transition-colors ${
+                    !activeGuidelineId ? 'opacity-40' : (mobileTab === 'pdf' ? 'bg-teal-500 text-slate-950' : 'bg-slate-900 text-slate-400 border border-slate-800')
+                  }`}
+                >
+                  Guideline Summary
+                </button>
+              </div>
             </div>
 
             {/* Split Screen Panel 2: Guideline Summary & Details */}
             <div className={`flex-1 md:w-1/2 flex flex-col overflow-hidden relative border-l border-slate-800 bg-slate-950 ${
-              isMobile && mobileTab !== 'pdf' ? 'hidden' : 'flex'
+              mobileTab !== 'pdf' ? 'hidden md:flex' : 'flex'
             }`}>
               {(() => {
                 const activeGuideline = guidelines.find(g => g.id === activeGuidelineId);
@@ -1068,6 +1093,7 @@ export default function Home() {
                             onClick={() => {
                               setActiveGuidelineId('');
                               setActivePdfUrl('');
+                              setMobileTab('search');
                             }}
                             className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors border border-slate-800 flex items-center justify-center"
                             title="Close Summary"
@@ -1076,7 +1102,7 @@ export default function Home() {
                           </button>
                         </div>
                       </div>
-
+ 
                       {/* Summary Content */}
                       <div className="flex-1 overflow-y-auto p-5 space-y-4">
                         <div className="prose prose-invert max-w-none text-xs leading-relaxed text-slate-350">
@@ -1094,14 +1120,12 @@ export default function Home() {
                         </div>
                       </div>
                       
-                      {isMobile && (
-                        <button 
-                          onClick={() => setMobileTab('search')}
-                          className="absolute bottom-6 right-6 bg-teal-500 hover:bg-teal-650 text-slate-950 font-bold px-4 py-2.5 rounded-full shadow-lg text-xs flex items-center gap-1 border border-teal-600 transition-transform active:scale-95 z-10"
-                        >
-                          ↩ Return to Search
-                        </button>
-                      )}
+                      <button 
+                        onClick={() => setMobileTab('search')}
+                        className="md:hidden absolute bottom-6 right-6 bg-teal-500 hover:bg-teal-650 text-slate-950 font-bold px-4 py-2.5 rounded-full shadow-lg text-xs flex items-center gap-1 border border-teal-600 transition-transform active:scale-95 z-10"
+                      >
+                        ↩ Return to Search
+                      </button>
                     </div>
                   );
                 }
