@@ -1,8 +1,10 @@
 {
+  "id": "/",
   "name": "AnaesSOP — Anaesthetic Clinical Governance Database",
   "short_name": "AnaesSOP",
   "description": "Hybrid RAG retrieval system and policy life-cycle engine for hospital clinical guidelines, protocols, and cognitive aids.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#020617",
@@ -12,13 +14,25 @@
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "categories": ["medical", "health"],
