@@ -11,6 +11,8 @@ import DoseCalculator from '../components/DoseCalculator';
 import { mockGuidelines, mockChunks, mockCalculator } from '../lib/supabaseClient';
 import { useSearch } from './hooks/useSearch';
 import staticGuidelines from '../data/guidelines_db.json';
+import TrustPhonebook from '../components/TrustPhonebook';
+import { SiteId } from '../lib/sitesConfig';
 
 export default function Home() {
   const { executeSearch, guidelines, setGuidelines } = useSearch();
@@ -87,7 +89,9 @@ export default function Home() {
   const [instantResults, setInstantResults] = useState<any[]>([]);
   
   // Mobile responsive layout
-  const [mobileTab, setMobileTab] = useState<'search' | 'pdf'>('search');
+  const [mobileTab, setMobileTab] = useState<'search' | 'pdf' | 'phonebook'>('search');
+  const [leftPanelTab, setLeftPanelTab] = useState<'search' | 'phonebook'>('search');
+  const [currentSiteId, setCurrentSiteId] = useState<SiteId>('site_1');
   const [isMobile, setIsMobile] = useState(false);
 
   // Guideline pinning and offline cache state
@@ -723,13 +727,40 @@ export default function Home() {
         {user && (
           <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
             
-            {/* Split Screen Panel 1: RAG Chat & Calculators */}
+            {/* Split Screen Panel 1: RAG Chat, Calculators & Phonebook */}
             <div className={`flex-1 md:w-1/2 flex flex-col overflow-hidden border-r border-slate-800 ${
-              mobileTab !== 'search' ? 'hidden md:flex' : 'flex'
+              mobileTab === 'pdf' ? 'hidden md:flex' : 'flex'
             }`}>
-              
-              {/* Search Bar Block */}
-              <div className="bg-slate-950 p-4 border-b border-slate-800 shrink-0 relative z-30">
+              {/* Desktop Tab Switcher */}
+              <div className="hidden md:flex bg-slate-950 border-b border-slate-800 shrink-0">
+                <button
+                  onClick={() => setLeftPanelTab('search')}
+                  className={`flex-1 py-3 text-xs font-bold transition-all border-b-2 ${
+                    leftPanelTab === 'search'
+                      ? 'border-teal-500 text-teal-400 bg-slate-900/40'
+                      : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/20'
+                  }`}
+                >
+                  Chat & Search
+                </button>
+                <button
+                  onClick={() => setLeftPanelTab('phonebook')}
+                  className={`flex-1 py-3 text-xs font-bold transition-all border-b-2 ${
+                    leftPanelTab === 'phonebook'
+                      ? 'border-teal-500 text-teal-400 bg-slate-900/40'
+                      : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/20'
+                  }`}
+                >
+                  Trust Phonebook
+                </button>
+              </div>
+
+              {(isMobile ? mobileTab === 'phonebook' : leftPanelTab === 'phonebook') ? (
+                <TrustPhonebook currentSiteId={currentSiteId} onSiteChange={setCurrentSiteId} />
+              ) : (
+                <>
+                  {/* Search Bar Block */}
+                  <div className="bg-slate-950 p-4 border-b border-slate-800 shrink-0 relative z-30">
                 <form onSubmit={handleSearchSubmit} className="relative">
                   <input
                     type="text"
@@ -1011,6 +1042,8 @@ export default function Home() {
                   </div>
                 ))}
               </div>
+            </>
+          )}
 
 
 
@@ -1020,20 +1053,28 @@ export default function Home() {
               }`}>
                 <button 
                   onClick={() => setMobileTab('search')}
-                  className={`flex-1 p-2 rounded-lg font-bold text-xs text-center transition-colors ${
+                  className={`flex-1 p-2 rounded-lg font-bold text-[11px] text-center transition-colors ${
                     mobileTab === 'search' ? 'bg-teal-500 text-slate-950' : 'bg-slate-900 text-slate-400 border border-slate-800'
                   }`}
                 >
-                  Chat & Search
+                  Search
                 </button>
                 <button 
                   disabled={!activeGuidelineId}
                   onClick={() => setMobileTab('pdf')}
-                  className={`flex-1 p-2 rounded-lg font-bold text-xs text-center transition-colors ${
+                  className={`flex-1 p-2 rounded-lg font-bold text-[11px] text-center transition-colors ${
                     !activeGuidelineId ? 'opacity-40' : (mobileTab === 'pdf' ? 'bg-teal-500 text-slate-950' : 'bg-slate-900 text-slate-400 border border-slate-800')
                   }`}
                 >
-                  Guideline Summary
+                  Guideline
+                </button>
+                <button 
+                  onClick={() => setMobileTab('phonebook')}
+                  className={`flex-1 p-2 rounded-lg font-bold text-[11px] text-center transition-colors ${
+                    mobileTab === 'phonebook' ? 'bg-teal-500 text-slate-950' : 'bg-slate-900 text-slate-400 border border-slate-800'
+                  }`}
+                >
+                  Phonebook
                 </button>
               </div>
             </div>

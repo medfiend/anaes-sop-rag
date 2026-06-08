@@ -9,3 +9,9 @@ package-lock.json
 .next/
 dist/
 *.log
+
+# Exclude sensitive raw source folders
+/pipeline/St George's Cloud/
+/pipeline/St George's Cloud Organized/
+/pipeline/local-organizer/
+
