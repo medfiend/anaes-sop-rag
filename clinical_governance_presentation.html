@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AnaesSOP — Clinical Governance & Pilot Business Case</title>
+  <!-- Google Fonts for Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --slate-950: #020617;
+      --slate-900: #0f172a;
+      --slate-800: #1e293b;
+      --slate-700: #334155;
+      --slate-400: #94a3b8;
+      --slate-300: #cbd5e1;
+      --slate-100: #f1f5f9;
+      --teal-500: #0d9488;
+      --teal-400: #2dd4bf;
+      --teal-900: #115e59;
+      --amber-500: #f59e0b;
+      --amber-950: #451a03;
+      --red-500: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--slate-900);
+      color: var(--slate-100);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-col: column;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Global Navigation */
+    header {
+      background-color: var(--slate-950);
+      border-bottom: 1px solid var(--slate-800);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 50;
+      position: sticky;
+      top: 0;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-badge {
+      width: 2.25rem;
+      height: 2.25rem;
+      background-color: var(--teal-500);
+      color: var(--slate-950);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      border-radius: 0.5rem;
+      font-size: 1.1rem;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .logo-text h1 {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .logo-text span {
+      font-size: 0.75rem;
+      color: var(--slate-400);
+      display: block;
+    }
+
+    .nav-toggle-buttons {
+      display: flex;
+      background-color: var(--slate-900);
+      padding: 0.25rem;
+      border-radius: 0.75rem;
+      border: 1px solid var(--slate-800);
+    }
+
+    .toggle-btn {
+      background: none;
+      border: none;
+      color: var(--slate-400);
+      padding: 0.5rem 1.25rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .toggle-btn.active {
+      background-color: var(--teal-500);
+      color: var(--slate-950);
+    }
+
+    /* Print and Export Utility Button */
+    .print-action-btn {
+      background-color: var(--slate-800);
+      border: 1px solid var(--slate-700);
+      color: var(--slate-100);
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background-color 0.2s;
+    }
+    .print-action-btn:hover {
+      background-color: var(--slate-700);
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      position: relative;
+    }
+
+    /* SLIDE MODE CONTAINER */
+    #slide-mode {
+      width: 100%;
+      max-width: 900px;
+      aspect-ratio: 16 / 10;
+      background-color: var(--slate-950);
+      border: 1px solid var(--slate-800);
+      border-radius: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    @media (max-width: 768px) {
+      #slide-mode {
+        aspect-ratio: auto;
+        min-height: 80vh;
+      }
+    }
+
+    /* Slide Content rendering area */
+    .slide-viewer {
+      flex: 1;
+      padding: 3.5rem 4rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+    }
+
+    @media (max-width: 768px) {
+      .slide-viewer {
+        padding: 2rem;
+      }
+    }
+
+    .slide {
+      display: none;
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+
+    .slide.active {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      justify-content: space-between;
+    }
+
+    .slide-title-area {
+      margin-bottom: 1.5rem;
+    }
+
+    .slide-subtitle {
+      color: var(--teal-400);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.5rem;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .slide-title {
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: var(--slate-100);
+      font-family: 'Outfit', sans-serif;
+      line-height: 1.2;
+    }
+
+    @media (max-width: 768px) {
+      .slide-title {
+        font-size: 1.75rem;
+      }
+    }
+
+    .slide-body {
+      font-size: 1.15rem;
+      color: var(--slate-300);
+      margin-bottom: 2rem;
+    }
+
+    .slide-body ul {
+      list-style-type: none;
+      margin-left: 0;
+    }
+
+    .slide-body li {
+      margin-bottom: 0.75rem;
+      position: relative;
+      padding-left: 1.75rem;
+    }
+
+    .slide-body li::before {
+      content: "✓";
+      color: var(--teal-400);
+      font-weight: bold;
+      position: absolute;
+      left: 0;
+    }
+
+    .slide-body p {
+      margin-bottom: 1rem;
+    }
+
+    /* Slide Footer / Controls */
+    .slide-controls {
+      background-color: rgba(15, 23, 42, 0.8);
+      border-top: 1px solid var(--slate-800);
+      padding: 1.25rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .slide-nav-buttons {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .nav-arrow {
+      background-color: var(--slate-800);
+      border: 1px solid var(--slate-700);
+      color: var(--slate-100);
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+
+    .nav-arrow:hover {
+      background-color: var(--slate-700);
+      border-color: var(--slate-400);
+    }
+
+    .nav-arrow:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .progress-bar-container {
+      flex: 1;
+      height: 0.35rem;
+      background-color: var(--slate-800);
+      border-radius: 9999px;
+      margin: 0 2rem;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background-color: var(--teal-500);
+      width: 16.66%;
+      transition: width 0.3s ease;
+      border-radius: 9999px;
+    }
+
+    .slide-counter {
+      font-size: 0.85rem;
+      color: var(--slate-400);
+      font-weight: 600;
+      min-width: 4rem;
+      text-align: right;
+    }
+
+    /* Alerts and highlight blocks inside slides */
+    .alert-block {
+      background-color: rgba(13, 148, 136, 0.1);
+      border-left: 4px solid var(--teal-500);
+      padding: 1rem 1.25rem;
+      border-radius: 0 0.5rem 0.5rem 0;
+      margin-top: 1.5rem;
+      font-size: 0.95rem;
+      color: var(--slate-300);
+    }
+    .alert-block.warning {
+      background-color: rgba(245, 158, 11, 0.1);
+      border-left-color: var(--amber-500);
+    }
+
+    .alert-block strong {
+      color: var(--slate-100);
+    }
+
+    /* Slide specific graphics */
+    .slide-layout-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    @media (max-width: 768px) {
+      .slide-layout-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .graphic-container {
+      background-color: var(--slate-900);
+      border: 1px solid var(--slate-800);
+      border-radius: 1rem;
+      padding: 1.25rem;
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: var(--slate-300);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .graphic-title {
+      font-weight: bold;
+      color: var(--teal-400);
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    /* DOCUMENT MODE CONTAINER */
+    #doc-mode {
+      display: none;
+      width: 100%;
+      max-width: 800px;
+      background-color: var(--slate-950);
+      border: 1px solid var(--slate-800);
+      border-radius: 1.5rem;
+      padding: 4rem 5rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+
+    @media (max-width: 768px) {
+      #doc-mode {
+        padding: 2rem;
+      }
+    }
+
+    .doc-section {
+      margin-bottom: 3rem;
+    }
+
+    .doc-section h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.75rem;
+      border-bottom: 2px solid var(--slate-800);
+      padding-bottom: 0.5rem;
+      margin-bottom: 1.25rem;
+      color: var(--teal-400);
+    }
+
+    .doc-section h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.2rem;
+      margin: 1.5rem 0 0.75rem 0;
+      color: var(--slate-100);
+    }
+
+    .doc-section p {
+      color: var(--slate-300);
+      margin-bottom: 1.25rem;
+      line-height: 1.7;
+    }
+
+    .doc-section ul {
+      margin-bottom: 1.5rem;
+      padding-left: 1.5rem;
+      color: var(--slate-300);
+    }
+
+    .doc-section li {
+      margin-bottom: 0.5rem;
+    }
+
+    /* Table styles in document */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      border: 1px solid var(--slate-800);
+      padding: 0.75rem 1rem;
+      text-align: left;
+    }
+
+    th {
+      background-color: var(--slate-900);
+      color: var(--slate-100);
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) {
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Callouts in document */
+    .doc-callout {
+      background-color: rgba(13, 148, 136, 0.05);
+      border-left: 4px solid var(--teal-500);
+      padding: 1.25rem;
+      border-radius: 0 0.75rem 0.75rem 0;
+      margin: 1.5rem 0;
+    }
+
+    .doc-callout.warning {
+      background-color: rgba(245, 158, 11, 0.05);
+      border-left-color: var(--amber-500);
+    }
+
+    .doc-callout-title {
+      font-weight: 700;
+      color: var(--slate-100);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge.active { background-color: rgba(45, 212, 191, 0.15); color: var(--teal-400); border: 1px solid rgba(45, 212, 191, 0.3); }
+    .badge.pending { background-color: rgba(245, 158, 11, 0.15); color: var(--amber-500); border: 1px solid rgba(245, 158, 11, 0.3); }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Footer Credits */
+    .page-footer {
+      background-color: var(--slate-950);
+      border-top: 1px solid var(--slate-800);
+      padding: 1.5rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--slate-400);
+    }
+
+    .page-footer a {
+      color: var(--teal-400);
+      text-decoration: none;
+    }
+    .page-footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* PRINT STYLING - Converts page automatically to NHS white-paper layout */
+    @media print {
+      body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        font-family: "Segoe UI", Arial, sans-serif !important;
+        font-size: 11pt !important;
+        line-height: 1.5 !important;
+      }
+
+      header, .page-footer, .slide-controls, #slide-mode, .print-action-btn, .nav-toggle-buttons {
+        display: none !important;
+      }
+
+      main {
+        padding: 0 !important;
+      }
+
+      #doc-mode {
+        display: block !important;
+        background: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+
+      .doc-section {
+        page-break-inside: avoid;
+        margin-bottom: 2rem;
+      }
+
+      .doc-section h2 {
+        color: #005eb8 !important; /* NHS Standard Blue */
+        border-bottom: 1.5pt solid #005eb8 !important;
+        font-size: 16pt !important;
+        margin-top: 2rem;
+      }
+
+      .doc-section h3 {
+        color: #000000 !important;
+        font-size: 12pt !important;
+      }
+
+      .doc-section p, .doc-section li, td {
+        color: #000000 !important;
+      }
+
+      table, tr, td, th {
+        border: 0.5pt solid #cccccc !important;
+        page-break-inside: avoid;
+      }
+
+      th {
+        background-color: #f0f4f8 !important;
+        color: #000000 !important;
+      }
+
+      .doc-callout {
+        background-color: #f8f9fa !important;
+        border-left: 3pt solid #005eb8 !important;
+        color: #000000 !important;
+        page-break-inside: avoid;
+      }
+
+      .doc-callout-title {
+        color: #000000 !important;
+      }
+
+      .badge {
+        border: 0.5pt solid #000000 !important;
+        background: none !important;
+        color: #000000 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Global Header -->
+  <header>
+    <div class="logo">
+      <div class="logo-badge">AS</div>
+      <div class="logo-text">
+        <h1>AnaesSOP</h1>
+        <span>Clinical Governance Database</span>
+      </div>
+    </div>
+    
+    <div class="nav-right">
+      <div class="nav-toggle-buttons">
+        <button id="btn-slide" class="toggle-btn active" onclick="setView('slide')">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="13" y2="17"></line></svg>
+          Slide Deck
+        </button>
+        <button id="btn-doc" class="toggle-btn" onclick="setView('doc')">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          Detailed Case
+        </button>
+      </div>
+
+      <button class="print-action-btn" onclick="triggerPrint()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        Print / Save PDF
+      </button>
+    </div>
+  </header>
+
+  <!-- Content Container -->
+  <main>
+
+    <!-- ================= SLIDE MODE AREA ================= -->
+    <div id="slide-mode">
+      <div class="slide-viewer">
+        
+        <!-- Slide 1 -->
+        <div class="slide active">
+          <div class="slide-title-area">
+            <div class="slide-subtitle">01 / Introduction</div>
+            <h2 class="slide-title">Point-of-Care Guideline Retrieval Friction</h2>
+          </div>
+          <div class="slide-body">
+            <div class="slide-layout-grid">
+              <div>
+                <p><strong>The Operational Threat:</strong></p>
+                <ul>
+                  <li>Finding a standard operating protocol (SOP) on current NHS intranets requires searching desktop terminals, wasting critical minutes.</li>
+                  <li>Handbooks and static binders suffer from wear, lack version control, and are physically bound to one location.</li>
+                  <li><strong>Lethal AI Hallucinations:</strong> Clinicians querying public AI (e.g. ChatGPT) for drug dilutions run massive safety risks due to decimal hallucinations.</li>
+                </ul>
+              </div>
+              <div class="graphic-container">
+                <div class="graphic-title">Traditional Retrieval Path</div>
+                <div>1. bed-crisis-identified</div>
+                <div>2. search-desktop-terminal (1m)</div>
+                <div>3. login-credentials (1m)</div>
+                <div>4. traverse-intranet-folders (1m)</div>
+                <div>5. download-unresponsive-pdf (1m)</div>
+                <div style="color:var(--red-500);font-weight:bold;">Total Delay: ~3-5 mins</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 2 -->
+        <div class="slide">
+          <div class="slide-title-area">
+            <div class="slide-subtitle">02 / Regulatory Exemption</div>
+            <h2 class="slide-title">Clinical Safety & SaMD Qualification</h2>
+          </div>
+          <div class="slide-body">
+            <p><strong>Bypassing Software as a Medical Device (SaMD) Exemption:</strong></p>
+            <ul>
+              <li>Dynamic drug calculators that evaluate patient parameters trigger strict MHRA device classifications (Class IIa/b), introducing severe legal liability.</li>
+              <li><strong>Mitigation Pathway:</strong> AnaesSOP implements a pre-calculated <strong>Tape-Scroller Lookup List</strong> at 1kg intervals, simulating a passive reference booklet.</li>
+              <li>Adjacent weight rows remain visible to verify calculation trends and instantly expose database typos, satisfying MHRA lookup verifiability rules.</li>
+            </ul>
+            <div class="alert-block">
+              <strong>Control Measure:</strong> Complies with NHS <strong>DCB0129 Clinical Safety Standards</strong>. Fully documented in the safety case file.
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 3 -->
+        <div class="slide">
+          <div class="slide-title-area">
+            <div class="slide-subtitle">03 / Data Security</div>
+            <h2 class="slide-title">Technical Security & Data Governance</h2>
+          </div>
+          <div class="slide-body">
+            <div class="slide-layout-grid">
+              <div>
+                <p><strong>Hardened Against the OWASP Top 10 API Security Risks:</strong></p>
+                <ul>
+                  <li><strong>Cryptographic Edge Validation:</strong> Requests verified on the Cloudflare Worker edge interface using SubtleCrypto APIs to validate Clerk JWT signature claims (`RS256`).</li>
+                  <li><strong>R2 Isolation Controls:</strong> Enforces single-file lookup constraints. Regular expression checks block path traversal (`..`, `/`, `\`) and wildcard listing parameters.</li>
+                  <li><strong>Response Security:</strong> Injects global CSP, HSTS, and `nosniff` headers on all pages and edge endpoints.</li>
+                </ul>
+              </div>
+              <div class="graphic-container">
+                <div class="graphic-title">Strict API Gating Policy</div>
+                <div>Client HTTP Ingest API Call</div>
+                <div> ↳ Validate: Bearer JWT?</div>
+                <div> ↳ Cryptographic Signature Verify?</div>
+                <div> ↳ Key Param Sanitized? (no * / ..)</div>
+                <div style="color:var(--teal-400);font-weight:bold;">Status: 200 Secure Response</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 4 -->
+        <div class="slide">
+          <div class="slide-title-area">
+            <div class="slide-subtitle">04 / Operational Impact</div>
+            <h2 class="slide-title">Operational Benefits & Governance Tools</h2>
+          </div>
+          <div class="slide-body">
+            <ul>
+              <li><strong>Audit Review Date Reminders:</strong> Automated dashboard reminders flag guidelines within 60 days of their review date to prevent clinical document expiry.</li>
+              <li><strong>Clinical Gap Analysis:</strong> Proactively maps the local Trust database against national bodies (e.g. AAGBI, Resus Council) to identify compliance gaps.</li>
+              <li><strong>Geofenced Contact Dialer:</strong> Auto-filters switchboard page extensions based on device GPS, with instant click-to-dial and large-text pager code lookup guidelines.</li>
+            </ul>
+            <div class="alert-block">
+              <strong>Emergency Bypass:</strong> High-risk emergency cognitive aids (LA Toxicity, Malignant Hyperthermia) bypass auth, loading in <strong>&lt; 3 seconds</strong>.
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 5 -->
+        <div class="slide">
+          <div class="slide-title-area">
+            <div class="slide-subtitle">05 / Execution Roadmap</div>
+            <h2 class="slide-title">Pilot Implementation Plan</h2>
+          </div>
+          <div class="slide-body">
+            <p><strong>A structured, phased 8-week rollout within the Department:</strong></p>
+            <ul>
+              <li><strong>Weeks 1-2 (Scope)</strong>: Ingest 10-15 core department guidelines and import switchboard contacts.</li>
+              <li><strong>Weeks 3-4 (Sandbox)</strong>: Verify Clerk authentication whitelists and run technical integration tests.</li>
+              <li><strong>Weeks 5-8 (Department Pilot)</strong>: Deploy PWA client to 20-30 department registrars/consultants. Capture bedside feedback logs.</li>
+              <li><strong>Week 9+ (Evaluation)</strong>: Present MTIR statistics (Time to retrieval) to Clinical Audit Leads for full scale deployment.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Slide 6 -->
+        <div class="slide">
+          <div class="slide-title-area">
+            <div class="slide-subtitle">06 / Governance Gating</div>
+            <h2 class="slide-title">Decisions & Inputs Required</h2>
+          </div>
+          <div class="slide-body">
+            <p><strong>Pending clearances required from the Governance Lead to go live:</strong></p>
+            <div class="alert-block warning" style="margin-top:0.5rem; margin-bottom:1rem;">
+              <strong>CSO Sign-Off:</strong> Approve CSO appointment and sign off the DCB0129 Clinical Safety Log.
+            </div>
+            <ul>
+              <li><strong>Guideline Selection:</strong> Confirm the core 10-15 guidelines to ingest for the pilot database.</li>
+              <li><strong>Extension Prefix Audit:</strong> Verify the registrar extension prefixes and emergency pager bleep codes.</li>
+              <li><strong>Email Domains:</strong> Whitelist specific NHS email domains allowed to access the database.</li>
+              <li><strong>Staging Nodes:</strong> Approve Cloudflare Serverless edge hosting for the duration of the pilot.</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Presentation Controls -->
+      <div class="slide-controls">
+        <div class="slide-nav-buttons">
+          <button id="prev-btn" class="nav-arrow" onclick="moveSlide(-1)" disabled>←</button>
+          <button id="next-btn" class="nav-arrow" onclick="moveSlide(1)">→</button>
+        </div>
+        <div class="progress-bar-container">
+          <div id="progress-indicator" class="progress-bar"></div>
+        </div>
+        <div id="slide-num" class="slide-counter">Slide 1 of 6</div>
+      </div>
+    </div>
+
+
+    <!-- ================= DOCUMENT MODE AREA ================= -->
+    <div id="doc-mode">
+      
+      <div class="doc-section">
+        <div style="text-align: center; margin-bottom: 3rem;">
+          <h1 style="font-family: 'Outfit', sans-serif; font-size: 2.2rem; color: var(--teal-400); margin-bottom: 0.5rem;">AnaesSOP Governance Business Case</h1>
+          <p style="color: var(--slate-400); font-size: 1rem;">Clinical Safety, Technical Security, and Departmental Pilot Roadmap</p>
+        </div>
+
+        <h2>1. Executive Summary</h2>
+        <p>
+          In acute clinical settings (Anaesthetics, Intensive Care, Emergency Medicine), rapid access to Standard Operating Procedures (SOPs) and emergency calculators directly impacts patient outcomes. The current infrastructure relies on desktop-bound intranet portals or physical binders, both of which introduce cognitive load, search latency, and security issues.
+        </p>
+        <p>
+          <strong>AnaesSOP</strong> is a secure, offline-first, mobile-friendly clinical guidelines retrieval system. Grounded strictly in verified departmental documents (hallucination-free RAG), it reduces guideline retrieval speeds from minutes to under three seconds, supporting clinicians at the point of care.
+        </p>
+      </div>
+
+      <div class="doc-section">
+        <h2>2. Clinical Safety & SaMD Regulatory Qualification</h2>
+        <p>
+          Under the UK MHRA stand-alone software guidelines and the EU Medical Device Regulation (MDR 2017/745), any software tool that accepts patient-specific parameters (such as weight) and performs dynamic calculations to determine drug dosages is classified as a regulated <strong>Medical Device (SaMD)</strong>.
+        </p>
+        <p>
+          To protect the Trust from regulatory liability, AnaesSOP uses a <strong>passive reference lookup scroller</strong>:
+        </p>
+        <ul>
+          <li><strong>Compile-Time Precalculation:</strong> Dynamic calculation functions are removed. Calculations are precalculated for every 1kg step (e.g. 10kg to 200kg) during compilation.</li>
+          <li><strong>Tape-Scroller Interface:</strong> Clinicians scroll a vertical list to highlight their target weight.</li>
+          <li><strong>Adjacent Context:</strong> Neighbouring weights and dosage outputs remain fully visible. This conforms to MHRA rules on user-verifiable lookups, allowing clinicians to instantly audit mathematical trends and catch typos.</li>
+          <li><strong>Grounded Verification:</strong> Every output links directly to the corresponding PDF guideline page.</li>
+        </ul>
+        <div class="doc-callout">
+          <div class="doc-callout-title">NHS DCB0129 Clinical Safety Standards</div>
+          A complete safety case and hazard log have been drafted to reduce clinical risks to "As Low As Reasonably Practicable" (ALARP). See the safety case file.
+        </div>
+      </div>
+
+      <div class="doc-section">
+        <h2>3. Technical Security & Data Governance (NHS DTAC Alignment)</h2>
+        <p>
+          To align with the Digital Technology Assessment Criteria (DTAC) requirements, the backend and Cloudflare Edge Worker routing have been hardened:
+        </p>
+        <ul>
+          <li><strong>Cryptographic Edge Validation:</strong> Enforces non-bypassable Clerk JWT signature validation using SubtleCrypto Web APIs on the worker's `/ingest` route, blocking unauthorized uploads.</li>
+          <li><strong>Single-File Constraints:</strong> R2 buckets are locked down. Input validation on `file` and `id` parameters blocks directory traversal (`..`, `/`, `\`) and key listing wildcards (`*`, `?`), preventing bucket enumeration attacks.</li>
+          <li><strong>Secure Headers:</strong> Enforces HSTS (`max-age=31536000; includeSubDomains; preload`), `X-Content-Type-Options: nosniff`, and a strict Content-Security-Policy (CSP) across routing logic.</li>
+          <li><strong>Zero PII Processing:</strong> The database only hosts public clinical guidelines and phone directories. No patient identifiable information (PII) is processed or stored.</li>
+        </ul>
+      </div>
+
+      <div class="doc-section">
+        <h2>4. Pilot Roadmap (8-Week Implementation)</h2>
+        <p>
+          A controlled rollout is proposed to evaluate usability and verify the Mean Time to Information Retrieval (MTIR) reduction before hospital-wide deployment:
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Phase</th>
+              <th>Timeline</th>
+              <th>Milestones & Deliverables</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1. Scope & Ingestion</strong></td>
+              <td>Weeks 1 - 2</td>
+              <td>Select 10-15 pilot guidelines; compile metadata; map site contact extensions.</td>
+            </tr>
+            <tr>
+              <td><strong>2. Staging Sandbox</strong></td>
+              <td>Weeks 3 - 4</td>
+              <td>Deploy staging edge nodes; connect Clerk authentication; test token forwarding.</td>
+            </tr>
+            <tr>
+              <td><strong>3. Departmental Pilot</strong></td>
+              <td>Weeks 5 - 8</td>
+              <td>Deploy Progressive Web App (PWA) to 20-30 clinicians; log bedside usability and MTIR telemetry.</td>
+            </tr>
+            <tr>
+              <td><strong>4. Evaluation</strong></td>
+              <td>Week 9+</td>
+              <td>Analyze audit logs and present performance statistics to the Clinical Audit Lead.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="doc-section">
+        <h2>5. Pending Governance Decisions & Pilot Gating</h2>
+        <p>
+          The following decisions and inputs must be resolved with the Trust Governance Lead before launching the pilot phase:
+        </p>
+        
+        <div class="doc-callout warning">
+          <div class="doc-callout-title">
+            <span class="badge pending">Action Needed</span>
+            CSO Assignment & Safety Log Sign-off
+          </div>
+          <p style="margin-bottom:0;">Designate a Clinical Safety Officer (CSO) within the department to officially audit, verify, and sign off the safety log case file.</p>
+        </div>
+
+        <div class="doc-callout warning">
+          <div class="doc-callout-title">
+            <span class="badge pending">Action Needed</span>
+            Confirm Pilot Guideline Database Scope
+          </div>
+          <p style="margin-bottom:0.5rem;">Approve the initial 10-15 guidelines. Recommended guidelines include: (1) LA Toxicity, (2) Malignant Hyperthermia, (3) Adult ALS, and (4) local Sedation Infusion SOPs.</p>
+          <p style="margin-bottom:0; font-style: italic;">User input required: Provide 5-10 additional high-frequency departmental SOPs.</p>
+        </div>
+
+        <div class="doc-callout warning">
+          <div class="doc-callout-title">
+            <span class="badge pending">Action Needed</span>
+            Audit Phonebook Directories & Dial Prefixes
+          </div>
+          <p style="margin-bottom:0;">Verify that the emergency crash lines, registrar extensions, and pagers extracted in the phonebook are accurate. Confirm landline routing prefixes for hospital mobile dialers.</p>
+        </div>
+
+        <div class="doc-callout warning">
+          <div class="doc-callout-title">
+            <span class="badge pending">Action Needed</span>
+            Define Authentication Domains Whitelist
+          </div>
+          <p style="margin-bottom:0;">Specify email domains permitted for sign-up (e.g., `@nhs.net` or local `@stgeorges.nhs.uk` domains).</p>
+        </div>
+
+        <div class="doc-callout warning">
+          <div class="doc-callout-title">
+            <span class="badge pending">Action Needed</span>
+            Approve Sandbox Serverless Hosting
+          </div>
+          <p style="margin-bottom:0;">Approve deploying the Progressive Web App (PWA) sandbox on Cloudflare UK edge servers for the duration of the pilot.</p>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="page-footer">
+    <p>Maintained by Sid Parashar. Developed under NHS DCB0129 Clinical Safety Standards.</p>
+    <p style="font-size:0.75rem; margin-top:0.25rem;">View the source code and documentation in the <a href="file:///c:/Users/Sid/Documents/NHS Employment/Anaesthetics/ST4 Anaesthesia/SOP RAG/" target="_blank">Project Workspace</a>.</p>
+  </footer>
+
+  <!-- Navigation and Slide Script -->
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const slideNum = document.getElementById('slide-num');
+    const progressIndicator = document.getElementById('progress-indicator');
+
+    function setView(mode) {
+      const slideBtn = document.getElementById('btn-slide');
+      const docBtn = document.getElementById('btn-doc');
+      const slideContainer = document.getElementById('slide-mode');
+      const docContainer = document.getElementById('doc-mode');
+
+      if (mode === 'slide') {
+        slideBtn.classList.add('active');
+        docBtn.classList.remove('active');
+        slideContainer.style.display = 'flex';
+        docContainer.style.display = 'none';
+      } else {
+        slideBtn.classList.remove('active');
+        docBtn.classList.add('active');
+        slideContainer.style.display = 'none';
+        docContainer.style.display = 'block';
+      }
+    }
+
+    function showSlide(index) {
+      slides.forEach((slide, i) => {
+        slide.classList.remove('active');
+        if (i === index) {
+          slide.classList.add('active');
+        }
+      });
+
+      // Update counter and buttons
+      slideNum.textContent = `Slide ${index + 1} of ${totalSlides}`;
+      progressIndicator.style.width = `${((index + 1) / totalSlides) * 100}%`;
+      
+      prevBtn.disabled = index === 0;
+      nextBtn.disabled = index === totalSlides - 1;
+    }
+
+    function moveSlide(direction) {
+      currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
+      showSlide(currentSlide);
+    }
+
+    // Keyboard Event Listeners for Presenting
+    document.addEventListener('keydown', (e) => {
+      const slideContainer = document.getElementById('slide-mode');
+      if (slideContainer.style.display !== 'none') {
+        if (e.key === 'ArrowRight' || e.key === 'Spacebar' || e.key === ' ') {
+          if (currentSlide < totalSlides - 1) moveSlide(1);
+          e.preventDefault();
+        } else if (e.key === 'ArrowLeft') {
+          if (currentSlide > 0) moveSlide(-1);
+          e.preventDefault();
+        }
+      }
+    });
+
+    function triggerPrint() {
+      // Force Document Mode layout on print
+      setView('doc');
+      window.print();
+    }
+
+    // Initial setup
+    showSlide(currentSlide);
+  </script>
+</body>
+</html>
