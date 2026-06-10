@@ -1,16 +1,15 @@
-import React, { useState, useMemo } from 'react';
-import { 
-  Search, 
-  Phone, 
-  X, 
-  Copy, 
-  ShieldAlert, 
+import React, { useState, useMemo, useEffect } from 'react';
+import {
+  Search,
+  Phone,
+  X,
+  Copy,
+  ShieldAlert,
   Info,
   Check,
   Building,
   SlidersHorizontal
 } from 'lucide-react';
-import phonebookData from '../data/phonebook.json';
 import { SITES, SiteId } from '../lib/sitesConfig';
 
 interface TrustPhonebookProps {
@@ -52,6 +51,34 @@ export default function TrustPhonebook({ currentSiteId, onSiteChange }: TrustPho
   const [showAllSites, setShowAllSites] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [copiedText, setCopiedText] = useState(false);
+
+  // Staff directory is fetched from the authenticated API instead of being
+  // bundled into the client JS (it contains real staff names/extensions).
+  const [phonebookData, setPhonebookData] = useState<Contact[]>([]);
+  const [isLoadingContacts, setIsLoadingContacts] = useState(true);
+  const [contactsError, setContactsError] = useState<string>('');
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadContacts = async () => {
+      try {
+        const res = await fetch('/api/phonebook');
+        if (!res.ok) {
+          throw new Error(res.status === 401 ? 'Sign in to view the phonebook.' : 'Could not load the directory.');
+        }
+        const data = await res.json();
+        if (!cancelled && data.success && Array.isArray(data.contacts)) {
+          setPhonebookData(data.contacts);
+        }
+      } catch (err: any) {
+        if (!cancelled) setContactsError(err.message || 'Could not load the directory.');
+      } finally {
+        if (!cancelled) setIsLoadingContacts(false);
+      }
+    };
+    loadContacts();
+    return () => { cancelled = true; };
+  }, []);
 
   // Active site configurations
   const activeSite = SITES[currentSiteId];
@@ -118,7 +145,7 @@ export default function TrustPhonebook({ currentSiteId, onSiteChange }: TrustPho
 
   // Filter and search contact records
   const filteredContacts = useMemo(() => {
-    return (phonebookData as Contact[]).filter(contact => {
+    return phonebookData.filter(contact => {
       // 1. Site Filter
       const contactSiteId = SITE_MAPPING[contact.site] || 'site_1'; // default empty/others to site_1 (St George's)
       if (!showAllSites && contactSiteId !== currentSiteId) {
@@ -146,7 +173,7 @@ export default function TrustPhonebook({ currentSiteId, onSiteChange }: TrustPho
 
       return true;
     });
-  }, [currentSiteId, selectedCategory, searchQuery, showAllSites]);
+  }, [phonebookData, currentSiteId, selectedCategory, searchQuery, showAllSites]);
 
   // Clean Bleep representation (remove leading '88' for switchboard representation)
   const getDisplayBleep = (bleep: string) => {
@@ -310,10 +337,26 @@ export default function TrustPhonebook({ currentSiteId, onSiteChange }: TrustPho
         ) : (
           <div className="p-12 text-center text-slate-600 flex flex-col items-center justify-center select-none">
             <Building className="w-12 h-12 text-slate-800 mb-3" />
-            <p className="font-semibold text-slate-400 text-sm">No contacts found</p>
-            <p className="text-xxs text-slate-600 max-w-xs mt-1 leading-normal">
-              Try adjusting your query or category filters, or toggle "Search All Sites".
-            </p>
+            {isLoadingContacts ? (
+              <>
+                <p className="font-semibold text-slate-400 text-sm animate-pulse">Loading directory…</p>
+                <p className="text-xxs text-slate-600 max-w-xs mt-1 leading-normal">
+                  Fetching the trust phonebook over a secure connection.
+                </p>
+              </>
+            ) : contactsError ? (
+              <>
+                <p className="font-semibold text-slate-400 text-sm">Directory unavailable</p>
+                <p className="text-xxs text-slate-600 max-w-xs mt-1 leading-normal">{contactsError}</p>
+              </>
+            ) : (
+              <>
+                <p className="font-semibold text-slate-400 text-sm">No contacts found</p>
+                <p className="text-xxs text-slate-600 max-w-xs mt-1 leading-normal">
+                  Try adjusting your query or category filters, or toggle "Search All Sites".
+                </p>
+              </>
+            )}
           </div>
         )}
       </div>

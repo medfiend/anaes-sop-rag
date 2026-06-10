@@ -146,6 +146,41 @@ async function verifyClerkJwt(token: string, env: Env): Promise<ClerkJwtPayload>
   return payload;
 }
 
+/**
+ * Assign each compiled section its most likely source page by keyword overlap
+ * against the per-page text extracted during upload. Citations can then
+ * deep-link to the right page instead of defaulting to page 1.
+ */
+function assignSourcePages(sections: any[], pageTexts: string[]): void {
+  if (!Array.isArray(pageTexts) || pageTexts.length === 0) return;
+  const normalizedPages = pageTexts.map((p) => (typeof p === 'string' ? p.toLowerCase() : ''));
+
+  for (const section of sections) {
+    const sample = `${section.title || ''} ${section.context || ''}`.toLowerCase();
+    // Distinctive terms only: ≥5 chars, deduped, capped to keep this cheap
+    const terms = Array.from(new Set(sample.split(/[^a-z0-9]+/).filter((w) => w.length >= 5))).slice(0, 40);
+    if (terms.length === 0) {
+      section.page = 1;
+      continue;
+    }
+
+    let bestPage = 1;
+    let bestScore = 0;
+    normalizedPages.forEach((pageText, idx) => {
+      let score = 0;
+      for (const term of terms) {
+        if (pageText.includes(term)) score++;
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        bestPage = idx + 1;
+      }
+    });
+
+    section.page = bestScore > 0 ? bestPage : 1;
+  }
+}
+
 function createSecureResponse(body: string | Uint8Array, status: number, contentType = 'application/json', extraHeaders: Record<string, string> = {}): Response {
   const headers = new Headers({
     'Content-Type': contentType,
@@ -231,7 +266,8 @@ export default {
         isReplacement,
         supersedesId,
         fileKey,
-        rawText
+        rawText,
+        pageTexts
       } = body;
 
       if (!documentId || !name || !rawText) {
@@ -491,6 +527,9 @@ ${rawText.substring(0, 12000)}`;
         summaryText = `### Clinical Overview for ${name}\n\nThis guideline provides Standard Operating Procedures and clinical protocols for ${name}. Review version ${version || 'v1.0.0'} and discuss details with the clinical owner.`;
       }
 
+      // 2.7 Map each section back to its most likely source page for citations
+      assignSourcePages(sections, pageTexts || []);
+
       // 3. Generate Qwen 1024-dimensional embeddings for each section
       const compiledSections = [];
       for (const section of sections) {
@@ -533,7 +572,10 @@ ${rawText.substring(0, 12000)}`;
         fileKey: finalFileKey,
         compiledAt: new Date().toISOString(),
         records: compiledSections,
-        calculator: calculator
+        calculator: calculator,
+        // LLM-generated calculators must be verified by an admin clinician in
+        // the sandbox before they are shown to end users (DCB0129 gate).
+        calculatorApproved: false
       };
 
       // Compile the lightweight summary JSON payload
@@ -551,7 +593,8 @@ ${rawText.substring(0, 12000)}`;
         fileKey: finalFileKey,
         summaryText,
         search_tags: Array.from(new Set(compiledSections.flatMap(s => s.synonyms || []))),
-        hasCalculator: !!calculator
+        hasCalculator: !!calculator,
+        calculator_approved: false
       };
 
       // 5. Upload compiled master and summary JSON files to R2 Bucket

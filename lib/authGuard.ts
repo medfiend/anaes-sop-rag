@@ -137,17 +137,48 @@ export async function requireAuth(req: Request): Promise<{ email: string } | Nex
 
 /**
  * Verify the request is from an authenticated admin user.
+ * Admin = email on the ADMIN_EMAILS allowlist, OR a Clerk user whose
+ * publicMetadata.role is "admin" (set in the Clerk dashboard) — so new
+ * admins can be added without a code change.
  */
 export async function requireAdmin(req: Request): Promise<{ email: string } | NextResponse> {
-  const result = await requireAuth(req);
-  if (result instanceof NextResponse) return result;
-
-  if (!ADMIN_EMAILS.includes(result.email.toLowerCase())) {
-    console.warn('[authGuard] requireAdmin: access denied for', result.email);
+  const user = await getVerifiedUser(req);
+  if (!user) {
+    console.warn('[authGuard] requireAdmin: no authenticated user found');
     return NextResponse.json(
-      { error: 'Access denied. Admin privileges required.' },
+      { error: 'Authentication required. Please sign in.' },
+      { status: 401 }
+    );
+  }
+
+  if (!isPermittedEmail(user.email)) {
+    console.warn('[authGuard] requireAdmin: non-NHS email rejected:', user.email);
+    return NextResponse.json(
+      { error: 'Access is restricted to NHS staff accounts (@nhs.net or .nhs.uk).' },
       { status: 403 }
     );
   }
-  return result;
+
+  if (ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+    return { email: user.email };
+  }
+
+  // Fall back to the Clerk role flag (skipped for the synthetic demo user)
+  if (user.userId !== 'demo-user-id') {
+    try {
+      const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
+      const clerkUser = await clerk.users.getUser(user.userId);
+      if ((clerkUser.publicMetadata as any)?.role === 'admin') {
+        return { email: user.email };
+      }
+    } catch (err: any) {
+      console.warn('[authGuard] requireAdmin: metadata lookup failed:', err.message || err);
+    }
+  }
+
+  console.warn('[authGuard] requireAdmin: access denied for', user.email);
+  return NextResponse.json(
+    { error: 'Access denied. Admin privileges required.' },
+    { status: 403 }
+  );
 }

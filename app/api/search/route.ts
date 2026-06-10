@@ -73,9 +73,11 @@ export async function POST(req: Request) {
                 // Re-format custom master JSON structure to match static db context
                 const steps = customMaster.records.map((r: any, idx: number) => ({
                   step_number: idx + 1,
-                  text: r.context
+                  text: r.context,
+                  page: r.page || 1
                 }));
 
+                const fileKey = customMaster.fileKey || '';
                 allGuidelines.push({
                   protocol_id: customMaster.documentId,
                   clinical: {
@@ -83,6 +85,8 @@ export async function POST(req: Request) {
                     steps
                   },
                   search_tags: customMaster.records[0]?.synonyms || [],
+                  pdf_name: fileKey.startsWith('guidelines/') ? fileKey.substring(11) : fileKey,
+                  default_page: customMaster.records[0]?.page || 1,
                   site_logistics: {
                     site_1: { hospital_name: "St George's Hospital", emergency_extension: "2222", drug_location: "Pharmacy", referral_pathway: "" }
                   }
@@ -123,12 +127,13 @@ export async function POST(req: Request) {
         const docName = doc.clinical.title;
         const stepsText = doc.clinical.steps.map((s: any) => `Step ${s.step_number}: ${s.text}`).join('\n');
         matchedContexts.push(`[Guideline Document: ${docName}]\n${stepsText}`);
-        
+
         citations.push({
           docId: doc.protocol_id,
           docName: doc.clinical.title,
-          page: 1, // default preview fallback page
-          highlight: { x0: 20, y0: 100, x1: 500, y1: 150 }
+          pdfName: doc.pdf_name || '',
+          // Prefer the page of the best-matching step, fall back to the doc default
+          page: matchedSteps[0]?.page || doc.default_page || 1
         });
       }
     }

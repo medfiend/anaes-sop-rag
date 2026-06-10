@@ -92,7 +92,7 @@ async function buildIndex(list: any[]): Promise<Orama<any>> {
           breadcrumbs: rec.breadcrumbs || [doc.name],
           docId: doc.id,
           pdfName: doc.pdf_name || '',
-          defaultPage: 1,
+          defaultPage: rec.page || 1,
         } as any);
       }
     } else {

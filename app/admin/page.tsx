@@ -8,7 +8,10 @@ import {
   LogOut, ArrowRight, Search
 } from 'lucide-react';
 import DoseCalculator from '../../components/DoseCalculator';
-import { mockGuidelines, mockCalculator } from '../../lib/supabaseClient';
+
+// Manually curated guidelines bundled with the app — their calculators were
+// hand-verified, so they are exempt from the dynamic approval workflow.
+const STATIC_GUIDELINE_IDS = ['la-toxicity', 'malignant-hyperthermia', 'resus-als', 'dexmed-sop-afoi', 'post-op-fossa'];
 
 export default function AdminDashboard() {
   const { user: clerkUser, isLoaded } = useUser();
@@ -214,11 +217,82 @@ export default function AdminDashboard() {
   }, [guidelines, policySearch, policyStatusFilter, policySort]);
 
 
-  // Sandbox state
-  const [calculatorState, setCalculatorState] = useState({
-    isApproved: false,
-    schema: mockCalculator.schema
-  });
+  // Review-date governance: flag guidelines overdue or approaching their review date
+  const REVIEW_SOON_DAYS = 90;
+  const reviewStatusFor = (doc: any): 'overdue' | 'due-soon' | 'ok' | 'unknown' => {
+    const raw = doc.date_next_review || doc.next_review;
+    if (!raw) return 'unknown';
+    const due = new Date(raw).getTime();
+    if (Number.isNaN(due)) return 'unknown';
+    const now = Date.now();
+    if (due < now) return 'overdue';
+    if (due - now < REVIEW_SOON_DAYS * 24 * 60 * 60 * 1000) return 'due-soon';
+    return 'ok';
+  };
+
+  const activeGuidelinesList = useMemo(
+    () => guidelines.filter(g => g.status !== 'superseded' && g.status !== 'Superseded'),
+    [guidelines]
+  );
+  const overdueGuidelines = useMemo(
+    () => activeGuidelinesList.filter(g => reviewStatusFor(g) === 'overdue'),
+    [activeGuidelinesList]
+  );
+  const dueSoonGuidelines = useMemo(
+    () => activeGuidelinesList.filter(g => reviewStatusFor(g) === 'due-soon'),
+    [activeGuidelinesList]
+  );
+
+  // Sandbox state: real dynamically-ingested calculators awaiting clinical sign-off
+  const [sandboxSelectedId, setSandboxSelectedId] = useState<string>('');
+  const [sandboxGuideline, setSandboxGuideline] = useState<any>(null);
+  const [isLoadingSandbox, setIsLoadingSandbox] = useState(false);
+  const [isSubmittingApproval, setIsSubmittingApproval] = useState(false);
+
+  // Custom guidelines with calculators, partitioned by approval state
+  const calculatorGuidelines = useMemo(
+    () => guidelines.filter(g =>
+      !STATIC_GUIDELINE_IDS.includes(g.id) &&
+      (g.hasCalculator || g.calculator)
+    ),
+    [guidelines]
+  );
+  const pendingCalculators = calculatorGuidelines.filter(g => g.calculator_approved !== true);
+  const approvedCalculators = calculatorGuidelines.filter(g => g.calculator_approved === true);
+
+  // Pull the full guideline (incl. calculator schema) when one is selected
+  useEffect(() => {
+    if (!sandboxSelectedId) {
+      setSandboxGuideline(null);
+      return;
+    }
+    let cancelled = false;
+    const fetchFull = async () => {
+      setIsLoadingSandbox(true);
+      try {
+        const res = await fetch(`/api/guidelines?id=${encodeURIComponent(sandboxSelectedId)}`);
+        const data = await res.json();
+        if (!cancelled && data.success && data.guideline) {
+          setSandboxGuideline(data.guideline);
+        }
+      } catch (err) {
+        console.error('Failed to load guideline for sandbox:', err);
+      } finally {
+        if (!cancelled) setIsLoadingSandbox(false);
+      }
+    };
+    fetchFull();
+    return () => { cancelled = true; };
+  }, [sandboxSelectedId]);
+
+  // Resolve an auth token (Clerk JWT, or demo passcode in demo mode)
+  const getAuthToken = async (): Promise<string | null> => {
+    if (isDemoMode) {
+      const match = document.cookie.match(/(^|;)\s*demo_passcode\s*=\s*([^;]+)/);
+      return match ? match[2] : null;
+    }
+    return await getToken();
+  };
 
   // Mock search gaps (guideline gaps log)
   const [searchGaps, setSearchGaps] = useState([
@@ -260,13 +334,7 @@ export default function AdminDashboard() {
       formData.append('isReplacement', isReplacement ? 'true' : 'false');
       formData.append('supersedesId', supersedesId);
 
-      let token = null;
-      if (isDemoMode) {
-        const match = document.cookie.match(/(^|;)\s*demo_passcode\s*=\s*([^;]+)/);
-        token = match ? match[2] : null;
-      } else {
-        token = await getToken();
-      }
+      const token = await getAuthToken();
       const headers: HeadersInit = {};
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
@@ -357,9 +425,38 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleApproveCalculator = () => {
-    setCalculatorState(prev => ({ ...prev, isApproved: true }));
-    showToast("Dose Calculator Approved & Published! Clinicians will now see the calculator widget when viewing this guideline.", "success");
+  const handleSetCalculatorApproval = async (documentId: string, approved: boolean) => {
+    setIsSubmittingApproval(true);
+    try {
+      const token = await getAuthToken();
+      const headers: HeadersInit = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/calculator-approval', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ documentId, approved })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Approval request failed.');
+      }
+
+      // Reflect the new state locally
+      setGuidelines(prev => prev.map(g => g.id === documentId ? { ...g, calculator_approved: approved } : g));
+      setSandboxGuideline((prev: any) => prev && prev.id === documentId ? { ...prev, calculator_approved: approved } : prev);
+      showToast(
+        approved
+          ? "Dose Calculator approved & published. Clinicians will now see the calculator when viewing this guideline."
+          : "Calculator approval revoked. The calculator is hidden from clinicians until re-approved.",
+        "success"
+      );
+    } catch (err: any) {
+      console.error('Calculator approval failed:', err);
+      showToast(`Approval failed: ${err.message}`, "error");
+    } finally {
+      setIsSubmittingApproval(false);
+    }
   };
 
   if (!loaded) {
@@ -510,11 +607,39 @@ export default function AdminDashboard() {
                   <span className="bg-red-500/10 border border-red-500/20 text-red-500 px-2.5 py-1 rounded text-xxs font-medium flex items-center gap-1">
                     {guidelines.filter(g => g.status === 'superseded' || g.status === 'Superseded').length} Superseded
                   </span>
+                  <span className="bg-red-500/10 border border-red-500/20 text-red-400 px-2.5 py-1 rounded text-xxs font-medium flex items-center gap-1">
+                    {overdueGuidelines.length} Review Overdue
+                  </span>
                   <span className="bg-amber-500/10 border border-amber-500/20 text-amber-500 px-2.5 py-1 rounded text-xxs font-medium flex items-center gap-1">
-                    {guidelines.filter(g => g.id === 'la-toxicity-guideline-uuid').length} Warning
+                    {dueSoonGuidelines.length} Due ≤{REVIEW_SOON_DAYS}d
                   </span>
                 </div>
               </div>
+
+              {/* Review-date governance banner */}
+              {(overdueGuidelines.length > 0 || dueSoonGuidelines.length > 0) && (
+                <div className="bg-slate-950/60 border border-amber-500/30 rounded-xl p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-500" />
+                    <span className="text-xs font-bold text-amber-500 uppercase tracking-wide">Review schedule attention required</span>
+                  </div>
+                  {overdueGuidelines.length > 0 && (
+                    <p className="text-xxs text-slate-300 leading-relaxed">
+                      <strong className="text-red-400">Overdue:</strong>{' '}
+                      {overdueGuidelines.map(g => `${g.name} (due ${new Date(g.date_next_review || g.next_review).toLocaleDateString()})`).join('; ')}
+                    </p>
+                  )}
+                  {dueSoonGuidelines.length > 0 && (
+                    <p className="text-xxs text-slate-300 leading-relaxed">
+                      <strong className="text-amber-400">Due within {REVIEW_SOON_DAYS} days:</strong>{' '}
+                      {dueSoonGuidelines.map(g => `${g.name} (due ${new Date(g.date_next_review || g.next_review).toLocaleDateString()})`).join('; ')}
+                    </p>
+                  )}
+                  <p className="text-[10px] text-slate-500">
+                    Contact the named owner to re-validate, then upload the revised version with "Replaces existing guideline" checked.
+                  </p>
+                </div>
+              )}
 
               {/* Filters Toolbar */}
               <div className="flex flex-col sm:flex-row gap-3 bg-slate-950/40 p-4 rounded-xl border border-slate-800">
@@ -570,16 +695,18 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   filteredAndSortedGuidelines.map(doc => {
-                    const isNearExpiry = doc.id === 'la-toxicity-guideline-uuid'; // mock warning
+                    const reviewStatus = reviewStatusFor(doc);
                     const isSuperseded = doc.status === 'superseded' || doc.status === 'Superseded';
                     return (
-                      <div 
+                      <div
                         key={doc.id}
                         className={`bg-slate-950/60 border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-all duration-200 ${
                           isSuperseded
                             ? 'border-red-950/50 bg-red-950/5 opacity-60'
-                            : isNearExpiry 
-                            ? 'border-amber-500/30 bg-amber-500/5' 
+                            : reviewStatus === 'overdue'
+                            ? 'border-red-500/40 bg-red-500/5'
+                            : reviewStatus === 'due-soon'
+                            ? 'border-amber-500/30 bg-amber-500/5'
                             : 'border-slate-800 hover:border-slate-700'
                         }`}
                       >
@@ -602,8 +729,14 @@ export default function AdminDashboard() {
                         <div className="flex items-center gap-4 border-t border-slate-800 sm:border-0 pt-3 sm:pt-0 justify-between shrink-0">
                           <div className="text-right">
                             <span className="text-xxs text-slate-500 block uppercase">Review Required</span>
-                            <span className={`text-xs font-semibold ${isNearExpiry ? 'text-amber-500' : 'text-slate-300'}`}>
-                              {new Date(doc.date_next_review).toLocaleDateString()}
+                            <span className={`text-xs font-semibold ${
+                              reviewStatus === 'overdue' ? 'text-red-400' : reviewStatus === 'due-soon' ? 'text-amber-500' : 'text-slate-300'
+                            }`}>
+                              {doc.date_next_review || doc.next_review
+                                ? new Date(doc.date_next_review || doc.next_review).toLocaleDateString()
+                                : 'Not set'}
+                              {reviewStatus === 'overdue' && <span className="block text-[9px] uppercase tracking-wider font-bold text-red-400">Overdue</span>}
+                              {reviewStatus === 'due-soon' && <span className="block text-[9px] uppercase tracking-wider font-bold text-amber-500">Due soon</span>}
                             </span>
                           </div>
 
@@ -612,9 +745,13 @@ export default function AdminDashboard() {
                               <span className="bg-red-500/10 border border-red-500/20 text-red-400 px-2.5 py-1.5 rounded-lg text-xxs font-medium flex items-center gap-1">
                                 🚫 Superseded
                               </span>
-                            ) : isNearExpiry ? (
+                            ) : reviewStatus === 'overdue' ? (
+                              <span className="bg-red-500/10 border border-red-500/20 text-red-400 px-2.5 py-1.5 rounded-lg text-xxs font-medium flex items-center gap-1">
+                                ⚠️ Review Overdue
+                              </span>
+                            ) : reviewStatus === 'due-soon' ? (
                               <span className="bg-amber-500/10 border border-amber-500/20 text-amber-500 px-2.5 py-1.5 rounded-lg text-xxs font-medium flex items-center gap-1">
-                                ⚠️ Warning (T-30 Alert sent to Owner)
+                                ⚠️ Review Due Soon
                               </span>
                             ) : (
                               <span className="bg-teal-500/10 border border-teal-500/20 text-teal-400 px-2.5 py-1.5 rounded-lg text-xxs font-medium flex items-center gap-1">
@@ -855,64 +992,143 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* Tab 3: Dose Calculator Sandbox Preview */}
+          {/* Tab 3: Dose Calculator Sandbox & Clinical Approval */}
           {activeTab === 'sandbox' && (
             <div className="space-y-6">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div>
                   <h2 className="text-sm font-bold uppercase tracking-wider text-slate-200">Calculator Sandbox</h2>
-                  <p className="text-xxs text-slate-500 mt-1">Verify AI-scaffolded calculations and approve before clinical release.</p>
+                  <p className="text-xxs text-slate-500 mt-1">
+                    AI-scaffolded calculators are hidden from clinicians until verified and approved here (DCB0129 gate).
+                  </p>
                 </div>
+                {pendingCalculators.length > 0 && (
+                  <span className="bg-amber-500/10 border border-amber-500/20 text-amber-500 px-2.5 py-1 rounded text-xxs font-medium">
+                    {pendingCalculators.length} Awaiting Approval
+                  </span>
+                )}
               </div>
 
-              {/* Sandbox Split Screen */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                {/* Left: Metadata details */}
+
+                {/* Left: Pending / approved calculator list */}
                 <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5 space-y-4">
-                  <h3 className="text-xs font-bold text-slate-200 border-b border-slate-850 pb-2">Scaffolded Properties</h3>
-                  
-                  <div className="space-y-3 text-xxs leading-relaxed">
-                    <div>
-                      <span className="text-slate-500 block uppercase font-bold">Guideline Reference:</span>
-                      <span className="text-slate-300 text-xs font-medium">Dexmed SOP for AFOI.KD..pdf</span>
+                  <h3 className="text-xs font-bold text-slate-200 border-b border-slate-850 pb-2">Dynamic Calculators</h3>
+
+                  {calculatorGuidelines.length === 0 && (
+                    <p className="text-xxs text-slate-500 leading-relaxed">
+                      No dynamically generated calculators yet. Upload a guideline containing dosing
+                      instructions and the AI compiler will scaffold one for review here.
+                    </p>
+                  )}
+
+                  {pendingCalculators.length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Awaiting clinical sign-off</span>
+                      {pendingCalculators.map(g => (
+                        <button
+                          key={g.id}
+                          onClick={() => setSandboxSelectedId(g.id)}
+                          className={`w-full text-left p-2.5 rounded-lg border text-xs transition-colors ${
+                            sandboxSelectedId === g.id
+                              ? 'border-amber-500/50 bg-amber-500/10 text-amber-300'
+                              : 'border-slate-800 bg-slate-900/40 text-slate-300 hover:border-amber-500/30'
+                          }`}
+                        >
+                          <span className="font-semibold block truncate">{g.name}</span>
+                          <span className="text-[10px] text-slate-500">v{(g.version || '1.0.0').replace(/^v/, '')} • {g.owner_email}</span>
+                        </button>
+                      ))}
                     </div>
-                    <div>
-                      <span className="text-slate-500 block uppercase font-bold">Detected Calculations:</span>
-                      <span className="text-slate-300">BMI adjustments, Devine Ideal Body Weight, Adjusted Weight, Loading infusion ml/h, Maintenance titration.</span>
+                  )}
+
+                  {approvedCalculators.length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-bold text-teal-500 uppercase tracking-wider">Approved & live</span>
+                      {approvedCalculators.map(g => (
+                        <button
+                          key={g.id}
+                          onClick={() => setSandboxSelectedId(g.id)}
+                          className={`w-full text-left p-2.5 rounded-lg border text-xs transition-colors ${
+                            sandboxSelectedId === g.id
+                              ? 'border-teal-500/50 bg-teal-500/10 text-teal-300'
+                              : 'border-slate-800 bg-slate-900/40 text-slate-300 hover:border-teal-500/30'
+                          }`}
+                        >
+                          <span className="font-semibold block truncate">{g.name}</span>
+                          <span className="text-[10px] text-slate-500">
+                            Approved {g.calculator_approved_at ? new Date(g.calculator_approved_at).toLocaleDateString() : ''}
+                            {g.calculator_approved_by ? ` by ${g.calculator_approved_by}` : ''}
+                          </span>
+                        </button>
+                      ))}
                     </div>
-                    <div>
-                      <span className="text-slate-500 block uppercase font-bold">Schema Status:</span>
-                      {calculatorState.isApproved ? (
-                        <span className="text-teal-400 font-semibold bg-teal-500/10 border border-teal-500/20 px-2 py-0.5 rounded inline-block mt-1">
-                          Published & Active
-                        </span>
-                      ) : (
-                        <span className="text-amber-500 font-semibold bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded inline-block mt-1">
-                          Draft (Awaiting verification)
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  )}
 
                   <div className="bg-slate-900 border border-slate-850 rounded-xl p-4 text-xxs text-slate-500 space-y-2 leading-relaxed mt-4">
-                    <span className="font-bold text-amber-500 uppercase block mb-1">Sandboxing Instructions:</span>
-                    <p>1. Open the calculator on the right.</p>
-                    <p>2. Put in test values: Male, 180cm, 100kg.</p>
-                    <p>3. Confirm outputs: Dosing Weight = <strong>85.12 kg</strong>, Loading rate = <strong>127.68 ml/h</strong>, Maintenance rate (0.4) = <strong>8.51 ml/h</strong>.</p>
-                    <p>4. Verify the figures align exactly with the SOP formulas on Page 9.</p>
-                    <p>5. Click <strong>Approve & Publish</strong> to make it active for all clinicians.</p>
+                    <span className="font-bold text-amber-500 uppercase block mb-1">Verification Instructions:</span>
+                    <p>1. Select a calculator and open the interactive preview on the right.</p>
+                    <p>2. Enter boundary test values (min/max weight, both genders where relevant).</p>
+                    <p>3. Cross-check every output row against the formulas in the source PDF.</p>
+                    <p>4. Only click <strong>Approve &amp; Publish</strong> once every figure matches the SOP exactly.</p>
+                    <p>5. Approvals are written to the audit log with your email and timestamp.</p>
                   </div>
                 </div>
 
-                {/* Right: Dynamic Interactive Sandbox widget */}
-                <div className="lg:col-span-2">
-                  <DoseCalculator 
-                    schema={calculatorState.schema as any} 
-                    isSandbox={true} 
-                    onApprove={handleApproveCalculator}
-                    isApproved={calculatorState.isApproved}
-                  />
+                {/* Right: Interactive sandbox preview + approval actions */}
+                <div className="lg:col-span-2 space-y-4">
+                  {!sandboxSelectedId && (
+                    <div className="bg-slate-950/40 border border-dashed border-slate-800 rounded-2xl p-10 text-center text-slate-500 text-xs">
+                      Select a calculator from the list to preview and verify it.
+                    </div>
+                  )}
+
+                  {sandboxSelectedId && isLoadingSandbox && (
+                    <div className="bg-slate-950/40 border border-slate-800 rounded-2xl p-10 text-center">
+                      <span className="text-teal-400 text-xs font-bold animate-pulse">Loading calculator schema from edge…</span>
+                    </div>
+                  )}
+
+                  {sandboxSelectedId && !isLoadingSandbox && sandboxGuideline && !sandboxGuideline.calculator && (
+                    <div className="bg-slate-950/40 border border-slate-800 rounded-2xl p-10 text-center text-slate-500 text-xs">
+                      This guideline has no calculator schema in its compiled index.
+                    </div>
+                  )}
+
+                  {sandboxSelectedId && !isLoadingSandbox && sandboxGuideline?.calculator && (
+                    <>
+                      <DoseCalculator
+                        schema={sandboxGuideline.calculator as any}
+                        isSandbox={true}
+                        onApprove={() => handleSetCalculatorApproval(sandboxGuideline.id, true)}
+                        isApproved={sandboxGuideline.calculator_approved === true}
+                      />
+                      <div className="flex items-center justify-between bg-slate-950/60 border border-slate-800 rounded-xl p-3">
+                        <span className="text-xxs text-slate-500">
+                          {sandboxGuideline.calculator_approved === true
+                            ? 'This calculator is live for all clinicians.'
+                            : 'This calculator is hidden from clinicians until approved.'}
+                        </span>
+                        {sandboxGuideline.calculator_approved === true ? (
+                          <button
+                            disabled={isSubmittingApproval}
+                            onClick={() => handleSetCalculatorApproval(sandboxGuideline.id, false)}
+                            className="bg-red-600/80 hover:bg-red-600 text-white text-xxs font-bold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            {isSubmittingApproval ? 'Updating…' : 'Revoke Approval'}
+                          </button>
+                        ) : (
+                          <button
+                            disabled={isSubmittingApproval}
+                            onClick={() => handleSetCalculatorApproval(sandboxGuideline.id, true)}
+                            className="bg-teal-500 hover:bg-teal-400 text-slate-950 text-xxs font-bold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            {isSubmittingApproval ? 'Publishing…' : 'Approve & Publish'}
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
 
               </div>

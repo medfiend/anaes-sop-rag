@@ -50,7 +50,10 @@ export async function GET(req: Request) {
             pdf_name: masterData.fileKey.startsWith('guidelines/') ? masterData.fileKey.substring(11) : masterData.fileKey,
             fileKey: masterData.fileKey,
             records: masterData.records || [],
-            calculator: masterData.calculator
+            calculator: masterData.calculator,
+            calculator_approved: masterData.calculatorApproved === true,
+            calculator_approved_by: masterData.calculatorApprovedBy || null,
+            calculator_approved_at: masterData.calculatorApprovedAt || null
           };
 
           return NextResponse.json({ success: true, guideline: fullGuideline });

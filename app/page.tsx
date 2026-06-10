@@ -19,6 +19,10 @@ const WELCOME_MESSAGE = {
   text: `Welcome to **AnaesSOP** clinical governance database. Search or query active guidelines above. For high-stress events, you can access the emergency aid buttons anytime.`
 };
 
+// Manually curated guidelines bundled with the app. Their calculators were
+// hand-verified, so they bypass the dynamic-calculator approval gate.
+const STATIC_GUIDELINE_IDS = ['la-toxicity', 'malignant-hyperthermia', 'resus-als', 'dexmed-sop-afoi', 'post-op-fossa'];
+
 export default function Home() {
   const { executeSearch, guidelines, setGuidelines } = useSearch();
   const [pullingThroughGuidelineId, setPullingThroughGuidelineId] = useState<string>('');
@@ -51,7 +55,13 @@ export default function Home() {
 
   const handleDemoSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const expected = process.env.NEXT_PUBLIC_DEMO_PASSCODE || 'NHS2026';
+    // No hardcoded fallback: demo login is impossible unless the deployment
+    // explicitly configures a passcode.
+    const expected = process.env.NEXT_PUBLIC_DEMO_PASSCODE;
+    if (!expected) {
+      setDemoError('Demo mode is not configured on this deployment. Contact the administrator.');
+      return;
+    }
     if (demoPasscode === expected) {
       sessionStorage.setItem('demo-auth', 'true');
       document.cookie = `demo_passcode=${demoPasscode}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
@@ -202,7 +212,7 @@ export default function Home() {
     if (!current) return;
     
     // If it's a custom guideline and records aren't loaded yet
-    const isStatic = ['la-toxicity', 'malignant-hyperthermia', 'resus-als', 'dexmed-sop-afoi', 'post-op-fossa'].includes(activeGuidelineId);
+    const isStatic = STATIC_GUIDELINE_IDS.includes(activeGuidelineId);
     const hasRecords = current.records && current.records.length > 0;
     
     if (!isStatic && !hasRecords) {
@@ -341,8 +351,7 @@ export default function Home() {
           docId: match.docId,
           docName: match.title,
           pdfName: match.pdfName,
-          page: match.defaultPage || 1, // Jump to the correct page of the guideline!
-          highlight: { x0: 20, y0: 100, x1: 500, y1: 150 }
+          page: match.defaultPage || 1 // Jump to the correct page of the guideline!
         }));
 
         // Auto select the active guideline for the calculator widget
@@ -779,8 +788,7 @@ export default function Home() {
                                   docId: match.docId,
                                   docName: match.title,
                                   pdfName: match.pdfName,
-                                  page: match.defaultPage || 1,
-                                  highlight: { x0: 20, y0: 100, x1: 500, y1: 150 }
+                                  page: match.defaultPage || 1
                                 }] : [];
 
                                 setChatHistory([
@@ -858,8 +866,7 @@ export default function Home() {
                                   docId: id,
                                   docName: name,
                                   pdfName,
-                                  page: gl.default_page || 1,
-                                  highlight: { x0: 20, y0: 100, x1: 500, y1: 150 }
+                                  page: gl.default_page || 1
                                 }] : [],
                                 guidelineId: id
                               }
@@ -953,7 +960,13 @@ export default function Home() {
                       const activeGuideline = guidelines.find(g => g.id === msg.guidelineId);
                       if (!activeGuideline) return null;
 
-                      const hasCalc = !!activeGuideline.calculator;
+                      // DCB0129 gate: dynamically generated calculators are only
+                      // shown once an admin clinician has approved them in the
+                      // sandbox. Hand-curated static calculators are exempt.
+                      const calcApproved = STATIC_GUIDELINE_IDS.includes(activeGuideline.id)
+                        || activeGuideline.calculator_approved === true;
+                      const hasCalc = !!activeGuideline.calculator && calcApproved;
+                      const hasPendingCalc = !!activeGuideline.calculator && !calcApproved;
                       const calcSchema = activeGuideline.calculator;
                       const considerations = activeGuideline.records 
                         ? activeGuideline.records 
@@ -975,6 +988,23 @@ export default function Home() {
                                 </span>
                               </div>
                               <DoseCalculator schema={calcSchema as any} isApproved={true} />
+                            </div>
+                          )}
+
+                          {/* Calculator pending clinical approval notice */}
+                          {hasPendingCalc && (
+                            <div className="flex gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
+                              <Calculator className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                              <div className="flex-1">
+                                <p className="text-[11px] font-bold text-amber-500 mb-0.5 uppercase tracking-wide">
+                                  Dose calculator awaiting clinical approval
+                                </p>
+                                <p className="text-[10px] text-amber-200/70 leading-relaxed">
+                                  An auto-generated dose calculator exists for this guideline but has not yet been
+                                  verified by the clinical governance lead. Refer to the source PDF for dosing until
+                                  it is approved.
+                                </p>
+                              </div>
                             </div>
                           )}
 

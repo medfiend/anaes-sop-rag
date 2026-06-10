@@ -2,6 +2,11 @@
 const nextConfig = {
   reactStrictMode: true,
   serverExternalPackages: ['pdfjs-dist'],
+  // Trust SOP PDFs are served from guidelines/ via the authenticated
+  // /api/pdf route; include them in the serverless function bundle.
+  outputFileTracingIncludes: {
+    '/api/pdf': ['./guidelines/**'],
+  },
   async headers() {
     return [
       {

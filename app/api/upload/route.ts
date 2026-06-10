@@ -12,10 +12,23 @@ const generateUUID = () => {
     : Math.random().toString(36).substring(2, 15);
 };
 
-async function extractTextFromPdfBuffer(buffer: Buffer): Promise<string> {
+/**
+ * Extract full text AND per-page text from the PDF. Page texts let the worker
+ * assign a real source page to each compiled record so citations deep-link to
+ * the correct page instead of defaulting to page 1.
+ */
+async function extractTextFromPdfBuffer(buffer: Buffer): Promise<{ text: string; pageTexts: string[] }> {
   const pdf = require('pdf-parse/lib/pdf-parse.js');
-  const result = await pdf(buffer);
-  return result.text || '';
+  const pageTexts: string[] = [];
+  const result = await pdf(buffer, {
+    pagerender: async (pageData: any) => {
+      const textContent = await pageData.getTextContent();
+      const pageText = textContent.items.map((item: any) => item.str).join(' ');
+      pageTexts.push(pageText);
+      return pageText;
+    }
+  });
+  return { text: result.text || '', pageTexts };
 }
 
 export async function POST(req: Request) {
@@ -152,8 +165,12 @@ export async function POST(req: Request) {
 
         sendStatus('AI Worker Compilation', { progress: 55, msg: "Extracting raw text from guideline PDF locally..." });
         let rawText = "";
+        let pageTexts: string[] = [];
         try {
-          rawText = await extractTextFromPdfBuffer(buffer);
+          const extracted = await extractTextFromPdfBuffer(buffer);
+          rawText = extracted.text;
+          // Cap per-page payload so very large PDFs don't blow up the worker request
+          pageTexts = extracted.pageTexts.slice(0, 300).map(t => t.substring(0, 4000));
         } catch (parseErr: any) {
           throw new Error(`PDF Text Extraction failed: ${parseErr.message}`);
         }
@@ -186,7 +203,8 @@ export async function POST(req: Request) {
             isReplacement,
             supersedesId,
             fileKey,
-            rawText
+            rawText,
+            pageTexts
           })
         });
 

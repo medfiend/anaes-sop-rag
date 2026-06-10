@@ -25,16 +25,15 @@ export async function GET(req: Request) {
       return new Response("Invalid file path", { status: 400 });
     }
 
-    // 2. Check if the file exists locally in the public folder
-    const publicFilePath = path.join(process.cwd(), 'public', file);
-    const altPublicFilePath = path.join(process.cwd(), 'public', `guidelines/${file}`);
-    
-    let localPath = '';
-    if (fs.existsSync(publicFilePath)) {
-      localPath = publicFilePath;
-    } else if (fs.existsSync(altPublicFilePath)) {
-      localPath = altPublicFilePath;
-    }
+    // 2. Check local folders. Trust SOP PDFs live in guidelines/ (NOT public/)
+    // so they are only reachable through this authenticated route; only the
+    // QRH emergency handbook remains in public/ for zero-auth crisis access.
+    const candidatePaths = [
+      path.join(process.cwd(), 'guidelines', file),
+      path.join(process.cwd(), 'public', file),
+      path.join(process.cwd(), 'public', `guidelines/${file}`),
+    ];
+    const localPath = candidatePaths.find(p => fs.existsSync(p)) || '';
 
     if (localPath) {
       const fileBuffer = fs.readFileSync(localPath);
@@ -42,7 +41,7 @@ export async function GET(req: Request) {
         headers: {
           'Content-Type': 'application/pdf',
           'Content-Disposition': `inline; filename="${encodeURIComponent(file)}"`,
-          'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
+          'Cache-Control': 'private, max-age=86400', // authenticated content — browser cache only
         }
       });
     }
@@ -87,7 +86,7 @@ export async function GET(req: Request) {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `inline; filename="${encodeURIComponent(file)}"`,
-        'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+        'Cache-Control': 'private, max-age=3600', // authenticated content — browser cache only
       }
     });
 
