@@ -42,7 +42,74 @@ export default function AdminDashboard() {
     }
   };
 
-  const [activeTab, setActiveTab] = useState<'policies' | 'upload' | 'sandbox' | 'gaps' | 'feedbacks'>('policies');
+  const [activeTab, setActiveTab] = useState<'policies' | 'upload' | 'sandbox' | 'gaps' | 'feedbacks' | 'mtir'>('policies');
+  
+  // MTIR simulation study states
+  const [mtirStats, setMtirStats] = useState<any>(null);
+  const [isLoadingMtir, setIsLoadingMtir] = useState<boolean>(false);
+  const [mtirRole, setMtirRole] = useState('ST4');
+  const [mtirTask, setMtirTask] = useState('la-toxicity');
+  const [mtirTimeSec, setMtirTimeSec] = useState('');
+  const [mtirAccuracy, setMtirAccuracy] = useState('1.0');
+  const [mtirSuccess, setMtirSuccess] = useState(true);
+  const [mtirDevice, setMtirDevice] = useState('mobile');
+  const [isSubmittingMtir, setIsSubmittingMtir] = useState(false);
+
+  const fetchMtirStats = async () => {
+    setIsLoadingMtir(true);
+    try {
+      const res = await fetch('/api/analytics/mtir');
+      const data = await res.json();
+      if (data.success && data.stats) {
+        setMtirStats(data.stats);
+      }
+    } catch (err) {
+      console.error("Failed to fetch MTIR stats:", err);
+    } finally {
+      setIsLoadingMtir(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'mtir' && isAdmin) {
+      fetchMtirStats();
+    }
+  }, [activeTab, isAdmin]);
+
+  const handleMtirSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mtirTimeSec) return;
+    setIsSubmittingMtir(true);
+    try {
+      const res = await fetch('/api/analytics/mtir', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          study_arm: 'baseline',
+          registrar_role: mtirRole,
+          task_id: mtirTask,
+          time_taken_ms: parseFloat(mtirTimeSec) * 1000,
+          is_successful: mtirSuccess ? 1 : 0,
+          accuracy_score: parseFloat(mtirAccuracy),
+          device_platform: mtirDevice,
+          connection_status: 'online'
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("Baseline simulation run logged successfully!", "success");
+        setMtirTimeSec('');
+        fetchMtirStats();
+      } else {
+        showToast(data.error || "Failed to log run.", "error");
+      }
+    } catch (err) {
+      console.error("Failed to log MTIR baseline run:", err);
+      showToast("Error submitting baseline run.", "error");
+    } finally {
+      setIsSubmittingMtir(false);
+    }
+  };
   
   // Guidelines state
   const [guidelines, setGuidelines] = useState<any[]>([]);
@@ -418,6 +485,16 @@ export default function AdminDashboard() {
           >
             <Mail className="w-4 h-4" />
             Clinician Feedback
+          </button>
+
+          <button
+            onClick={() => setActiveTab('mtir')}
+            className={`w-full text-left p-3 rounded-lg text-xs font-semibold flex items-center gap-2.5 transition-colors ${
+              activeTab === 'mtir' ? 'bg-teal-500 text-slate-950' : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
+            }`}
+          >
+            <Activity className="w-4 h-4" />
+            MTIR Simulation Study
           </button>
         </nav>
 
@@ -933,6 +1010,253 @@ export default function AdminDashboard() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Tab 6: MTIR Simulation Study */}
+          {activeTab === 'mtir' && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-3 gap-2">
+                <div>
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-slate-200">MTIR Simulation Study</h2>
+                  <p className="text-xxs text-slate-500 mt-1">
+                    Compare Mean Time to Information Retrieval (MTIR) and look-up accuracy between traditional intranet/binders and the AnaesSOP RAG system.
+                  </p>
+                </div>
+                <button
+                  onClick={fetchMtirStats}
+                  disabled={isLoadingMtir}
+                  className="bg-slate-950 border border-slate-800 hover:bg-slate-900 text-slate-300 font-semibold px-3 py-1.5 rounded-lg text-xxs flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                >
+                  <Activity className={`w-3.5 h-3.5 ${isLoadingMtir ? 'animate-spin' : ''}`} />
+                  Refresh Stats
+                </button>
+              </div>
+
+              {isLoadingMtir && !mtirStats ? (
+                <div className="text-center py-12 text-xs text-slate-500 animate-pulse">
+                  Loading MTIR telemetry from D1 database...
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  
+                  {/* Left: Baseline Entry Form */}
+                  <div className="lg:col-span-1 bg-slate-950/60 border border-slate-800 rounded-2xl p-5 space-y-4">
+                    <div>
+                      <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Log Baseline Run</h3>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Record look-up times using traditional desktop intranet or physical folders.</p>
+                    </div>
+
+                    <form onSubmit={handleMtirSubmit} className="space-y-3.5">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase">Registrar Role</label>
+                        <select
+                          value={mtirRole}
+                          onChange={(e) => setMtirRole(e.target.value)}
+                          className="bg-slate-900 border border-slate-800 text-white rounded-lg p-2 text-xs focus:ring-1 focus:ring-teal-500"
+                        >
+                          <option value="ST3">ST3 (Junior Registrar)</option>
+                          <option value="ST4">ST4 (Junior Registrar)</option>
+                          <option value="ST5-7">ST5-7 (Senior Registrar)</option>
+                          <option value="Consultant">Consultant</option>
+                        </select>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase">Scenario Task</label>
+                        <select
+                          value={mtirTask}
+                          onChange={(e) => setMtirTask(e.target.value)}
+                          className="bg-slate-900 border border-slate-800 text-white rounded-lg p-2 text-xs focus:ring-1 focus:ring-teal-500"
+                        >
+                          <optgroup label="Default Mock Scenarios">
+                            <option value="la-toxicity">Local Anaesthetic Toxicity Guideline</option>
+                            <option value="dexmed-dosing">Dexmedetomidine Dosing Formula</option>
+                            <option value="malignant-hyperthermia">Malignant Hyperthermia checklist</option>
+                          </optgroup>
+                          {guidelines && guidelines.length > 0 && (
+                            <optgroup label="Active Uploaded Guidelines">
+                              {guidelines
+                                .filter(g => g.status !== 'superseded' && g.status !== 'Superseded')
+                                .map((g: any) => (
+                                  <option key={g.id} value={g.id}>{g.name} ({g.version})</option>
+                                ))}
+                            </optgroup>
+                          )}
+                        </select>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase">Device Used</label>
+                          <select
+                            value={mtirDevice}
+                            onChange={(e) => setMtirDevice(e.target.value)}
+                            className="bg-slate-900 border border-slate-800 text-white rounded-lg p-2 text-xs focus:ring-1 focus:ring-teal-500"
+                          >
+                            <option value="desktop">PC Terminal</option>
+                            <option value="mobile">Mobile PWA</option>
+                          </select>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase">Time Taken (seconds)</label>
+                          <input
+                            type="number"
+                            required
+                            min="1"
+                            max="600"
+                            placeholder="e.g. 180"
+                            value={mtirTimeSec}
+                            onChange={(e) => setMtirTimeSec(e.target.value)}
+                            className="bg-slate-900 border border-slate-800 text-white rounded-lg p-2 text-xs focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase">Accuracy Score</label>
+                          <select
+                            value={mtirAccuracy}
+                            onChange={(e) => setMtirAccuracy(e.target.value)}
+                            className="bg-slate-900 border border-slate-800 text-white rounded-lg p-2 text-xs focus:ring-1 focus:ring-teal-500"
+                          >
+                            <option value="1.0">1.0 (Exact Info)</option>
+                            <option value="0.8">0.8 (Close Match)</option>
+                            <option value="0.5">0.5 (Partial Info)</option>
+                            <option value="0.0">0.0 (Failed/Wrong)</option>
+                          </select>
+                        </div>
+                        <div className="flex flex-col gap-1.5 pt-4">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="mtirSuccess"
+                              checked={mtirSuccess}
+                              onChange={(e) => setMtirSuccess(e.target.checked)}
+                              className="w-4 h-4 rounded border-slate-800 text-teal-500 bg-slate-900 focus:ring-teal-500"
+                            />
+                            <label htmlFor="mtirSuccess" className="text-xs font-semibold text-slate-300">
+                              Task Successful
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={isSubmittingMtir}
+                        className="w-full bg-teal-500 hover:bg-teal-600 disabled:bg-teal-800 text-slate-950 font-bold p-2.5 rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5 mt-2"
+                      >
+                        {isSubmittingMtir ? "Submitting..." : "Submit Baseline Run"}
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Right: Telemetry Dashboard */}
+                  <div className="lg:col-span-2 space-y-6">
+                    {/* KPI Cards */}
+                    {mtirStats && (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+                          <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-tight">Avg Baseline Time</span>
+                          <span className="text-base font-bold text-slate-200 mt-2 font-mono">{mtirStats.avgBaselineTimeSec ? `${mtirStats.avgBaselineTimeSec}s` : '0s'}</span>
+                          <span className="text-[9px] text-slate-500 mt-1">Sample Size: {mtirStats.totalBaseline || 0} runs</span>
+                        </div>
+                        <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+                          <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-tight">Avg App Time</span>
+                          <span className="text-base font-bold text-teal-400 mt-2 font-mono">{mtirStats.avgAppTimeSec ? `${mtirStats.avgAppTimeSec}s` : '0s'}</span>
+                          <span className="text-[9px] text-slate-500 mt-1">Sample Size: {mtirStats.totalApp || 0} runs</span>
+                        </div>
+                        <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+                          <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-tight">Speedup Factor</span>
+                          <span className="text-base font-extrabold text-teal-400 mt-2 font-mono">{mtirStats.speedupFactor ? `${mtirStats.speedupFactor}x` : '0.0x'}</span>
+                          <span className="text-[9px] text-teal-400/70 font-semibold mt-1">SOP Look-Up Speedup</span>
+                        </div>
+                        <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+                          <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-tight">Success Rates</span>
+                          <div className="mt-1 flex flex-col">
+                            <span className="text-xxs font-semibold text-slate-400">
+                              Intranet: <span className="text-red-400 font-mono">{mtirStats.baselineSuccessRate || 0}%</span>
+                            </span>
+                            <span className="text-xxs font-semibold text-slate-400">
+                              App: <span className="text-teal-400 font-mono">{mtirStats.appSuccessRate || 0}%</span>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Role Breakdown Table */}
+                    {mtirStats && mtirStats.roleBreakdown && mtirStats.roleBreakdown.length > 0 && (
+                      <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
+                        <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-3">Registrar Cohort Breakdown</h4>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs text-slate-300">
+                            <thead>
+                              <tr className="border-b border-slate-800 text-[10px] uppercase text-slate-500">
+                                <th className="pb-2 font-bold">Role</th>
+                                <th className="pb-2 text-center font-bold">Baseline Runs</th>
+                                <th className="pb-2 text-center font-bold">App Runs</th>
+                                <th className="pb-2 text-right font-bold">Baseline Avg</th>
+                                <th className="pb-2 text-right font-bold">App Avg</th>
+                                <th className="pb-2 text-right font-bold text-teal-400">Speedup</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {mtirStats.roleBreakdown.map((row: any) => (
+                                <tr key={row.role} className="border-b border-slate-900/50 last:border-0 hover:bg-slate-900/20">
+                                  <td className="py-2.5 font-semibold text-slate-200">{row.role}</td>
+                                  <td className="py-2.5 text-center">{row.baselineCount}</td>
+                                  <td className="py-2.5 text-center">{row.appCount}</td>
+                                  <td className="py-2.5 text-right font-mono">{row.avgBaselineSec ? `${row.avgBaselineSec.toFixed(1)}s` : '-'}</td>
+                                  <td className="py-2.5 text-right font-mono text-teal-400 font-semibold">{row.avgAppSec ? `${row.avgAppSec.toFixed(2)}s` : '-'}</td>
+                                  <td className="py-2.5 text-right font-mono text-teal-400 font-bold">{row.speedup ? `${row.speedup.toFixed(1)}x` : '-'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Recent Trial Logs */}
+                    {mtirStats && mtirStats.recentLogs && mtirStats.recentLogs.length > 0 && (
+                      <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
+                        <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-3">Recent Study Run Logs</h4>
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                          {mtirStats.recentLogs.map((log: any) => (
+                            <div key={log.id} className="bg-slate-900/40 border border-slate-850 rounded-lg p-2.5 flex justify-between items-center text-xxs">
+                              <div>
+                                <span className={`px-1.5 py-0.5 rounded font-bold uppercase mr-2 text-[8px] ${
+                                  log.study_arm === 'baseline' 
+                                    ? 'bg-red-500/10 text-red-400 border border-red-500/20' 
+                                    : 'bg-teal-500/10 text-teal-400 border border-teal-500/20'
+                                }`}>
+                                  {log.study_arm === 'baseline' ? 'Baseline' : 'App (SOP RAG)'}
+                                </span>
+                                <span className="font-semibold text-slate-200">{log.registrar_role}</span>
+                                <span className="text-slate-500 mx-1.5">|</span>
+                                <span className="text-slate-400">{log.task_id}</span>
+                              </div>
+                              <div className="text-right">
+                                <span className={`font-bold font-mono ${log.study_arm === 'baseline' ? 'text-slate-300' : 'text-teal-400'}`}>
+                                  {(log.time_taken_ms / 1000).toFixed(2)}s
+                                </span>
+                                <span className="text-slate-500 mx-1.5">|</span>
+                                <span className={log.is_successful ? 'text-teal-500' : 'text-red-500'}>
+                                  {log.is_successful ? '✓ Success' : '✗ Failed'}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

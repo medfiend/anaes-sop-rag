@@ -16,12 +16,12 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const file = searchParams.get('file');
 
-    if (!file) {
+    if (!file || typeof file !== 'string') {
       return new Response("Missing file parameter", { status: 400 });
     }
 
-    // Path traversal protection
-    if (file.includes('..') || file.includes('/') || file.includes('\\')) {
+    // Path traversal & character validation protection to block directory enumeration/listing wildcards
+    if (file.includes('..') || file.includes('/') || file.includes('\\') || /[*?%#$:;]/.test(file)) {
       return new Response("Invalid file path", { status: 400 });
     }
 
