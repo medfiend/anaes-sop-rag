@@ -8,11 +8,16 @@ import {
 } from 'lucide-react';
 import PdfViewer from '../components/PdfViewer';
 import DoseCalculator from '../components/DoseCalculator';
-import { mockGuidelines, mockChunks, mockCalculator } from '../lib/supabaseClient';
-import { useSearch } from './hooks/useSearch';
+import { useSearch, MATCH_STRENGTH_LABELS } from './hooks/useSearch';
 import staticGuidelines from '../data/guidelines_db.json';
 import TrustPhonebook from '../components/TrustPhonebook';
 import { SiteId } from '../lib/sitesConfig';
+import { formatMessageText } from '../lib/markdownFormat';
+
+const WELCOME_MESSAGE = {
+  sender: 'bot' as const,
+  text: `Welcome to **AnaesSOP** clinical governance database. Search or query active guidelines above. For high-stress events, you can access the emergency aid buttons anytime.`
+};
 
 export default function Home() {
   const { executeSearch, guidelines, setGuidelines } = useSearch();
@@ -66,17 +71,12 @@ export default function Home() {
   // Workspace state
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [chatHistory, setChatHistory] = useState<Array<{ sender: 'user' | 'bot'; text: string; citations?: any[]; queryText?: string }>>([]);
+  const [chatHistory, setChatHistory] = useState<Array<{ sender: 'user' | 'bot'; text: string; citations?: any[]; queryText?: string; guidelineId?: string }>>([]);
 
   // Seed welcome message when user logs in
   useEffect(() => {
     if (user && chatHistory.length === 0) {
-      setChatHistory([
-        {
-          sender: 'bot',
-          text: `Welcome to **AnaesSOP** clinical governance database. Search or query active guidelines above. For high-stress events, you can access the emergency aid buttons anytime.`
-        }
-      ]);
+      setChatHistory([WELCOME_MESSAGE]);
     }
   }, [user, chatHistory.length]);
   
@@ -177,7 +177,7 @@ export default function Home() {
 
     const runInstantSearch = async () => {
       try {
-        const res = await executeSearch(trimmed, true); // skip embedding for instant typing speed!
+        const res = await executeSearch(trimmed);
         if (res && res.results && !res.isNegativeResult) {
           setInstantResults(res.results.slice(0, 5)); // show top 5 matches
         } else {
@@ -191,7 +191,7 @@ export default function Home() {
     // Debounce search slightly to avoid excessive CPU load
     const timer = setTimeout(runInstantSearch, 150);
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, executeSearch]);
 
   // Dynamic Pull-Through on active guideline selection
   useEffect(() => {
@@ -292,24 +292,6 @@ export default function Home() {
     }
   };
 
-  const formatMessageText = (text: string) => {
-    if (!text) return "";
-    return text
-      // Replace markdown headings (### and ##)
-      .replace(/^###\s+(.+)$/gm, '<h3 class="text-xs font-bold text-teal-400 mt-3 mb-1.5 uppercase tracking-wider">$1</h3>')
-      .replace(/^##\s+(.+)$/gm, '<h2 class="text-sm font-bold text-teal-400 mt-4 mb-2 uppercase tracking-wide border-b border-slate-800 pb-1.5">$1</h2>')
-      // Replace bold markdown
-      .replace(/\*\*(.*?)\*\*/g, '<strong class="text-slate-100 font-semibold">$1</strong>')
-      // Replace page markdown references
-      .replace(/\[Page (.*?)\]/g, '<span class="text-teal-400 font-bold underline cursor-pointer hover:text-teal-350">[Pg $1]</span>')
-      // Replace online search button link format
-      .replace(/\[Online AI Search\]\(\/ask-online-ai\)/g, '<button class="bg-teal-500 hover:bg-teal-650 active:scale-95 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xxs mt-2 transition-all block online-search-btn shadow-md shadow-teal-500/10">Run Edge LLM Search ⚡</button>')
-      // Format bullet lists (lines starting with -, *, or •)
-      .replace(/^(?:-|•|\*)\s+(.+)$/gm, '<div class="flex items-start gap-2 my-1.5 ml-2 text-slate-300"><span class="text-teal-400 mt-1.5 shrink-0 w-1.5 h-1.5 rounded-full bg-teal-400"></span><span class="flex-1">$1</span></div>')
-      // Format numbered lists (lines starting with number followed by dot)
-      .replace(/^(\d+)\.\s+(.+)$/gm, '<div class="flex items-start gap-2 my-1.5 ml-2 text-slate-300"><span class="text-teal-400 font-bold shrink-0 font-mono">$1.</span><span class="flex-1">$2</span></div>');
-  };
-
   const handleLogout = async () => {
     if (isDemoMode) {
       sessionStorage.removeItem('demo-auth');
@@ -329,12 +311,8 @@ export default function Home() {
 
     const query = searchQuery;
     // Reset layout for new search: clear history except welcome greeting, clear active PDF and active guideline ID
-    const welcomeMsg = {
-      sender: 'bot',
-      text: `Welcome to **AnaesSOP** clinical governance database. Search or query active guidelines above. For high-stress events, you can access the emergency aid buttons anytime.`
-    };
     setChatHistory([
-      welcomeMsg as any,
+      WELCOME_MESSAGE,
       { sender: 'user', text: query }
     ]);
     setActivePdfUrl('');
@@ -351,11 +329,11 @@ export default function Home() {
         botResponse = "I cannot find the answer to this question in the active departmental guidelines. Please refer directly to the official guidelines or check the Emergency Protocols panel.\n\n[Online AI Search](/ask-online-ai)";
       } else {
         const topMatch = searchRes.results[0];
-        
-        botResponse = `**Result from Guideline: ${topMatch.title}** (Confidence Match: **${topMatch.confidence}%**)`;
-        
+
+        botResponse = `**Result from Guideline: ${topMatch.title}** (${MATCH_STRENGTH_LABELS[topMatch.matchStrength]})`;
+
         if (searchRes.isLowConfidence) {
-          botResponse += `\n\n⚠️ **Low Confidence Match:** The local database matched this protocol with a confidence of ${topMatch.confidence}%. You may run a deep AI search on the server using the button below.\n\n[Online AI Search](/ask-online-ai)`;
+          botResponse += `\n\n⚠️ **Weak match:** This result is based on limited keyword overlap with your query — verify it is the right guideline before acting on it. You may run a deep AI search on the server using the button below.\n\n[Online AI Search](/ask-online-ai)`;
         }
 
         // Map matching guidelines to citations
@@ -795,10 +773,8 @@ export default function Home() {
                             <button
                               type="button"
                               onClick={() => {
-                                const targetId = match.docId;
-                                
-                                const botResponse = `**Result from Guideline: ${match.title}** (Confidence Match: **100%**)`;
-                                
+                                const botResponse = `**Result from Guideline: ${match.title}** (selected directly from search results)`;
+
                                 const citations = match.pdfName ? [{
                                   docId: match.docId,
                                   docName: match.title,
@@ -807,12 +783,8 @@ export default function Home() {
                                   highlight: { x0: 20, y0: 100, x1: 500, y1: 150 }
                                 }] : [];
 
-                                const welcomeMsg = {
-                                  sender: 'bot',
-                                  text: `Welcome to **AnaesSOP** clinical governance database. Search or query active guidelines above. For high-stress events, you can access the emergency aid buttons anytime.`
-                                };
                                 setChatHistory([
-                                  welcomeMsg as any,
+                                  WELCOME_MESSAGE,
                                   { sender: 'user', text: `Selected guideline: ${match.title}` },
                                   { 
                                     sender: 'bot', 
@@ -837,8 +809,8 @@ export default function Home() {
                                   {match.context.substring(0, 80)}...
                                 </span>
                               </div>
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-400 font-medium shrink-0">
-                                {match.confidence}%
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-400 font-medium shrink-0 capitalize">
+                                {match.matchStrength} match
                               </span>
                             </button>
                             
@@ -876,16 +848,12 @@ export default function Home() {
                           onClick={() => {
                             setActiveGuidelineId(id);
                             // Seed a chat bubble for this selection
-                            const welcomeMsg = {
-                              sender: 'bot',
-                              text: `Welcome to **AnaesSOP** clinical governance database. Search or query active guidelines above. For high-stress events, you can access the emergency aid buttons anytime.`
-                            };
                             setChatHistory([
-                              welcomeMsg as any,
+                              WELCOME_MESSAGE,
                               { sender: 'user', text: `Selected pinned guideline: ${name}` },
                               {
                                 sender: 'bot',
-                                text: `**Result from Guideline: ${name}** (Confidence Match: **100%**)`,
+                                text: `**Result from Guideline: ${name}** (pinned guideline)`,
                                 citations: pdfName ? [{
                                   docId: id,
                                   docName: name,
