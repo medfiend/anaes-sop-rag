@@ -13,3 +13,12 @@ bucket_name = "anaessop-guidelines"
 binding = "D1_DATABASE"
 database_name = "anaessop-db"
 database_id = "1333324d-38ed-417c-b6fb-0ce490580f60"
+
+# Secrets (set via `wrangler secret put <NAME>`, never committed here):
+#   WORKER_SHARED_SECRET — must match the Vercel env var of the same name;
+#                          authorizes server-to-server ingest calls.
+#   DEMO_PASSCODE        — only when DEMO_MODE is enabled.
+# Plain vars:
+#   ADMIN_EMAILS         — comma-separated admin emails allowed to ingest
+#                          with a direct Clerk JWT (requires email claim).
+#   DEMO_MODE            — "true" to allow the demo passcode path.

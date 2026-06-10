@@ -25,6 +25,26 @@ export async function POST(req: Request) {
     return authResult;
   }
 
+  let forwardedToken: string | null = null;
+  const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    forwardedToken = authHeader.substring(7);
+  }
+
+  if (!forwardedToken) {
+    try {
+      const { auth } = require('@clerk/nextjs/server');
+      const { getToken } = await auth();
+      forwardedToken = await getToken();
+    } catch (err) {
+      console.warn('[Upload Route] Could not retrieve Clerk token via auth().getToken():', err);
+    }
+  }
+
+  if (!forwardedToken && process.env.DEMO_MODE === 'true' && process.env.DEMO_PASSCODE) {
+    forwardedToken = process.env.DEMO_PASSCODE;
+  }
+
   const encoder = new TextEncoder();
   
   // Set up streaming response
@@ -142,9 +162,19 @@ export async function POST(req: Request) {
         
         const workerUrl = process.env.CLOUDFLARE_WORKER_URL || "https://anaessop-ai-worker.raja-parashar.workers.dev";
         
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (forwardedToken) {
+          headers['Authorization'] = `Bearer ${forwardedToken}`;
+        }
+        // Server-to-server trust: this route has already enforced requireAdmin,
+        // so prove to the worker that the call comes from the trusted backend.
+        if (process.env.WORKER_SHARED_SECRET) {
+          headers['X-Worker-Secret'] = process.env.WORKER_SHARED_SECRET;
+        }
+        
         const workerResponse = await fetch(`${workerUrl.replace(/\/$/, '')}/ingest`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({
             documentId,
             name: docName,

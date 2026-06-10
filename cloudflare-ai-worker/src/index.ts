@@ -2,6 +2,161 @@ export interface Env {
   AI: any;
   R2_BUCKET: any;
   D1_DATABASE: any;
+  CLERK_JWKS_URL?: string;
+  DEMO_MODE?: string;
+  DEMO_PASSCODE?: string;
+  /** Shared secret for trusted server-to-server calls from the Next.js backend. */
+  WORKER_SHARED_SECRET?: string;
+  /** Comma-separated list of admin emails permitted to ingest via direct JWT. */
+  ADMIN_EMAILS?: string;
+}
+
+// Helper functions for JWT verification on the Edge using Web Crypto APIs
+
+function base64UrlDecode(str: string): string {
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+  try {
+    return atob(base64);
+  } catch (err) {
+    throw new Error('Base64url decoding failed');
+  }
+}
+
+function base64UrlDecodeToBytes(str: string): Uint8Array {
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+  try {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+  } catch (err) {
+    throw new Error('Base64url byte decoding failed');
+  }
+}
+
+// In-memory cache for JWKS keys to avoid repeating fetch calls
+let cachedJwks: any = null;
+let cachedJwksTimestamp = 0;
+const JWKS_CACHE_TTL = 3600 * 1000; // 1 hour
+
+async function fetchJwks(jwksUrl: string): Promise<any> {
+  const now = Date.now();
+  if (cachedJwks && (now - cachedJwksTimestamp < JWKS_CACHE_TTL)) {
+    return cachedJwks;
+  }
+  const res = await fetch(jwksUrl);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch JWKS keys from ${jwksUrl}`);
+  }
+  const jwks = await res.json();
+  cachedJwks = jwks;
+  cachedJwksTimestamp = now;
+  return jwks;
+}
+
+interface ClerkJwtPayload {
+  sub: string;
+  exp: number;
+  nbf?: number;
+  email?: string;
+  [key: string]: any;
+}
+
+async function verifyClerkJwt(token: string, env: Env): Promise<ClerkJwtPayload> {
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    throw new Error('JWT must consist of three parts (header, payload, signature).');
+  }
+
+  const [headerB64, payloadB64, signatureB64] = parts;
+  
+  let header: any;
+  try {
+    header = JSON.parse(base64UrlDecode(headerB64));
+  } catch (err) {
+    throw new Error('Failed to parse JWT header.');
+  }
+
+  if (header.alg !== 'RS256') {
+    throw new Error('Unsupported JWT signing algorithm. Only RS256 is supported.');
+  }
+
+  const kid = header.kid;
+  if (!kid) {
+    throw new Error('Missing kid (Key ID) in JWT header.');
+  }
+
+  let payload: ClerkJwtPayload;
+  try {
+    payload = JSON.parse(base64UrlDecode(payloadB64));
+  } catch (err) {
+    throw new Error('Failed to parse JWT payload.');
+  }
+
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (payload.exp && nowSeconds >= payload.exp) {
+    throw new Error('JWT token has expired.');
+  }
+
+  if (payload.nbf && nowSeconds < payload.nbf) {
+    throw new Error('JWT token is not active yet.');
+  }
+
+  const jwksUrl = env.CLERK_JWKS_URL || 'https://upright-goblin-40.clerk.accounts.dev/.well-known/jwks.json';
+  const jwks = await fetchJwks(jwksUrl);
+
+  const jwk = jwks.keys?.find((k: any) => k.kid === kid);
+  if (!jwk) {
+    throw new Error(`Matching JWK key with kid "${kid}" not found in JWKS.`);
+  }
+
+  const cryptoKey = await crypto.subtle.importKey(
+    'jwk',
+    jwk,
+    {
+      name: 'RSASSA-PKCS1-v1_5',
+      hash: { name: 'SHA-256' }
+    },
+    false,
+    ['verify']
+  );
+
+  const dataBytes = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
+  const signatureBytes = base64UrlDecodeToBytes(signatureB64);
+
+  const isValid = await crypto.subtle.verify(
+    'RSASSA-PKCS1-v1_5',
+    cryptoKey,
+    signatureBytes,
+    dataBytes
+  );
+
+  if (!isValid) {
+    throw new Error('JWT signature is invalid.');
+  }
+
+  return payload;
+}
+
+function createSecureResponse(body: string | Uint8Array, status: number, contentType = 'application/json', extraHeaders: Record<string, string> = {}): Response {
+  const headers = new Headers({
+    'Content-Type': contentType,
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+    'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; sandbox;",
+    'Referrer-Policy': 'no-referrer',
+    ...extraHeaders
+  });
+  return new Response(body, { status, headers });
 }
 
 export default {
@@ -10,7 +165,56 @@ export default {
 
     // Only accept POST requests on the /ingest path
     if (request.method !== "POST" || url.pathname !== "/ingest") {
-      return new Response("Not Found. POST to /ingest is required.", { status: 404 });
+      return createSecureResponse("Not Found. POST to /ingest is required.", 404, 'text/plain');
+    }
+
+    // Authorization Guard.
+    // Ingestion publishes live clinical guidelines, so a signed-in user is NOT
+    // enough — the caller must be one of:
+    //   1. Demo mode passcode bearer (pilot demo deployments only)
+    //   2. The trusted Next.js backend, via the X-Worker-Secret shared secret
+    //   3. A Clerk JWT whose verified email claim is on the admin allowlist
+    const authHeader = request.headers.get("Authorization") || request.headers.get("authorization");
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.substring(7).trim() : null;
+    const workerSecret = request.headers.get("X-Worker-Secret");
+
+    const adminEmails = (env.ADMIN_EMAILS || 'audit.lead@nhs.net,s.parashar1@nhs.net')
+      .split(',')
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+
+    let isAuthorized = false;
+    let authErrorMsg = '';
+
+    if (env.DEMO_MODE === 'true' && env.DEMO_PASSCODE && token === env.DEMO_PASSCODE) {
+      // 1. Demo Mode Bypass
+      console.log("[CF WORKER AI] Authorization granted via Demo Passcode.");
+      isAuthorized = true;
+    } else if (env.WORKER_SHARED_SECRET && workerSecret === env.WORKER_SHARED_SECRET) {
+      // 2. Trusted backend (the Next.js /api/upload route enforces requireAdmin)
+      console.log("[CF WORKER AI] Authorization granted via backend shared secret.");
+      isAuthorized = true;
+    } else if (token) {
+      // 3. Direct Clerk JWT — must verify AND carry an allowlisted admin email claim
+      try {
+        const payload = await verifyClerkJwt(token, env);
+        const claimEmail = (payload.email || (payload as any).email_address || '').toLowerCase();
+        if (claimEmail && adminEmails.includes(claimEmail)) {
+          console.log(`[CF WORKER AI] JWT verified for admin. sub: ${payload.sub}`);
+          isAuthorized = true;
+        } else {
+          authErrorMsg = 'Token is valid but does not belong to an authorized admin.';
+        }
+      } catch (err: any) {
+        authErrorMsg = err.message || 'Verification failed';
+        console.error("[CF WORKER AI] JWT Verification error:", authErrorMsg);
+      }
+    } else {
+      authErrorMsg = 'Missing or malformed Authorization header.';
+    }
+
+    if (!isAuthorized) {
+      return createSecureResponse(JSON.stringify({ error: `Unauthorized: ${authErrorMsg}` }), 401);
     }
 
     try {
@@ -31,10 +235,12 @@ export default {
       } = body;
 
       if (!documentId || !name || !rawText) {
-        return new Response(JSON.stringify({ error: "Missing required fields (documentId, name, rawText)" }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" }
-        });
+        return createSecureResponse(JSON.stringify({ error: "Missing required fields (documentId, name, rawText)" }), 400);
+      }
+
+      // Input validation & Path traversal protection on documentId to enforce single-file constraints
+      if (typeof documentId !== 'string' || documentId.includes('..') || documentId.includes('/') || documentId.includes('\\') || /[*?%#$:;]/.test(documentId)) {
+        return createSecureResponse(JSON.stringify({ error: "Invalid documentId parameter." }), 400);
       }
 
       console.log(`[CF WORKER AI] Starting compilation for: ${name} (${documentId})`);
@@ -310,6 +516,11 @@ ${rawText.substring(0, 12000)}`;
 
       const finalFileKey = fileKey || `guidelines/${documentId}_guideline.pdf`;
 
+      // Validation on compiled file key to prevent directory manipulation
+      if (finalFileKey.includes('..') || /[*?%#$:;]/.test(finalFileKey)) {
+        return createSecureResponse(JSON.stringify({ error: "Invalid fileKey parameter." }), 400);
+      }
+
       // 4. Compile the final Orama guidelinesMaster JSON payload
       const guidelinesMaster = {
         documentId,
@@ -459,24 +670,18 @@ ${rawText.substring(0, 12000)}`;
         `Successfully indexed layout master and summary to R2 index using Cloudflare Neurons.`
       ).run();
 
-      return new Response(JSON.stringify({
+      return createSecureResponse(JSON.stringify({
         success: true,
         documentId,
         sectionsCount: sections.length,
         masterIndexKey: r2MasterKey,
         summaryIndexKey: r2SummaryKey,
         msg: "Guideline compiled, vectorized with Qwen AI, and registered live on R2/D1!"
-      }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" }
-      });
+      }), 200);
 
     } catch (err: any) {
       console.error("Worker processing failure:", err);
-      return new Response(JSON.stringify({ error: err.message }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" }
-      });
+      return createSecureResponse(JSON.stringify({ error: err.message }), 500);
     }
   }
 };

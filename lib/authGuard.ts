@@ -1,8 +1,32 @@
-import { createClerkClient } from '@clerk/backend';
+import { createClerkClient, verifyToken } from '@clerk/backend';
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const ADMIN_EMAILS = ['audit.lead@nhs.net', 's.parashar1@nhs.net'];
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'audit.lead@nhs.net,s.parashar1@nhs.net')
+  .split(',')
+  .map(e => e.trim().toLowerCase())
+  .filter(Boolean);
+
+/**
+ * NHS staff domain policy. Admin emails are allowed regardless so that the
+ * demo identity and any explicitly trusted accounts keep working.
+ */
+function isPermittedEmail(email: string): boolean {
+  const lower = email.toLowerCase();
+  return lower.endsWith('@nhs.net') || lower.endsWith('.nhs.uk') || ADMIN_EMAILS.includes(lower);
+}
+
+/** Parse a cookie header into name/value pairs (exact matching, no substring tricks). */
+function getCookieValue(cookieHeader: string, name: string): string | null {
+  for (const part of cookieHeader.split(';')) {
+    const eqIdx = part.indexOf('=');
+    if (eqIdx === -1) continue;
+    if (part.slice(0, eqIdx).trim() === name) {
+      return decodeURIComponent(part.slice(eqIdx + 1).trim());
+    }
+  }
+  return null;
+}
 
 /**
  * Get a verified Clerk user from a request.
@@ -21,10 +45,9 @@ async function getVerifiedUser(req: Request): Promise<{ userId: string; email: s
     const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
     const cookieHeader = req.headers.get('cookie') || '';
-    // Look for demo_passcode=YOUR_PASSCODE in the cookie string
-    const hasDemoCookie = cookieHeader.includes(`demo_passcode=${process.env.DEMO_PASSCODE}`);
+    const demoCookie = getCookieValue(cookieHeader, 'demo_passcode');
 
-    if (hasDemoCookie || bearerToken === process.env.DEMO_PASSCODE) {
+    if (demoCookie === process.env.DEMO_PASSCODE || bearerToken === process.env.DEMO_PASSCODE) {
       return { userId: 'demo-user-id', email: 'audit.lead@nhs.net' };
     }
   }
@@ -36,15 +59,17 @@ async function getVerifiedUser(req: Request): Promise<{ userId: string; email: s
   if (bearerToken) {
     try {
       const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
-      const payload = await clerk.verifyToken(bearerToken);
+      const payload = await verifyToken(bearerToken, { secretKey: process.env.CLERK_SECRET_KEY });
       if (payload?.sub) {
         // Fetch user details from Clerk to get their email
         const user = await clerk.users.getUser(payload.sub);
         const email =
           user.emailAddresses.find(e => e.id === user.primaryEmailAddressId)?.emailAddress ||
           user.emailAddresses[0]?.emailAddress ||
-          'authenticated-user';
-        return { userId: payload.sub, email };
+          '';
+        if (email) {
+          return { userId: payload.sub, email };
+        }
       }
     } catch (err: any) {
       console.warn('[authGuard] Bearer token verification failed:', err.message || err);
@@ -56,11 +81,27 @@ async function getVerifiedUser(req: Request): Promise<{ userId: string; email: s
   try {
     const { userId, sessionClaims } = await auth();
     if (userId) {
-      const email =
+      let email =
         (sessionClaims?.email as string) ||
         (sessionClaims as any)?.email_address ||
-        'authenticated-user';
-      return { userId, email };
+        '';
+      // Session tokens often omit the email claim — resolve it from the
+      // Clerk backend so the NHS-domain policy below can be enforced.
+      if (!email) {
+        try {
+          const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
+          const user = await clerk.users.getUser(userId);
+          email =
+            user.emailAddresses.find(e => e.id === user.primaryEmailAddressId)?.emailAddress ||
+            user.emailAddresses[0]?.emailAddress ||
+            '';
+        } catch (lookupErr: any) {
+          console.warn('[authGuard] Could not resolve user email from Clerk:', lookupErr.message || lookupErr);
+        }
+      }
+      if (email) {
+        return { userId, email };
+      }
     }
   } catch (err: any) {
     console.error('[authGuard] auth() threw:', err.message || err);
@@ -70,8 +111,8 @@ async function getVerifiedUser(req: Request): Promise<{ userId: string; email: s
 }
 
 /**
- * Verify the request is from an authenticated Clerk user.
- * Accepts both Authorization: Bearer JWT and session cookies.
+ * Verify the request is from an authenticated Clerk user on a permitted
+ * NHS email domain. Accepts both Authorization: Bearer JWT and session cookies.
  */
 export async function requireAuth(req: Request): Promise<{ email: string } | NextResponse> {
   const user = await getVerifiedUser(req);
@@ -82,6 +123,15 @@ export async function requireAuth(req: Request): Promise<{ email: string } | Nex
       { status: 401 }
     );
   }
+
+  if (!isPermittedEmail(user.email)) {
+    console.warn('[authGuard] requireAuth: non-NHS email rejected:', user.email);
+    return NextResponse.json(
+      { error: 'Access is restricted to NHS staff accounts (@nhs.net or .nhs.uk).' },
+      { status: 403 }
+    );
+  }
+
   return { email: user.email };
 }
 
@@ -92,7 +142,7 @@ export async function requireAdmin(req: Request): Promise<{ email: string } | Ne
   const result = await requireAuth(req);
   if (result instanceof NextResponse) return result;
 
-  if (!ADMIN_EMAILS.includes(result.email)) {
+  if (!ADMIN_EMAILS.includes(result.email.toLowerCase())) {
     console.warn('[authGuard] requireAdmin: access denied for', result.email);
     return NextResponse.json(
       { error: 'Access denied. Admin privileges required.' },

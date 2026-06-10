@@ -1,15 +1,28 @@
 import { NextResponse } from 'next/server';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { queryD1, r2Client, R2_BUCKET, isR2Configured } from '../../../lib/cloudflare';
+import { requireAuth } from '../../../lib/authGuard';
 import staticGuidelines from '../../../data/guidelines_db.json';
 
 export async function GET(req: Request) {
   try {
+    // Auth guard — guideline content is restricted to signed-in NHS staff.
+    // (Emergency bypass uses the static guidelines bundled with the client.)
+    const authResult = await requireAuth(req);
+    if (authResult instanceof NextResponse) {
+      return authResult;
+    }
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
     // 1. Dynamic Pull-Through Mode: Load the full master guideline index from R2
     if (id) {
+      // Input validation & Path traversal protection on id to block directory listing/enumeration manipulation
+      if (typeof id !== 'string' || id.includes('..') || id.includes('/') || id.includes('\\') || /[*?%#$:;]/.test(id)) {
+        return NextResponse.json({ success: false, error: 'Invalid guideline identifier.' }, { status: 400 });
+      }
+
       if (!isR2Configured || !r2Client) {
         return NextResponse.json({ success: false, error: 'Storage service not configured.' }, { status: 500 });
       }
