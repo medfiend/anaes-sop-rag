@@ -45,6 +45,63 @@ const SITE_MAPPING: Record<string, SiteId> = {
   'EPSOM': 'site_3',
 };
 
+// Helper to compute Levenshtein distance
+function getLevenshteinDistance(a: string, b: string): number {
+  const tmp: number[][] = [];
+  let i, j;
+  for (i = 0; i <= a.length; i++) {
+    tmp.push([i]);
+  }
+  for (j = 0; j <= b.length; j++) {
+    tmp[0][j] = j;
+  }
+  for (i = 1; i <= a.length; i++) {
+    for (j = 1; j <= b.length; j++) {
+      if (a[i - 1] === b[j - 1]) {
+        tmp[i][j] = tmp[i - 1][j - 1];
+      } else {
+        tmp[i][j] = Math.min(
+          tmp[i - 1][j] + 1, // deletion
+          tmp[i][j - 1] + 1, // insertion
+          tmp[i - 1][j - 1] + 1 // substitution
+        );
+      }
+    }
+  }
+  return tmp[a.length][b.length];
+}
+
+// Token-based fuzzy match checking
+function isFuzzyMatch(text: string, query: string): boolean {
+  if (!text) return false;
+  const targetText = text.toLowerCase();
+  const searchWord = query.toLowerCase();
+  
+  if (targetText.includes(searchWord)) return true;
+  
+  const textWords = targetText.split(/[^a-z0-9]+/);
+  const queryWords = searchWord.split(/[^a-z0-9]+/);
+  
+  // Check if all query words match at least one text word fuzzy-style
+  return queryWords.every(qWord => {
+    if (qWord.length <= 2) {
+      // For short words (like bleeps/exts), require exact substring or exact match
+      return textWords.some(tWord => tWord.includes(qWord));
+    }
+    
+    return textWords.some(tWord => {
+      // Exact substring match
+      if (tWord.includes(qWord)) return true;
+      
+      // Calculate Levenshtein distance
+      // Allow 1 edit for 3-5 chars, 2 edits for 6+ chars
+      const maxDistance = qWord.length <= 5 ? 1 : 2;
+      const distance = getLevenshteinDistance(tWord, qWord);
+      return distance <= maxDistance;
+    });
+  });
+}
+
 export default function TrustPhonebook({ currentSiteId, onSiteChange }: TrustPhonebookProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -159,16 +216,19 @@ export default function TrustPhonebook({ currentSiteId, onSiteChange }: TrustPho
 
       // 3. Search Query Filter
       if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase().trim();
-        const nameMatch = (contact.name || '').toLowerCase().includes(query);
-        const titleMatch = (contact.jobTitle || '').toLowerCase().includes(query);
-        const deptMatch = (contact.department || '').toLowerCase().includes(query);
-        const extnMatch = (contact.extn || '').includes(query);
-        const altExtnMatch = (contact.altExtn || '').includes(query);
-        const bleepMatch = (contact.bleep || '').includes(query);
-        const roomMatch = (contact.room || '').toLowerCase().includes(query);
+        const query = searchQuery.trim();
+        const nameMatch = isFuzzyMatch(contact.name, query);
+        const titleMatch = isFuzzyMatch(contact.jobTitle, query);
+        const deptMatch = isFuzzyMatch(contact.department, query);
+        const roomMatch = isFuzzyMatch(contact.room, query);
 
-        return nameMatch || titleMatch || deptMatch || extnMatch || altExtnMatch || bleepMatch || roomMatch;
+        // Exact substring matching for numeric codes
+        const lowerQuery = query.toLowerCase();
+        const extnMatch = (contact.extn || '').includes(lowerQuery);
+        const altExtnMatch = (contact.altExtn || '').includes(lowerQuery);
+        const bleepMatch = (contact.bleep || '').includes(lowerQuery);
+
+        return nameMatch || titleMatch || deptMatch || roomMatch || extnMatch || altExtnMatch || bleepMatch;
       }
 
       return true;
