@@ -3,6 +3,18 @@ import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { queryD1, r2Client, R2_BUCKET, isR2Configured } from '../../../lib/cloudflare';
 import { requireAuth } from '../../../lib/authGuard';
 import staticGuidelines from '../../../data/guidelines_db.json';
+import fs from 'fs';
+import path from 'path';
+
+const STATIC_GUIDELINE_IDS = [
+  'la-toxicity', 'malignant-hyperthermia', 'resus-als', 'dexmed-sop-afoi', 'post-op-fossa',
+  'key-basic-plan', 'hypoxia', 'increased-airway-pressure', 'hypotension', 'hypertension',
+  'bradycardia', 'tachycardia', 'peri-operative-hyperthermia', 'anaphylaxis', 'massive-blood-loss',
+  'cico', 'bronchospasm', 'circulatory-embolus', 'laryngospasm', 'patient-fire',
+  'cardiac-tamponade', 'high-central-neuraxial-block', 'cardiac-ischaemia', 'neuroprotection-post-arrest',
+  'sepsis', 'mains-oxygen-failure', 'mains-electricity-failure', 'emergency-evacuation'
+];
+
 
 export async function GET(req: Request) {
   try {
@@ -135,7 +147,19 @@ export async function GET(req: Request) {
     }
 
     // Static guidelines (always full context for local failover and offline emergency access)
-    const staticGuidesList = [...staticGuidelines].map((g: any) => ({
+    // Read dynamically from disk if available to catch background compiler updates
+    let activeStaticGuidelines = staticGuidelines;
+    const staticDbPath = path.join(process.cwd(), 'data', 'guidelines_db.json');
+    if (fs.existsSync(staticDbPath)) {
+      try {
+        const fileContent = fs.readFileSync(staticDbPath, 'utf8');
+        activeStaticGuidelines = JSON.parse(fileContent);
+      } catch (e) {
+        console.error("Failed to parse guidelines_db.json from disk, using imported fallback:", e);
+      }
+    }
+
+    const staticGuidesList = [...activeStaticGuidelines].map((g: any) => ({
       id: g.protocol_id,
       name: g.clinical.title,
       version: g.metadata?.version_hash?.substring(0, 8) || 'v1.0.0',
@@ -144,7 +168,7 @@ export async function GET(req: Request) {
       changelog: g.metadata?.changelog || 'Initial release',
       date_published: g.metadata?.compiled_at || '2025-06-01T00:00:00Z',
       date_next_review: g.metadata?.review_due_at || '2027-06-01T00:00:00Z',
-      is_emergency: g.protocol_id === 'la-toxicity' || g.protocol_id === 'malignant-hyperthermia' || g.protocol_id === 'resus-als',
+      is_emergency: STATIC_GUIDELINE_IDS.includes(g.protocol_id) && g.protocol_id !== 'dexmed-sop-afoi' && g.protocol_id !== 'post-op-fossa',
       clinical: g.clinical,
       search_tags: g.search_tags || [],
       pdf_name: g.pdf_name,
@@ -155,7 +179,7 @@ export async function GET(req: Request) {
 
     // Filter summaries list to extract only custom dynamic ones and prevent duplicates of static guidelines
     const customGuidesList = allSummaries.filter((s: any) => 
-      !['la-toxicity', 'malignant-hyperthermia', 'resus-als', 'dexmed-sop-afoi', 'post-op-fossa'].includes(s.id)
+      !STATIC_GUIDELINE_IDS.includes(s.id)
     );
 
     // Apply superseding states to static guidelines list if replaced by dynamic custom guidelines
@@ -168,7 +192,36 @@ export async function GET(req: Request) {
       }
     });
 
-    const mergedGuidelines = [...staticGuidesList, ...customGuidesList];
+    // Read and merge AAGBI Guidelines if database exists
+    let aagbiGuidelines: any[] = [];
+    const aagbiDbPath = path.join(process.cwd(), 'data', 'aagbi_guidelines_db.json');
+    if (fs.existsSync(aagbiDbPath)) {
+      try {
+        const fileContent = fs.readFileSync(aagbiDbPath, 'utf8');
+        const parsed = JSON.parse(fileContent);
+        aagbiGuidelines = parsed.map((g: any) => ({
+          id: g.protocol_id,
+          name: g.clinical.title,
+          version: g.metadata?.version_hash?.substring(0, 8) || 'v1.0.0',
+          owner_email: g.metadata?.owner_email || 'audit.lead@nhs.net',
+          status: g.status || 'Active',
+          changelog: g.metadata?.changelog || 'Initial release',
+          date_published: g.metadata?.compiled_at || '2025-06-01T00:00:00Z',
+          date_next_review: g.metadata?.review_due_at || '2028-06-01T00:00:00Z',
+          is_emergency: false,
+          clinical: g.clinical,
+          search_tags: g.search_tags || [],
+          pdf_name: g.pdf_name,
+          default_page: g.default_page || 1,
+          calculator: g.calculator || null,
+          summaryText: g.clinical?.summaryText || (g.clinical?.steps ? g.clinical.steps.map((s: any) => s.text).join(' ') : "AAGBI clinical guideline")
+        }));
+      } catch (e) {
+        console.error("Failed to parse AAGBI guidelines DB", e);
+      }
+    }
+
+    const mergedGuidelines = [...staticGuidesList, ...aagbiGuidelines, ...customGuidesList];
     return NextResponse.json({ success: true, guidelines: mergedGuidelines });
   } catch (error: any) {
     console.error("GET guidelines error:", error);
@@ -183,7 +236,7 @@ export async function GET(req: Request) {
         changelog: g.metadata?.changelog || 'Initial release',
         date_published: g.metadata?.compiled_at || '2025-06-01T00:00:00Z',
         date_next_review: g.metadata?.review_due_at || '2027-06-01T00:00:00Z',
-        is_emergency: g.protocol_id === 'la-toxicity' || g.protocol_id === 'malignant-hyperthermia' || g.protocol_id === 'resus-als',
+        is_emergency: STATIC_GUIDELINE_IDS.includes(g.protocol_id) && g.protocol_id !== 'dexmed-sop-afoi' && g.protocol_id !== 'post-op-fossa',
         clinical: g.clinical,
         search_tags: g.search_tags,
         pdf_name: g.pdf_name,

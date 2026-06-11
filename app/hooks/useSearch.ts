@@ -2,6 +2,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { create, insert, search, Orama } from '@orama/orama';
 import staticGuidelines from '../../data/guidelines_db.json';
 
+const STATIC_GUIDELINE_IDS = [
+  'la-toxicity', 'malignant-hyperthermia', 'resus-als', 'dexmed-sop-afoi', 'post-op-fossa',
+  'key-basic-plan', 'hypoxia', 'increased-airway-pressure', 'hypotension', 'hypertension',
+  'bradycardia', 'tachycardia', 'peri-operative-hyperthermia', 'anaphylaxis', 'massive-blood-loss',
+  'cico', 'bronchospasm', 'circulatory-embolus', 'laryngospasm', 'patient-fire',
+  'cardiac-tamponade', 'high-central-neuraxial-block', 'cardiac-ischaemia', 'neuroprotection-post-arrest',
+  'sepsis', 'mains-oxygen-failure', 'mains-electricity-failure', 'emergency-evacuation'
+];
+
+
 /**
  * Qualitative match strength shown to clinicians instead of a fabricated
  * "confidence %". These are keyword (BM25) relevance bands, nothing more —
@@ -61,7 +71,7 @@ function mapStaticGuidelines(): any[] {
     changelog: g.metadata?.changelog || 'Initial release',
     date_published: g.metadata?.compiled_at || '2025-06-01T00:00:00Z',
     date_next_review: g.metadata?.review_due_at || '2027-06-01T00:00:00Z',
-    is_emergency: g.protocol_id === 'la-toxicity' || g.protocol_id === 'malignant-hyperthermia' || g.protocol_id === 'resus-als',
+    is_emergency: STATIC_GUIDELINE_IDS.includes(g.protocol_id) && g.protocol_id !== 'dexmed-sop-afoi' && g.protocol_id !== 'post-op-fossa',
     clinical: g.clinical,
     search_tags: g.search_tags || [],
     pdf_name: g.pdf_name,

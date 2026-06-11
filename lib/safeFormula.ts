@@ -263,6 +263,22 @@ class Parser {
       if (token.value === 'true') return true;
       if (token.value === 'false') return false;
 
+      // Allow direct calls to math functions like min(a, b), max(a, b), round(a)
+      const nextToken = this.peek();
+      if (nextToken && nextToken.type === 'operator' && nextToken.value === '(') {
+        if (token.value in MATH_FUNCTIONS) {
+          this.pos++; // consume '('
+          const args: number[] = [];
+          if (!this.matchOperator(')')) {
+            do {
+              args.push(this.asNumber(this.parseTernary(), token.value));
+            } while (this.matchOperator(','));
+            this.expectOperator(')');
+          }
+          return MATH_FUNCTIONS[token.value](...args);
+        }
+      }
+
       if (!(token.value in this.scope)) {
         throw new FormulaError(`Unknown variable '${token.value}' in formula.`);
       }

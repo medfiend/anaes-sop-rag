@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useUser, useClerk, SignIn } from '@clerk/nextjs';
 import { 
-  Search, ShieldAlert, FileText, UserCheck, LogOut, ArrowRight, 
+  Search, ShieldAlert, FileText, UserCheck, LogOut, ArrowRight, ArrowLeft,
   Menu, HelpCircle, Activity, Sparkles, Send, Calculator, History, ChevronRight, X, Pin
 } from 'lucide-react';
 import PdfViewer from '../components/PdfViewer';
@@ -21,7 +21,14 @@ const WELCOME_MESSAGE = {
 
 // Manually curated guidelines bundled with the app. Their calculators were
 // hand-verified, so they bypass the dynamic-calculator approval gate.
-const STATIC_GUIDELINE_IDS = ['la-toxicity', 'malignant-hyperthermia', 'resus-als', 'dexmed-sop-afoi', 'post-op-fossa'];
+const STATIC_GUIDELINE_IDS = [
+  'la-toxicity', 'malignant-hyperthermia', 'resus-als', 'dexmed-sop-afoi', 'post-op-fossa',
+  'key-basic-plan', 'hypoxia', 'increased-airway-pressure', 'hypotension', 'hypertension',
+  'bradycardia', 'tachycardia', 'peri-operative-hyperthermia', 'anaphylaxis', 'massive-blood-loss',
+  'cico', 'bronchospasm', 'circulatory-embolus', 'laryngospasm', 'patient-fire',
+  'cardiac-tamponade', 'high-central-neuraxial-block', 'cardiac-ischaemia', 'neuroprotection-post-arrest',
+  'sepsis', 'mains-oxygen-failure', 'mains-electricity-failure', 'emergency-evacuation'
+];
 
 export default function Home() {
   const { executeSearch, guidelines, setGuidelines } = useSearch();
@@ -35,6 +42,8 @@ export default function Home() {
   const [demoAuth, setDemoAuth] = useState<boolean>(false);
   const [demoPasscode, setDemoPasscode] = useState<string>('');
   const [demoError, setDemoError] = useState<string>('');
+  const [isLoginOpen, setIsLoginOpen] = useState<boolean>(false);
+
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -83,12 +92,20 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false);
   const [chatHistory, setChatHistory] = useState<Array<{ sender: 'user' | 'bot'; text: string; citations?: any[]; queryText?: string; guidelineId?: string }>>([]);
 
-  // Seed welcome message when user logs in
+  // Seed welcome message when page loads
   useEffect(() => {
-    if (user && chatHistory.length === 0) {
+    if (chatHistory.length === 0) {
       setChatHistory([WELCOME_MESSAGE]);
     }
-  }, [user, chatHistory.length]);
+  }, [chatHistory.length]);
+
+  // Close login modal when user logs in successfully
+  useEffect(() => {
+    if (user) {
+      setIsLoginOpen(false);
+    }
+  }, [user]);
+
   
   // PDF / Citations synchronization
   const [activePdfUrl, setActivePdfUrl] = useState<string>('');
@@ -97,6 +114,10 @@ export default function Home() {
   const [activeHighlights, setActiveHighlights] = useState<any[]>([]);
   const [activeGuidelineId, setActiveGuidelineId] = useState<string>('');
   const [instantResults, setInstantResults] = useState<any[]>([]);
+  const [directoryFilter, setDirectoryFilter] = useState('');
+  const [showSummary, setShowSummary] = useState(true);
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [showPdf, setShowPdf] = useState(false);
   
   // Mobile responsive layout
   const [mobileTab, setMobileTab] = useState<'search' | 'pdf' | 'phonebook'>('search');
@@ -213,9 +234,10 @@ export default function Home() {
     
     // If it's a custom guideline and records aren't loaded yet
     const isStatic = STATIC_GUIDELINE_IDS.includes(activeGuidelineId);
+    const isAagbi = current.pdf_name?.startsWith('http');
     const hasRecords = current.records && current.records.length > 0;
     
-    if (!isStatic && !hasRecords) {
+    if (!isStatic && !isAagbi && !hasRecords) {
       const fetchFullGuideline = async () => {
         setPullingThroughGuidelineId(activeGuidelineId);
         try {
@@ -236,8 +258,12 @@ export default function Home() {
     }
   }, [activeGuidelineId, guidelines, setGuidelines]);
 
-  // Helper to resolve PDF URL dynamically (QRH is served locally, others stream from R2)
+  // Helper to resolve PDF URL dynamically (QRH is served locally, others stream from R2, AAGBI links directly)
   const getPdfUrl = (filename: string) => {
+    if (!filename) return '';
+    if (filename.startsWith('http://') || filename.startsWith('https://')) {
+      return filename;
+    }
     if (filename === 'QRH_complete_June_2023.pdf') {
       return '/QRH_complete_June_2023.pdf';
     }
@@ -274,6 +300,95 @@ export default function Home() {
       setMobileTab('pdf');
     }
   };
+
+  const handleSelectGuideline = (id: string, name: string, pdfName?: string, defaultPage: number = 1) => {
+    const targetFile = pdfName || 'QRH_complete_June_2023.pdf';
+    
+    // Reset panel toggle states on new selection
+    setShowSummary(true);
+    setShowCalculator(false);
+    setShowPdf(false);
+    
+    // Check if pdfName starts with http (AAGBI remote link)
+    if (targetFile.startsWith('http://') || targetFile.startsWith('https://')) {
+      window.open(targetFile, '_blank');
+      
+      setChatHistory([
+        WELCOME_MESSAGE,
+        { sender: 'user', text: `Selected guideline: ${name}` },
+        { 
+          sender: 'bot', 
+          text: `**Result from Guideline: ${name}** (loaded directly from AAGBI server)`, 
+          citations: [{
+            docId: id,
+            docName: name,
+            pdfName: targetFile,
+            page: defaultPage
+          }],
+          guidelineId: id
+        }
+      ]);
+      setActivePdfUrl('');
+      setActiveGuidelineId(id);
+      setSearchQuery('');
+      setInstantResults([]);
+      if (isMobile) {
+        setMobileTab('pdf');
+      }
+      return;
+    }
+
+    const citations = [{
+      docId: id,
+      docName: name,
+      pdfName: targetFile,
+      page: defaultPage
+    }];
+
+    setChatHistory([
+      WELCOME_MESSAGE,
+      { sender: 'user', text: `Selected guideline: ${name}` },
+      { 
+        sender: 'bot', 
+        text: `**Result from Guideline: ${name}**`, 
+        citations,
+        guidelineId: id
+      }
+    ]);
+    
+    setActivePdfUrl(getPdfUrl(targetFile));
+    setActivePdfName(name);
+    setActivePage(defaultPage);
+    setActiveGuidelineId(id);
+    setActiveHighlights([]);
+    setSearchQuery('');
+    setInstantResults([]);
+    
+    if (isMobile) {
+      setMobileTab('pdf');
+    }
+  };
+
+  const handleResetToHome = () => {
+    setChatHistory([WELCOME_MESSAGE]);
+    setActiveGuidelineId('');
+    setActivePdfUrl('');
+    setSearchQuery('');
+    setInstantResults([]);
+    setMobileTab('search');
+    setShowSummary(true);
+    setShowCalculator(false);
+    setShowPdf(false);
+  };
+
+  // Filter guidelines for the browse directory on the landing page
+  const filteredDirectoryGuidelines = guidelines
+    .filter(g => {
+      if (!g.name) return false;
+      const searchStr = (g.name + ' ' + (g.search_tags || []).join(' ')).toLowerCase();
+      return searchStr.includes(directoryFilter.toLowerCase());
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   // Clerk handles sending and verifying OTP codes natively.
 
@@ -336,14 +451,20 @@ export default function Home() {
       let citations: any[] = [];
 
       if (searchRes.isNegativeResult) {
-        botResponse = "I cannot find the answer to this question in the active departmental guidelines. Please refer directly to the official guidelines or check the Emergency Protocols panel.\n\n[Online AI Search](/ask-online-ai)";
+        botResponse = "I cannot find the answer to this question in the active departmental guidelines. Please refer directly to the official guidelines or check the Emergency Protocols panel.";
+        if (user) {
+          botResponse += "\n\n[Online AI Search](/ask-online-ai)";
+        }
       } else {
         const topMatch = searchRes.results[0];
 
         botResponse = `**Result from Guideline: ${topMatch.title}** (${MATCH_STRENGTH_LABELS[topMatch.matchStrength]})`;
 
         if (searchRes.isLowConfidence) {
-          botResponse += `\n\n⚠️ **Weak match:** This result is based on limited keyword overlap with your query — verify it is the right guideline before acting on it. You may run a deep AI search on the server using the button below.\n\n[Online AI Search](/ask-online-ai)`;
+          botResponse += `\n\n⚠️ **Weak match:** This result is based on limited keyword overlap with your query — verify it is the right guideline before acting on it.`;
+          if (user) {
+            botResponse += ` You may run a deep AI search on the server using the button below.\n\n[Online AI Search](/ask-online-ai)`;
+          }
         }
 
         // Map matching guidelines to citations
@@ -423,7 +544,7 @@ export default function Home() {
     setActiveGuidelineId(cit.docId);
     
     // Open native browser PDF viewer in a new tab at the exact page
-    const targetUrl = `${getPdfUrl(targetFile)}#page=${cit.page}`;
+    const targetUrl = targetFile.startsWith('http') ? targetFile : `${getPdfUrl(targetFile)}#page=${cit.page}`;
     window.open(targetUrl, '_blank');
     
     if (isMobile) {
@@ -481,237 +602,25 @@ export default function Home() {
               </button>
             </div>
           ) : (
-            <span className="text-xxs text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20 flex items-center gap-1">
-              <Activity className="w-3 h-3 animate-pulse-soft" /> Emergency Bypass Mode Active
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xxs text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20 flex items-center gap-1">
+                <Activity className="w-3 h-3 animate-pulse-soft" /> Emergency Bypass Mode Active
+              </span>
+              <button 
+                onClick={() => setIsLoginOpen(true)}
+                className="bg-teal-500 hover:bg-teal-650 active:scale-95 text-slate-950 font-bold text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all shadow-md shadow-teal-500/10"
+              >
+                <UserCheck className="w-3.5 h-3.5" />
+                <span>Sign In</span>
+              </button>
+            </div>
           )}
         </div>
       </header>
 
       {/* Main body area */}
       <main className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
-        
-        {/* State A: Pre-login Landing & Emergency Bypass Portal */}
-        {!user && (
-          <div className="flex-1 overflow-y-auto bg-slate-900 flex flex-col items-center justify-center p-4 py-8 md:p-8">
-            <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
-              
-              {/* Left Column: Zero-Auth Emergency Bypass Portal */}
-              <div className="bg-slate-950/40 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-7 h-7 rounded bg-red-600 flex items-center justify-center text-white">
-                      <ShieldAlert className="w-4 h-4 text-white" />
-                    </div>
-                    <h2 className="text-base font-bold text-slate-100 uppercase tracking-wide">National Emergency Protocols</h2>
-                  </div>
-                  <p className="text-xs text-slate-300 mb-6 leading-relaxed">
-                    High-availability crisis algorithms. Zero-authentication access for immediate clinical decision support during high-stress scenarios.
-                  </p>
-
-                  <div className="space-y-3">
-                    <button 
-                      onClick={() => handleOpenEmergencyAid('la_toxicity_aagbi.pdf', 'AAGBI Local Anaesthetic Toxicity Protocol')}
-                      className="w-full bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-red-900/50 p-3.5 rounded-xl text-left transition-all duration-200 group flex items-start justify-between"
-                    >
-                      <div className="flex gap-3">
-                        <ShieldAlert className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                        <div>
-                          <h3 className="text-xs font-semibold text-slate-200 group-hover:text-red-400 transition-colors">LA Toxicity Management</h3>
-                          <span className="text-xs text-slate-400">AAGBI Safety Guideline - Intralipid dosing</span>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-red-500 transition-transform group-hover:translate-x-0.5" />
-                    </button>
-
-                    <button 
-                      onClick={() => handleOpenEmergencyAid('malignant_hyperthermia.pdf', 'AAGBI Malignant Hyperthermia Protocol')}
-                      className="w-full bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-red-900/50 p-3.5 rounded-xl text-left transition-all duration-200 group flex items-start justify-between"
-                    >
-                      <div className="flex gap-3">
-                        <ShieldAlert className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                        <div>
-                          <h3 className="text-xs font-semibold text-slate-200 group-hover:text-red-400 transition-colors">Malignant Hyperthermia</h3>
-                          <span className="text-xs text-slate-400">AAGBI Safety Guideline - Dantrolene cooling</span>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-red-500 transition-transform group-hover:translate-x-0.5" />
-                    </button>
-
-                    <button 
-                      onClick={() => handleOpenEmergencyAid('resus_als.pdf', 'Resuscitation Council ALS Protocol')}
-                      className="w-full bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-red-900/50 p-3.5 rounded-xl text-left transition-all duration-200 group flex items-start justify-between"
-                    >
-                      <div className="flex gap-3">
-                        <Activity className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                        <div>
-                          <h3 className="text-xs font-semibold text-slate-200 group-hover:text-red-400 transition-colors">Adult Advanced Life Support (ALS)</h3>
-                          <span className="text-xs text-slate-400">Resuscitation Council UK algorithm</span>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-red-500 transition-transform group-hover:translate-x-0.5" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="border-t border-slate-800 mt-6 pt-4 text-xs text-slate-400 flex items-center gap-2">
-                  <span className="inline-block w-2 h-2 rounded-full bg-teal-400 animate-pulse-soft"></span>
-                  Offline-ready cached guidelines
-                </div>
-              </div>
-
-              {/* Right Column: Secure NHS Authentication Portal / Access Denied */}
-              <div className="bg-slate-950/40 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between">
-                {clerkUser && !isNhsEmail ? (
-                  <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <ShieldAlert className="w-5 h-5 text-red-500 animate-pulse" />
-                      <h2 className="text-base font-bold text-red-500 uppercase tracking-wide">Access Denied</h2>
-                    </div>
-                    <p className="text-xs text-slate-300 mb-4 leading-relaxed">
-                      Authentication was successful, but the account <strong className="text-white">{rawEmail}</strong> does not belong to a permitted NHS email domain.
-                    </p>
-                    <p className="text-xxs text-slate-400 mb-6 leading-relaxed">
-                      Access to the full clinical database and dose calculators is strictly restricted to NHS staff (domain ending with <code>@nhs.net</code> or <code>.nhs.uk</code>).
-                    </p>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full bg-red-600 hover:bg-red-700 text-white font-bold p-2.5 rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5"
-                    >
-                      <LogOut className="w-3.5 h-3.5" /> Sign Out & Try Another Account
-                    </button>
-                  </div>
-                ) : isDemoMode ? (
-                  <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <UserCheck className="w-5 h-5 text-teal-400" />
-                      <h2 className="text-base font-bold text-slate-100 uppercase tracking-wide">NHS Demo Mode Portal</h2>
-                    </div>
-                    <p className="text-xxs text-slate-400 mb-6 leading-relaxed">
-                      This application is running in <strong>Demo Mode</strong>. Enter the pre-shared passcode to access search engines and calculators.
-                    </p>
-                    
-                    <form onSubmit={handleDemoSubmit} className="space-y-4">
-                      <div>
-                        <label className="text-slate-400 text-[10px] font-semibold uppercase tracking-wider mb-1 block">
-                          Passcode
-                        </label>
-                        <input
-                          type="password"
-                          value={demoPasscode}
-                          onChange={(e) => setDemoPasscode(e.target.value)}
-                          placeholder="Enter passcode..."
-                          className="w-full bg-slate-900 border border-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 text-white rounded-lg p-2.5 text-xs transition-colors"
-                        />
-                        {demoError && (
-                          <p className="text-red-400 text-xxs mt-1">{demoError}</p>
-                        )}
-                      </div>
-                      <button
-                        type="submit"
-                        className="w-full bg-teal-500 hover:bg-teal-650 text-slate-950 font-bold p-2.5 rounded-lg text-xs transition-colors shadow-md shadow-teal-500/10"
-                      >
-                        Access Demo
-                      </button>
-                    </form>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <UserCheck className="w-5 h-5 text-teal-400" />
-                      <h2 className="text-base font-bold text-slate-100 uppercase tracking-wide">NHS Staff Login</h2>
-                    </div>
-                    <p className="text-xxs text-slate-400 mb-6 leading-relaxed">
-                      Sign in with your NHS email to access full semantic guidelines searching, custom dosing calculators, and administrative uploads.
-                    </p>
-                    
-                    <div className="flex justify-center cl-override">
-                      <SignIn 
-                        routing="hash"
-                        appearance={{
-                          variables: {
-                            colorPrimary: '#0d9488',
-                            colorBackground: 'transparent',
-                            colorForeground: '#f1f5f9',
-                            colorMutedForeground: '#94a3b8',
-                            colorInput: '#0f172a',
-                            colorInputForeground: '#ffffff',
-                            colorBorder: '#1e293b',
-                          },
-                          elements: {
-                            card: 'shadow-none border-0 bg-transparent p-0 w-full max-w-sm',
-                            header: 'hidden',
-                            formButtonPrimary: 'w-full bg-teal-500 hover:bg-teal-600 text-slate-950 font-bold p-2.5 rounded-lg text-xs transition-colors shadow-none',
-                            formFieldInput: 'bg-slate-900 border border-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 text-white rounded-lg p-2.5 text-xs transition-colors',
-                            footer: 'bg-transparent',
-                            footerActionText: 'text-slate-400 text-xxs',
-                            footerActionLink: 'text-teal-400 hover:text-teal-300 text-xxs font-bold',
-                            identityPreviewText: 'text-slate-100',
-                            formFieldLabel: 'text-slate-400 text-[10px] font-semibold uppercase tracking-wider mb-1',
-                            formFieldLabelRow: 'mb-1',
-                            formFieldAction: 'text-teal-400 hover:text-teal-300 text-[10px]',
-                            dividerText: 'text-slate-500 text-xxs',
-                            dividerLine: 'bg-slate-800',
-                            formFieldErrorText: 'text-red-400 text-xxs mt-1',
-                            alert: 'bg-red-500/10 border border-red-500/20 text-red-200 text-xxs rounded-lg p-3',
-                            alertText: 'text-red-400 text-xxs',
-                            // Custom targets to enforce high-contrast readable style on OTP input digit blocks
-                            formFieldInputCode: 'bg-slate-900 border border-slate-800 text-white font-mono text-center text-lg rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 w-10 h-10',
-                            formFieldInput__code: 'bg-slate-900 border border-slate-800 text-white font-mono text-center text-lg rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 w-10 h-10',
-                            formFieldInputShowCode: 'text-white bg-slate-900 border border-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500',
-                          }
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div className="text-slate-600 text-xxs leading-normal mt-6 border-t border-slate-800/50 pt-4">
-                  * Access requires a secure passwordless OTP code sent to your verified NHS email.
-                </div>
-              </div>
-
-            </div>
-
-            {/* Emergency PDF Backdrop if active */}
-            {activePdfUrl && (
-              <div className="fixed inset-0 bg-slate-950/95 z-40 flex items-center justify-center p-4">
-                <div className="w-full max-w-5xl h-[90vh] rounded-2xl overflow-hidden flex flex-col bg-slate-900 border border-slate-700 shadow-2xl">
-                  {/* Modal Header */}
-                  <div className="bg-slate-950 px-4 py-3 flex items-center justify-between border-b border-slate-800 shrink-0">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
-                      <span className="text-red-500 font-bold text-xxs uppercase tracking-wider">
-                        CRITICAL EMERGENCY AID PANEL
-                      </span>
-                    </div>
-                    <button 
-                      onClick={() => {
-                        setActivePdfUrl('');
-                        setActiveGuidelineId('');
-                      }}
-                      className="bg-red-600 hover:bg-red-750 active:scale-95 text-white px-3.5 py-1.5 rounded-lg text-xxs font-bold transition-all shadow-md shadow-red-600/20"
-                    >
-                      Close Emergency Aid
-                    </button>
-                  </div>
-                  <div className="flex-1 overflow-hidden">
-                    <PdfViewer 
-                      fileUrl={activePdfUrl} 
-                      pageNumber={activePage} 
-                      highlights={activeHighlights} 
-                      fileName={activePdfName}
-                      onPageChange={(p) => setActivePage(p)}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* State B: Post-login Full Interactive Workspace */}
-        {user && (
+          {/* Full Interactive Workspace (Emergency Bypass/Signed In) */}
           <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
             
             {/* Split Screen Panel 1: RAG Chat, Calculators & Phonebook */}
@@ -743,18 +652,45 @@ export default function Home() {
               </div>
 
               {(isMobile ? mobileTab === 'phonebook' : leftPanelTab === 'phonebook') ? (
-                <TrustPhonebook currentSiteId={currentSiteId} onSiteChange={setCurrentSiteId} />
+                user ? (
+                  <TrustPhonebook currentSiteId={currentSiteId} onSiteChange={setCurrentSiteId} />
+                ) : (
+                  <div className="flex-1 bg-slate-950 flex flex-col items-center justify-center p-6 text-center select-none text-slate-500">
+                    <ShieldAlert className="w-12 h-12 text-slate-800 mb-3" />
+                    <p className="font-medium text-slate-400 text-sm">NHS Trust Phonebook Locked</p>
+                    <p className="text-xxs text-slate-650 max-w-xs mt-1 leading-normal mb-4">
+                      Access to the internal NHS trust phonebook is restricted. Please sign in with your secure NHS email to view.
+                    </p>
+                    <button
+                      onClick={() => setIsLoginOpen(true)}
+                      className="bg-teal-500 hover:bg-teal-650 text-slate-950 font-bold px-4 py-2 rounded-lg text-xs transition-colors"
+                    >
+                      Sign In to View
+                    </button>
+                  </div>
+                )
               ) : (
                 <>
                   {/* Search Bar Block */}
                   <div className="bg-slate-950 p-4 border-b border-slate-800 shrink-0 relative z-30">
-                <form onSubmit={handleSearchSubmit} className="relative">
+                    {!user && (
+                      <div className="bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xxs p-2.5 rounded-lg mb-3 flex items-start gap-2 leading-relaxed">
+                        <Activity className="w-3.5 h-3.5 shrink-0 text-amber-500 mt-0.5" />
+                        <div>
+                          <strong>Emergency Bypass Mode Active:</strong> You are searching cached national QRH guidelines. NHS staff can <button onClick={() => setIsLoginOpen(true)} className="underline font-bold text-teal-400 hover:text-teal-350">Sign In</button> to access the complete hospital SOP database, internal phonebook, and admin uploads.
+                        </div>
+                      </div>
+                    )}
+                    <form onSubmit={handleSearchSubmit} className="relative">
                   <input
                     type="text"
                     required
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search guidelines (e.g. 'dexmed infusion', 'LA toxicity')..."
+                    placeholder={user 
+                      ? "Search all hospital SOPs and guidelines (e.g. 'dexmed', 'LA toxicity')..." 
+                      : "Search all 26 emergency QRH guidelines (e.g. 'anaphylaxis', 'hypoxia')..."
+                    }
                     className="w-full bg-slate-900 border border-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 text-slate-100 rounded-xl pl-10 pr-4 py-3 text-xs transition-colors"
                   />
                   <Search className="absolute left-3 top-3.5 w-4 h-4 text-slate-500" />
@@ -781,37 +717,23 @@ export default function Home() {
                           >
                             <button
                               type="button"
-                              onClick={() => {
-                                const botResponse = `**Result from Guideline: ${match.title}** (selected directly from search results)`;
-
-                                const citations = match.pdfName ? [{
-                                  docId: match.docId,
-                                  docName: match.title,
-                                  pdfName: match.pdfName,
-                                  page: match.defaultPage || 1
-                                }] : [];
-
-                                setChatHistory([
-                                  WELCOME_MESSAGE,
-                                  { sender: 'user', text: `Selected guideline: ${match.title}` },
-                                  { 
-                                    sender: 'bot', 
-                                    text: botResponse, 
-                                    citations,
-                                    guidelineId: match.docId
-                                  }
-                                ]);
-                                setActivePdfUrl('');
-
-                                setActiveGuidelineId(match.docId);
-                                setInstantResults([]);
-                                setSearchQuery('');
-                              }}
+                              onClick={() => handleSelectGuideline(match.docId, match.title, match.pdfName, match.defaultPage)}
                               className="flex-1 text-left px-4 py-3 text-xs text-slate-200 group flex items-center justify-between truncate"
                             >
                               <div className="flex flex-col gap-0.5 truncate pr-4">
-                                <span className="font-semibold text-slate-200 group-hover:text-teal-400 transition-colors truncate">
+                                <span className="font-semibold text-slate-200 group-hover:text-teal-400 transition-colors truncate flex items-center gap-1.5">
                                   {match.title}
+                                  {(() => {
+                                    const gl = guidelines.find(g => g.id === match.docId);
+                                    if (gl?.calculator) {
+                                      return (
+                                        <span className="inline-flex items-center gap-0.5 bg-teal-500/10 text-teal-400 text-[8px] font-bold px-1.5 py-0.5 rounded border border-teal-500/20 shadow-sm shrink-0">
+                                          <Calculator className="w-2.5 h-2.5" /> CALC
+                                        </span>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
                                 </span>
                                 <span className="text-[10px] text-slate-500 truncate">
                                   {match.context.substring(0, 80)}...
@@ -840,6 +762,16 @@ export default function Home() {
                   )}
                 </form>
 
+                  {(chatHistory.length > 1 || activeGuidelineId) && (
+                    <button
+                      type="button"
+                      onClick={handleResetToHome}
+                      className="mt-2.5 w-full bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-teal-500/30 text-teal-400 hover:text-teal-300 font-semibold py-2 px-3 rounded-lg text-[10px] flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" /> Back to Main Dashboard (Clear Chat)
+                    </button>
+                  )}
+
                 {/* Pinned Quick-Access Shortcuts */}
                 {pinnedGuidelineIds.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2 px-1">
@@ -853,30 +785,16 @@ export default function Home() {
                         <button
                           key={id}
                           type="button"
-                          onClick={() => {
-                            setActiveGuidelineId(id);
-                            // Seed a chat bubble for this selection
-                            setChatHistory([
-                              WELCOME_MESSAGE,
-                              { sender: 'user', text: `Selected pinned guideline: ${name}` },
-                              {
-                                sender: 'bot',
-                                text: `**Result from Guideline: ${name}** (pinned guideline)`,
-                                citations: pdfName ? [{
-                                  docId: id,
-                                  docName: name,
-                                  pdfName,
-                                  page: gl.default_page || 1
-                                }] : [],
-                                guidelineId: id
-                              }
-                            ]);
-                            setActivePdfUrl('');
-                          }}
+                          onClick={() => handleSelectGuideline(id, name, pdfName, gl.default_page || 1)}
                           className="bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-400 text-[10px] font-semibold px-2.5 py-1 rounded-md flex items-center gap-1 transition-all"
                         >
                           <Pin className="w-2.5 h-2.5 fill-teal-400" />
-                          {name}
+                          <span>{name}</span>
+                          {gl.calculator && (
+                            <span title="Calculator available">
+                              <Calculator className="w-2.5 h-2.5 text-teal-400 shrink-0 ml-0.5" />
+                            </span>
+                          )}
                         </button>
                       );
                     })}
@@ -918,7 +836,7 @@ export default function Home() {
                           } else {
                             const activeGuideline = guidelines.find(g => g.id === activeGuidelineId);
                             if (activeGuideline?.pdf_name) {
-                              const targetUrl = `${getPdfUrl(activeGuideline.pdf_name)}#page=${page}`;
+                              const targetUrl = activeGuideline.pdf_name.startsWith('http') ? activeGuideline.pdf_name : `${getPdfUrl(activeGuideline.pdf_name)}#page=${page}`;
                               window.open(targetUrl, '_blank');
                             }
                           }
@@ -944,99 +862,7 @@ export default function Home() {
                         </div>
                       </div>
                     )}
-                    {/* Inline Guideline Widgets (Calculator + Key Considerations) */}
-                    {msg.guidelineId && (() => {
-                      if (pullingThroughGuidelineId === msg.guidelineId) {
-                        return (
-                          <div className="mt-4 pt-4 border-t border-slate-800 text-center flex flex-col items-center justify-center gap-2.5">
-                            <div className="w-4 h-4 rounded-full border-2 border-teal-500 border-t-transparent animate-spin"></div>
-                            <span className="text-xs font-bold text-teal-400 uppercase tracking-widest animate-pulse">
-                              Retrieving full clinical data & calculator from edge...
-                            </span>
-                          </div>
-                        );
-                      }
 
-                      const activeGuideline = guidelines.find(g => g.id === msg.guidelineId);
-                      if (!activeGuideline) return null;
-
-                      // DCB0129 gate: dynamically generated calculators are only
-                      // shown once an admin clinician has approved them in the
-                      // sandbox. Hand-curated static calculators are exempt.
-                      const calcApproved = STATIC_GUIDELINE_IDS.includes(activeGuideline.id)
-                        || activeGuideline.calculator_approved === true;
-                      const hasCalc = !!activeGuideline.calculator && calcApproved;
-                      const hasPendingCalc = !!activeGuideline.calculator && !calcApproved;
-                      const calcSchema = activeGuideline.calculator;
-                      const considerations = activeGuideline.records 
-                        ? activeGuideline.records 
-                        : (activeGuideline.clinical?.steps?.map((s: any) => ({
-                            title: `Step ${s.step_number}`,
-                            context: s.text,
-                            summaryText: s.text
-                          })) || []);
-
-                      return (
-                        <div className="mt-4 pt-4 border-t border-slate-800 space-y-4">
-                          {/* Calculator Block */}
-                          {hasCalc && calcSchema && (
-                            <div className="flex flex-col">
-                              <div className="flex items-center gap-1.5 mb-2">
-                                <Calculator className="w-3.5 h-3.5 text-teal-400" />
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                  Dose Calculator: {calcSchema.calculator_name || calcSchema.calculatorName}
-                                </span>
-                              </div>
-                              <DoseCalculator schema={calcSchema as any} isApproved={true} />
-                            </div>
-                          )}
-
-                          {/* Calculator pending clinical approval notice */}
-                          {hasPendingCalc && (
-                            <div className="flex gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
-                              <Calculator className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                              <div className="flex-1">
-                                <p className="text-[11px] font-bold text-amber-500 mb-0.5 uppercase tracking-wide">
-                                  Dose calculator awaiting clinical approval
-                                </p>
-                                <p className="text-[10px] text-amber-200/70 leading-relaxed">
-                                  An auto-generated dose calculator exists for this guideline but has not yet been
-                                  verified by the clinical governance lead. Refer to the source PDF for dosing until
-                                  it is approved.
-                                </p>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Considerations Block */}
-                          <div className="flex flex-col">
-                            <div className="flex items-center gap-1.5 mb-2">
-                              <FileText className="w-3.5 h-3.5 text-teal-400" />
-                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                Key Clinical SOP Considerations
-                              </span>
-                            </div>
-                            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-3 space-y-2.5 max-h-[320px] overflow-y-auto">
-                              {considerations.length > 0 ? (
-                                considerations.map((rec: any, idx: number) => (
-                                  <div key={idx} className="bg-slate-950/60 border border-slate-850 p-2.5 rounded-lg">
-                                    <h4 className="text-teal-450 font-bold text-xxs mb-1 flex items-center gap-1">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
-                                      {rec.title}
-                                    </h4>
-                                    <p className="text-slate-300 text-[10px] leading-relaxed whitespace-pre-line">
-                                      {rec.context}
-                                    </p>
-                                  </div>
-                                ))
-                              ) : (
-                                <p className="text-slate-500 text-xxs text-center py-2">No structured considerations available.</p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
                   </div>
                 ))}
               </div>
@@ -1084,18 +910,38 @@ export default function Home() {
               {(() => {
                 const activeGuideline = guidelines.find(g => g.id === activeGuidelineId);
                 if (activeGuideline) {
+                  const calcSchema = activeGuideline.calculator;
+                  const hasCalculator = !!calcSchema;
+                  const calcApproved = STATIC_GUIDELINE_IDS.includes(activeGuideline.id)
+                    || activeGuideline.calculator_approved === true;
+
                   const summaryMarkdown = activeGuideline.summaryText 
                     || activeGuideline.clinical?.summaryText
                     || activeGuideline.clinical?.steps?.map((s: any) => `### Step ${s.step_number}\n${s.text}`).join('\n\n')
                     || "No clinical summary available for this guideline.";
 
+                  const considerations = activeGuideline.records 
+                    ? activeGuideline.records 
+                    : (activeGuideline.clinical?.steps?.map((s: any) => ({
+                        title: `Step ${s.step_number}`,
+                        context: s.text,
+                        summaryText: s.text
+                      })) || []);
+
                   return (
                     <div className="flex-1 flex flex-col overflow-hidden">
                       {/* Header */}
-                      <div className="p-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between shrink-0">
-                        <div className="flex-1 min-w-0 pr-4">
+                      <div className="p-4 bg-slate-900 border-b border-slate-800 flex items-center gap-3 shrink-0">
+                        <button
+                          type="button"
+                          onClick={handleResetToHome}
+                          className="p-2 bg-slate-850 hover:bg-slate-750 text-slate-400 hover:text-teal-400 rounded-lg transition-colors border border-slate-750 hover:border-teal-500/30 flex items-center justify-center shrink-0"
+                          title="Back to Dashboard"
+                        >
+                          <ArrowLeft className="w-4 h-4 text-teal-400" />
+                        </button>
+                        <div className="flex-1 min-w-0 pr-2">
                           <h2 className="text-xs font-bold text-slate-100 truncate flex items-center gap-1.5">
-                            <Activity className="w-3.5 h-3.5 text-teal-400" />
                             {activeGuideline.name || activeGuideline.clinical?.title}
                           </h2>
                           <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400">
@@ -1128,37 +974,178 @@ export default function Home() {
                               Source PDF ↗
                             </a>
                           )}
+                        </div>
+                      </div>
+
+                      {/* Control Toggle Bar */}
+                      <div className="bg-slate-900 border-b border-slate-800 p-2 flex flex-wrap gap-2 items-center justify-between shrink-0 relative z-10">
+                        <div className="flex flex-wrap gap-1.5">
                           <button
-                            onClick={() => {
-                              setActiveGuidelineId('');
-                              setActivePdfUrl('');
-                              setMobileTab('search');
-                            }}
-                            className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors border border-slate-800 flex items-center justify-center"
-                            title="Close Summary"
+                            type="button"
+                            onClick={() => setShowSummary(prev => !prev)}
+                            className={`px-3 py-1.5 rounded-lg text-xxs font-bold flex items-center gap-1.5 transition-all border cursor-pointer ${
+                              showSummary
+                                ? 'bg-teal-500 text-slate-950 border-teal-500 font-extrabold shadow-sm'
+                                : 'bg-slate-950 text-slate-400 border-slate-850 hover:text-slate-200 hover:border-slate-700'
+                            }`}
                           >
-                            <X className="w-3.5 h-3.5" />
+                            <FileText className="w-3.5 h-3.5" />
+                            Clinical Summary
                           </button>
+
+                          {hasCalculator && (
+                            <button
+                              type="button"
+                              onClick={() => setShowCalculator(prev => !prev)}
+                              className={`px-3 py-1.5 rounded-lg text-xxs font-bold flex items-center gap-1.5 transition-all border relative cursor-pointer ${
+                                showCalculator
+                                  ? 'bg-teal-500 text-slate-950 border-teal-500 font-extrabold shadow-sm'
+                                  : 'bg-slate-950 text-slate-400 border-slate-850 hover:text-slate-200 hover:border-slate-700'
+                              }`}
+                            >
+                              <Calculator className="w-3.5 h-3.5" />
+                              Dose Calculator
+                              {/* Pulse badge to show calculator is available when not shown */}
+                              {!showCalculator && (
+                                <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
+                                </span>
+                              )}
+                            </button>
+                          )}
+
+                          {activeGuideline.pdf_name && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (activeGuideline.pdf_name.startsWith('http')) {
+                                  window.open(activeGuideline.pdf_name, '_blank');
+                                } else {
+                                  setShowPdf(prev => !prev);
+                                }
+                              }}
+                              className={`px-3 py-1.5 rounded-lg text-xxs font-bold flex items-center gap-1.5 transition-all border cursor-pointer ${
+                                showPdf && !activeGuideline.pdf_name.startsWith('http')
+                                  ? 'bg-teal-500 text-slate-950 border-teal-500 font-extrabold shadow-sm'
+                                  : 'bg-slate-950 text-slate-400 border-slate-850 hover:text-slate-200 hover:border-slate-700'
+                              }`}
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                              {activeGuideline.pdf_name.startsWith('http') ? 'Source PDF ↗' : 'View Source PDF'}
+                            </button>
+                          )}
                         </div>
+
+                        {showPdf && !activeGuideline.pdf_name.startsWith('http') && (
+                          <span className="text-[10px] text-slate-400 bg-slate-950 border border-slate-850 px-2.5 py-1 rounded-md">
+                            Page: <strong className="text-teal-400">{activePage}</strong>
+                          </span>
+                        )}
                       </div>
- 
-                      {/* Summary Content */}
-                      <div className="flex-1 overflow-y-auto p-5 space-y-4">
-                        <div className="prose prose-invert max-w-none text-xs leading-relaxed text-slate-350">
-                          <div className="flex items-center gap-2 mb-3 text-teal-405 border-b border-slate-800 pb-2">
-                            <Sparkles className="w-4 h-4 text-teal-400 animate-pulse-soft" />
-                            <h3 className="text-xxs font-bold uppercase tracking-wider">Clinical Guidance Summary</h3>
+
+                      {/* Content Area */}
+                      <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-slate-950">
+                        {/* Summary / Calculator Column */}
+                        {(showSummary || (showCalculator && hasCalculator)) && (
+                          <div className={`flex-1 flex flex-col overflow-y-auto p-5 space-y-4 ${
+                            showPdf && !activeGuideline.pdf_name.startsWith('http') ? 'md:w-1/2 md:max-w-[50%] border-r border-slate-800' : 'w-full'
+                          }`}>
+                            
+                            {/* Dose Calculator block */}
+                            {showCalculator && hasCalculator && calcSchema && (
+                              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3 shadow-lg text-left">
+                                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                                  <div className="flex items-center gap-1.5">
+                                    <Calculator className="w-4 h-4 text-teal-400 animate-pulse-soft" />
+                                    <span className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                                      Dose Calculator: {calcSchema.calculator_name || calcSchema.calculatorName}
+                                    </span>
+                                  </div>
+                                  {!calcApproved && (
+                                    <span className="bg-amber-500/10 text-amber-500 text-[9px] font-bold px-2 py-0.5 rounded border border-amber-500/20">
+                                      Awaiting Approval
+                                    </span>
+                                  )}
+                                </div>
+                                <DoseCalculator schema={calcSchema as any} isApproved={calcApproved} />
+                              </div>
+                            )}
+
+                            {/* Clinical Summary block */}
+                            {showSummary && (
+                              <div className="space-y-4">
+                                <div className="prose prose-invert max-w-none text-xs leading-relaxed text-slate-350 bg-slate-900/40 border border-slate-850 rounded-xl p-4 text-left">
+                                  <div className="flex items-center gap-2 mb-3 text-teal-405 border-b border-slate-850 pb-2">
+                                    <Sparkles className="w-4 h-4 text-teal-400 animate-pulse-soft" />
+                                    <h3 className="text-xxs font-bold uppercase tracking-wider">Clinical Guidance Summary</h3>
+                                  </div>
+                                  
+                                  <div 
+                                    className="space-y-3 whitespace-pre-line text-slate-300 markdown-summary font-sans text-xs"
+                                    dangerouslySetInnerHTML={{ 
+                                      __html: formatMessageText(summaryMarkdown) 
+                                    }}
+                                  />
+                                </div>
+
+                                {/* Key Considerations Checklist block */}
+                                <div className="bg-slate-900/40 border border-slate-850 rounded-xl p-4 text-left">
+                                  <div className="flex items-center gap-1.5 mb-3 pb-2 border-b border-slate-850">
+                                    <FileText className="w-3.5 h-3.5 text-teal-400" />
+                                    <span className="text-xxs font-bold text-slate-300 uppercase tracking-wider">
+                                      Key Clinical SOP Considerations
+                                    </span>
+                                  </div>
+                                  <div className="space-y-2.5 max-h-[320px] overflow-y-auto scrollbar-thin">
+                                    {considerations.length > 0 ? (
+                                      considerations.map((rec: any, idx: number) => (
+                                        <div key={idx} className="bg-slate-950/60 border border-slate-850 p-2.5 rounded-lg">
+                                          <h4 className="text-teal-400 font-bold text-[10px] mb-1 flex items-center gap-1">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
+                                            {rec.title}
+                                          </h4>
+                                          <p className="text-slate-350 text-[10px] leading-relaxed whitespace-pre-line">
+                                            {rec.context}
+                                          </p>
+                                        </div>
+                                      ))
+                                    ) : (
+                                      <p className="text-slate-500 text-xxs text-center py-2">No structured considerations available.</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
                           </div>
-                          
-                          <div 
-                            className="space-y-3 whitespace-pre-line text-slate-300 markdown-summary font-sans text-xs"
-                            dangerouslySetInnerHTML={{ 
-                              __html: formatMessageText(summaryMarkdown) 
-                            }}
-                          />
-                        </div>
+                        )}
+
+                        {/* Embedded PDF Viewer Column */}
+                        {showPdf && !activeGuideline.pdf_name.startsWith('http') && (
+                          <div className="flex-1 h-full min-w-[320px]">
+                            <PdfViewer 
+                              fileUrl={getPdfUrl(activeGuideline.pdf_name)} 
+                              pageNumber={activePage || activeGuideline.default_page || 1}
+                              fileName={activeGuideline.name || activeGuideline.clinical?.title}
+                              onPageChange={(p) => setActivePage(p)}
+                            />
+                          </div>
+                        )}
+
+                        {/* Fallback if all are toggled off */}
+                        {!showSummary && (!showCalculator || !hasCalculator) && (!showPdf || activeGuideline.pdf_name.startsWith('http')) && (
+                          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center select-none text-slate-500">
+                            <FileText className="w-12 h-12 text-slate-800 mb-3" />
+                            <p className="font-medium text-slate-400 text-sm">All Panels Hidden</p>
+                            <p className="text-xxs text-slate-600 max-w-xs mt-1 leading-normal">
+                              Toggle the buttons above to display the clinical summary, calculator, or source PDF.
+                            </p>
+                          </div>
+                        )}
+
                       </div>
-                      
+
                       <button 
                         onClick={() => setMobileTab('search')}
                         className="md:hidden absolute bottom-6 right-6 bg-teal-500 hover:bg-teal-650 text-slate-950 font-bold px-4 py-2.5 rounded-full shadow-lg text-xs flex items-center gap-1 border border-teal-600 transition-transform active:scale-95 z-10"
@@ -1170,18 +1157,157 @@ export default function Home() {
                 }
 
                 return (
-                  <div className="flex-1 bg-slate-950 flex flex-col items-center justify-center p-6 text-center select-none text-slate-500">
-                    <FileText className="w-16 h-16 text-slate-800 mb-3" />
-                    <p className="font-medium text-slate-400 text-sm">Clinical Guideline Summary Panel</p>
-                    <p className="text-xxs text-slate-600 max-w-xs mt-1 leading-normal">
-                      Search and click a guideline reference. The detailed clinical summary, warnings, and drug administration steps will load here.
-                    </p>
+                  <div className="flex-1 bg-slate-950 flex flex-col items-center justify-start p-6 text-center overflow-y-auto">
+                    <div className="max-w-md w-full py-6 space-y-5">
+                      <div className="flex flex-col items-center">
+                        <div className="w-12 h-12 rounded-full bg-teal-500/10 border border-teal-500/25 flex items-center justify-center mb-2.5 text-teal-400">
+                          <Activity className="w-6 h-6 animate-pulse-soft" />
+                        </div>
+                        <h2 className="text-slate-200 text-sm font-bold uppercase tracking-wider">
+                          QRH Emergency Portal Active
+                        </h2>
+                        <p className="text-[11px] text-slate-450 mt-1 max-w-xs leading-normal">
+                          All 26 Quick Reference Handbook (QRH) emergency guidelines are fully indexed, searchable, and whitelisted for offline use.
+                        </p>
+                      </div>
+
+                      <div className="border-t border-slate-900 pt-4">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2.5">
+                          Quick-Access Emergency Aid
+                        </span>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => handleSelectGuideline('resus-als', 'Cardiac Arrest (ALS)', 'QRH_complete_June_2023.pdf', 6)}
+                            className="bg-red-950/20 hover:bg-red-950/40 border border-red-900/30 hover:border-red-500/50 text-red-200 hover:text-white font-bold p-3 rounded-xl text-xxs transition-all flex flex-col items-center gap-1 cursor-pointer"
+                          >
+                            <ShieldAlert className="w-4 h-4 text-red-500" />
+                            <span>1. Cardiac Arrest (ALS)</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleSelectGuideline('la-toxicity', 'LA Toxicity (LAST)', 'QRH_complete_June_2023.pdf', 23)}
+                            className="bg-red-950/20 hover:bg-red-950/40 border border-red-900/30 hover:border-red-500/50 text-red-200 hover:text-white font-bold p-3 rounded-xl text-xxs transition-all flex flex-col items-center gap-1 cursor-pointer"
+                          >
+                            <ShieldAlert className="w-4 h-4 text-red-500" />
+                            <span>2. LA Toxicity (LAST)</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleSelectGuideline('malignant-hyperthermia', 'Malignant Hyperthermia', 'QRH_complete_June_2023.pdf', 21)}
+                            className="bg-orange-950/20 hover:bg-orange-950/40 border border-orange-900/30 hover:border-orange-500/50 text-orange-200 hover:text-white font-bold p-3 rounded-xl text-xxs transition-all flex flex-col items-center gap-1 cursor-pointer"
+                          >
+                            <Activity className="w-4 h-4 text-orange-500" />
+                            <span>3. Malignant Hyperthermia</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleSelectGuideline('anaphylaxis', 'Anaphylaxis', 'QRH_complete_June_2023.pdf', 14)}
+                            className="bg-teal-950/20 hover:bg-teal-950/40 border border-teal-900/30 hover:border-teal-500/50 text-teal-200 hover:text-white font-bold p-3 rounded-xl text-xxs transition-all flex flex-col items-center gap-1 cursor-pointer"
+                          >
+                            <Activity className="w-4 h-4 text-teal-400" />
+                            <span>4. Anaphylaxis</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleSelectGuideline('cico', 'CICO Emergency', 'QRH_complete_June_2023.pdf', 16)}
+                            className="bg-red-950/20 hover:bg-red-950/40 border border-red-900/30 hover:border-red-500/50 text-red-200 hover:text-white font-bold p-3 rounded-xl text-xxs transition-all flex flex-col items-center gap-1 cursor-pointer"
+                          >
+                            <ShieldAlert className="w-4 h-4 text-red-500" />
+                            <span>5. CICO Emergency</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleSelectGuideline('hypoxia', 'Hypoxia', 'QRH_complete_June_2023.pdf', 7)}
+                            className="bg-teal-950/20 hover:bg-teal-950/40 border border-teal-900/30 hover:border-teal-500/50 text-teal-200 hover:text-white font-bold p-3 rounded-xl text-xxs transition-all flex flex-col items-center gap-1 cursor-pointer"
+                          >
+                            <Activity className="w-4 h-4 text-teal-400" />
+                            <span>6. Hypoxia</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Searchable Guideline Directory Section */}
+                      <div className="border-t border-slate-900 pt-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                            Full Guideline Directory
+                          </span>
+                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-teal-400 font-bold">
+                            {filteredDirectoryGuidelines.length} Indexed
+                          </span>
+                        </div>
+                        
+                        {/* Search directory filter */}
+                        <div className="relative mb-2">
+                          <input
+                            type="text"
+                            placeholder="Filter directory by title (e.g. 'sepsis', 'bronchospasm')..."
+                            value={directoryFilter}
+                            onChange={(e) => setDirectoryFilter(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20 text-slate-200 rounded-lg pl-8 pr-8 py-1.5 text-xxs transition-colors"
+                          />
+                          <Search className="absolute left-2.5 top-2.5 w-3 h-3 text-slate-500" />
+                          {directoryFilter && (
+                            <button 
+                              type="button"
+                              onClick={() => setDirectoryFilter('')} 
+                              className="absolute right-2.5 top-2 hover:text-teal-400 transition-colors text-slate-500 text-xxs p-0.5"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Scrollable list of guidelines */}
+                        <div className="bg-slate-900 border border-slate-800/80 rounded-xl max-h-48 overflow-y-auto divide-y divide-slate-850 text-left scrollbar-thin">
+                          {filteredDirectoryGuidelines.map((gl) => {
+                            const isQRH = STATIC_GUIDELINE_IDS.includes(gl.id);
+                            return (
+                              <button
+                                key={gl.id}
+                                type="button"
+                                onClick={() => handleSelectGuideline(gl.id, gl.name, gl.pdf_name, gl.default_page || 1)}
+                                className="w-full px-3 py-2 hover:bg-slate-850/40 text-left transition-colors flex items-center justify-between group"
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <FileText className="w-3.5 h-3.5 text-slate-500 group-hover:text-teal-400 transition-colors shrink-0" />
+                                  <span className="text-xxs text-slate-300 group-hover:text-slate-100 transition-colors truncate">
+                                    {gl.name}
+                                  </span>
+                                  {gl.calculator && (
+                                    <span className="inline-flex items-center gap-0.5 bg-teal-500/10 text-teal-400 text-[8px] font-bold px-1.5 py-0.5 rounded border border-teal-500/20 shadow-sm shrink-0" title="Dose Calculator available">
+                                      <Calculator className="w-2.5 h-2.5" /> CALC
+                                    </span>
+                                  )}
+                                </div>
+                                <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold shrink-0 ml-2 ${
+                                  isQRH 
+                                    ? 'bg-red-500/10 text-red-400 border border-red-500/10' 
+                                    : 'bg-teal-500/10 text-teal-400 border border-teal-500/10'
+                                }`}>
+                                  {isQRH ? 'QRH' : 'AAGBI'}
+                                </span>
+                              </button>
+                            );
+                          })}
+                          {filteredDirectoryGuidelines.length === 0 && (
+                            <div className="p-4 text-center text-[10px] text-slate-500">
+                              No guidelines match "{directoryFilter}"
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="text-[10px] text-slate-500 leading-normal max-w-xs mx-auto border-t border-slate-900 pt-3.5">
+                        Type queries in the search box to run RAG search, compute weight-based drug doses, and view references.
+                      </div>
+                    </div>
                   </div>
                 );
               })()}
             </div>
           </div>
-        )}
+
       </main>
 
       {/* Feedback Modal Overlay */}
@@ -1233,6 +1359,129 @@ export default function Home() {
                 {isSubmittingFeedback ? "Submitting..." : "Send Feedback"}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+      {/* NHS Auth / Login Modal Overlay */}
+      {isLoginOpen && (
+        <div className="fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 relative shadow-2xl overflow-y-auto max-h-[90vh]">
+            <button 
+              onClick={() => {
+                setIsLoginOpen(false);
+                setDemoError('');
+              }}
+              className="absolute top-4 right-4 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors"
+            >
+              ✕ Close
+            </button>
+            
+            {clerkUser && !isNhsEmail ? (
+              <div className="mt-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <ShieldAlert className="w-5 h-5 text-red-500 animate-pulse" />
+                  <h2 className="text-base font-bold text-red-500 uppercase tracking-wide">Access Denied</h2>
+                </div>
+                <p className="text-xs text-slate-350 mb-4 leading-relaxed">
+                  Authentication was successful, but the account <strong className="text-white">{rawEmail}</strong> does not belong to a permitted NHS email domain.
+                </p>
+                <p className="text-xxs text-slate-400 mb-6 leading-relaxed">
+                  Access to the full clinical database and dose calculators is strictly restricted to NHS staff (domain ending with <code>@nhs.net</code> or <code>.nhs.uk</code>).
+                </p>
+                <button
+                  onClick={handleLogout}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white font-bold p-2.5 rounded-lg text-xs transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <LogOut className="w-3.5 h-3.5" /> Sign Out & Try Another Account
+                </button>
+              </div>
+            ) : isDemoMode ? (
+              <div className="mt-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <UserCheck className="w-5 h-5 text-teal-400" />
+                  <h2 className="text-base font-bold text-slate-100 uppercase tracking-wide">NHS Demo Mode Portal</h2>
+                </div>
+                <p className="text-xxs text-slate-400 mb-6 leading-relaxed">
+                  This application is running in <strong>Demo Mode</strong>. Enter the pre-shared passcode to access search engines and calculators.
+                </p>
+                
+                <form onSubmit={handleDemoSubmit} className="space-y-4">
+                  <div>
+                    <label className="text-slate-400 text-[10px] font-semibold uppercase tracking-wider mb-1 block">
+                      Passcode
+                    </label>
+                    <input
+                      type="password"
+                      value={demoPasscode}
+                      onChange={(e) => setDemoPasscode(e.target.value)}
+                      placeholder="Enter passcode..."
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 text-white rounded-lg p-2.5 text-xs transition-colors"
+                    />
+                    {demoError && (
+                      <p className="text-red-400 text-xxs mt-1">{demoError}</p>
+                    )}
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full bg-teal-500 hover:bg-teal-650 text-slate-950 font-bold p-2.5 rounded-lg text-xs transition-colors shadow-md shadow-teal-500/10"
+                  >
+                    Access Demo
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <div className="mt-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <UserCheck className="w-5 h-5 text-teal-400" />
+                  <h2 className="text-base font-bold text-slate-100 uppercase tracking-wide">NHS Staff Login</h2>
+                </div>
+                <p className="text-xxs text-slate-400 mb-6 leading-relaxed">
+                  Sign in with your NHS email to access full semantic guidelines searching, custom dosing calculators, and administrative uploads.
+                </p>
+                
+                <div className="flex justify-center cl-override">
+                  <SignIn 
+                    routing="hash"
+                    appearance={{
+                      variables: {
+                        colorPrimary: '#0d9488',
+                        colorBackground: 'transparent',
+                        colorForeground: '#f1f5f9',
+                        colorMutedForeground: '#94a3b8',
+                        colorInput: '#0f172a',
+                        colorInputForeground: '#ffffff',
+                        colorBorder: '#1e293b',
+                      },
+                      elements: {
+                        card: 'shadow-none border-0 bg-transparent p-0 w-full max-w-sm',
+                        header: 'hidden',
+                        formButtonPrimary: 'w-full bg-teal-500 hover:bg-teal-600 text-slate-950 font-bold p-2.5 rounded-lg text-xs transition-colors shadow-none',
+                        formFieldInput: 'bg-slate-950 border border-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 text-white rounded-lg p-2.5 text-xs transition-colors',
+                        footer: 'bg-transparent',
+                        footerActionText: 'text-slate-400 text-xxs',
+                        footerActionLink: 'text-teal-400 hover:text-teal-300 text-xxs font-bold',
+                        identityPreviewText: 'text-slate-100',
+                        formFieldLabel: 'text-slate-400 text-[10px] font-semibold uppercase tracking-wider mb-1',
+                        formFieldLabelRow: 'mb-1',
+                        formFieldAction: 'text-teal-400 hover:text-teal-300 text-[10px]',
+                        dividerText: 'text-slate-500 text-xxs',
+                        dividerLine: 'bg-slate-800',
+                        formFieldErrorText: 'text-red-400 text-xxs mt-1',
+                        alert: 'bg-red-500/10 border border-red-500/20 text-red-200 text-xxs rounded-lg p-3',
+                        alertText: 'text-red-400 text-xxs',
+                        formFieldInputCode: 'bg-slate-950 border border-slate-800 text-white font-mono text-center text-lg rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 w-10 h-10',
+                        formFieldInput__code: 'bg-slate-950 border border-slate-800 text-white font-mono text-center text-lg rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 w-10 h-10',
+                        formFieldInputShowCode: 'text-white bg-slate-900 border border-slate-800 focus:border-teal-500 focus:ring-1 focus:ring-teal-500',
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+            
+            <div className="text-slate-500 text-xxs leading-normal mt-6 border-t border-slate-800/50 pt-4">
+              * Access requires a secure passwordless OTP code sent to your verified NHS email.
+            </div>
           </div>
         </div>
       )}

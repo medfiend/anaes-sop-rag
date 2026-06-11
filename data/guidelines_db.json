@@ -198,5 +198,3693 @@
         }
       ]
     }
+  },
+  {
+    "protocol_id": "key-basic-plan",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Key Basic Plan for Initial Problem Detection and Management in Anesthesia",
+      "steps": [
+        {
+          "step_number": 1,
+          "text": "General Principles & Box A: This Key Basic Plan will detect and identify almost all initial problems, allowing you to fix or temporise. Using the same systematic approach increases the chance of identifying the problem, reduces the risk of missing the problem, and limits fixing attention inappropriately. Box A (CRITICAL CHANGES): If problem worsens significantly or a new problem arises, call for help and go back to START of key basic plan."
+        },
+        {
+          "step_number": 2,
+          "text": "❶ Adequate Oxygen Delivery (Box B): Pause surgery if possible. Check fresh gas flow for circuit in use AND check measured FiO2. Visual inspection of entire breathing system including valves and connections. Rapidly confirm reservoir bag moving OR ventilator bellows moving. Box B Note: Altering fresh gas flow may require change of vaporiser setting."
+        },
+        {
+          "step_number": 3,
+          "text": "❷ Airway Assessment (Box C): Check position of airway device and listen for noise (including larynx and stomach). Check capnogram shape compatible with patent airway. Confirm airway device is patent (consider passing suction catheter). Consider whether you need to isolate equipment (Box D). Box C Note: Listen over the larynx with a stethoscope to get more information (e.g. leak / obstruction). You can pass a suction catheter to check patency of tracheal tube."
+        },
+        {
+          "step_number": 4,
+          "text": "Box D: Isolate Equipment: Ventilate lungs using self-inflating bag connected DIRECTLY to tracheal tube connector. DO NOT use the HME filter, angle piece or catheter mount. If increased pressure manually confirmed, re-connect machine. If increased pressure NOT manually confirmed, assume problem with machine/circuit/HME/filter/angle piece/catheter mount: check and replace as indicated."
+        },
+        {
+          "step_number": 5,
+          "text": "❸ Breathing Assessment (Box E): Check chest symmetry, rate, breath sounds, SpO2, measured VT exp, EtCO2. Feel the airway pressure using reservoir bag and APL valve (Box E) <3 breaths. Box E Note: Remember that airway ‘feel’ depends on your APL valve setting and fresh gas flow. You can only 'feel' a maximum of what the APL valve is set to. Measured expired tidal volume gives additional information."
+        },
+        {
+          "step_number": 6,
+          "text": "❹ Circulation Assessment: Check rate, rhythm, perfusion, and re-check Blood Pressure (BP)."
+        },
+        {
+          "step_number": 7,
+          "text": "❺ Depth of Anesthesia: Ensure appropriate depth of anaesthesia, analgesia and neuromuscular blockade."
+        },
+        {
+          "step_number": 8,
+          "text": "❻ Consider Surgical Problem: Consider potential surgical problems contributing to the crisis."
+        },
+        {
+          "step_number": 9,
+          "text": "❼ Escalation: Call for help if the problem is not resolving quickly."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "anesthesia crisis",
+      "airway management",
+      "ventilation failure",
+      "oxygenation",
+      "circulatory collapse",
+      "capnography",
+      "respiratory distress",
+      "anaesthetic emergency",
+      "systematic assessment",
+      "breathing circuit",
+      "laryngeal obstruction",
+      "key basic plan",
+      "monitoring"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 5
+  },
+  {
+    "protocol_id": "hypoxia",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Hypoxia / desaturation / cyanosis",
+      "steps": [
+        {
+          "step_number": 0,
+          "text": "Using these steps from start to end should identify any cause of unexpected hypoxia in theatre. Avoid spending excessive time and attention on one aspect until you have run through the whole drill."
+        },
+        {
+          "step_number": "Box A",
+          "text": "CRITICAL CHANGES: If problem worsens significantly or a new problem arises, call for help and go to START of GUIDELINE 1 - 1 Key basic plan."
+        },
+        {
+          "step_number": "Box B",
+          "text": "ISOLATE EQUIPMENT: Ventilate using self-inflating bag connected DIRECTLY to tracheal tube connector. DO NOT use HME filter, angle piece or catheter mount: • If problem resolves: assume problem with machine, circuit, HME, filter, angle piece or catheter mount: check and replace. • If increased pressure manually confirmed: re-connect machine."
+        },
+        {
+          "step_number": "Box C",
+          "text": "AIRWAY PRESSURE: Remember that airway “feel” depends on your APL valve setting. You can only “feel” a maximum of what the APL valve is set to. Measured expired tidal volume gives additional information."
+        },
+        {
+          "step_number": "Box D",
+          "text": "POTENTIAL CAUSES AND ACTIONS: • Hypoxia with increased airway pressure → 2-3 • Inadequate movement or expired volume: assist/increase ventilation. • Asymmetrical chest expansion: exclude bronchial intubation/foreign body/pneumothorax. • Consider potential actions: tracheal/bronchial suction; bronchodilator; PEEP; diuretic; bronchoscopy. • Consider potential causes: o Laryngospasm and stridor → 3-6 o Bronchospasm → 3-4 o Anaphylaxis → 3-1 o Circulatory embolism → 3-5 o Cardiac ischaemia (or infarction) → 3-12 o Cardiac tamponade → 3-9 o Sepsis → 3-14 o Malignant hyperthermia crisis → 3-8 o Aspiration, pulmonary oedema, congenital heart disease"
+        },
+        {
+          "step_number": "❶",
+          "text": "Adequate oxygen delivery: • Pause surgery if possible. • Increase fresh gas flow AND give 100% oxygen AND check measured FiO2. • Visual inspection of entire breathing system including valves and connections. • Rapidly confirm reservoir bag moving OR ventilator bellows moving. • If SpO2 low, is it accurate? Consider whether poor perfusion could be the problem."
+        },
+        {
+          "step_number": "❷",
+          "text": "Airway: • Check position of airway device and listen for noise (including over larynx and stomach). • Check capnogram shape compatible with patent airway. • Confirm airway device is patent (consider passing suction catheter). • Isolate patient from anaesthetic machine and breathing system (Box B). • Once machine/breathing system problem excluded, consider whether airway device should be replaced or its type changed."
+        },
+        {
+          "step_number": "❸",
+          "text": "Breathing: • Check chest symmetry, rate, breath sounds, SpO2, measured VTexp, ETCO2. • Feel the airway pressure using reservoir bag and APL valve (Box C) <3 breaths. • Consider potential causes and actions (Box D). • Consider muscle relaxation to optimise ventilation."
+        },
+        {
+          "step_number": "❹",
+          "text": "Circulation: • Check heart rate, rhythm, perfusion, recheck blood pressure. • If circulation unstable, consider if this is secondary to hypoxia."
+        },
+        {
+          "step_number": "❺",
+          "text": "Depth: • Ensure adequate depth of anaesthesia and analgesia."
+        },
+        {
+          "step_number": "❻",
+          "text": "If not resolving call for help AND check arterial blood gas, 12-lead ECG, chest X-ray."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "hypoxia",
+      "desaturation",
+      "cyanosis",
+      "respiratory failure",
+      "oxygenation",
+      "ventilation",
+      "airway management",
+      "anaphylaxis",
+      "bronchospasm",
+      "circulatory embolism",
+      "cardiac arrest",
+      "pneumothorax",
+      "hypoxemia",
+      "anaesthesia crisis"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 7
+  },
+  {
+    "protocol_id": "increased-airway-pressure",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "2 - 3 Increased airway pressure v.1",
+      "steps": [
+        {
+          "step_number": 0,
+          "text": "Using these steps from start to end should identify any cause of increased airway pressure in theatre. Avoid spending excessive time and attention on one aspect until you have run through the whole guideline."
+        },
+        {
+          "step_number": "Box A",
+          "text": "CRITICAL CHANGES: If problem worsens significantly or a new problem arises, call for help and go back to START of 1 - 1 Key basic plan."
+        },
+        {
+          "step_number": "Box C",
+          "text": "EXCLUDE ANAESTHETIC MACHINE/BREATHING SYSTEM PROBLEM: Ventilate lungs using self-inflating bag connected DIRECTLY to tracheal tube connector. DO NOT use HME filter, angle piece or catheter mount. • If increased pressure manually confirmed, re-connect machine. • If problem resolved, assume problem with machine, circuit, HME, filter, angle piece or catheter mount: check and replace."
+        },
+        {
+          "step_number": "Box B",
+          "text": "FEEL THE AIRWAY PRESSURE: Remember that airway “feel” depends on your APL valve setting. You can only “feel” a maximum of what the APL valve is set to. Measured expired tidal volume gives additional information."
+        },
+        {
+          "step_number": "Box D",
+          "text": "POTENTIAL CAUSES AND ACTIONS: • Inadequate neuromuscular blockade. • If laparoscopic surgery, consider releasing pneumoperitoneum and levelling patient position. • Consider potential causes: o Laryngospasm and stridor → 3-6 o Bronchospasm → 3-4 o Anaphylaxis → 3-1 o Circulatory embolus → 3-5 o Aspiration, pulmonary oedema; bronchial intubation; foreign body; pneumothorax. • Consider potential actions: tracheal/bronchial suction; bronchodilator; PEEP; diuretic; bronchoscopy."
+        },
+        {
+          "step_number": "❶",
+          "text": "Adequate oxygen delivery: • Pause surgery if possible. • Consider surgery related cause. • Increase fresh gas flow AND give 100% oxygen AND check measured FiO2. • Visual inspection of entire breathing system including valves and connections. • Rapidly confirm reservoir bag moving OR ventilator bellows moving. • Confirm increased airway pressure by switching to hand ventilation (<3 breaths) (Box B)."
+        },
+        {
+          "step_number": "❷",
+          "text": "Airway: • Check position of airway device and listen for noise (including larynx and stomach). • Check capnogram shape compatible with patent airway. • Confirm airway device is patent (consider passing suction catheter). • Isolate patient from anaesthetic machine and breathing system (Box C). • If machine/breathing system problem excluded, consider whether airway device should be replaced or its type changed."
+        },
+        {
+          "step_number": "❸",
+          "text": "Breathing: • Check chest symmetry, rate, breath sounds, SpO2, measured VTexp, ETCO2. • Feel the airway pressure using reservoir bag and APL valve (Box B). • Consider potential causes and actions (Box D)."
+        },
+        {
+          "step_number": "❹",
+          "text": "Circulation: • Check heart rate, rhythm, perfusion, recheck blood pressure. • If circulation unstable, consider if it is due to high airway pressure gas trapping."
+        },
+        {
+          "step_number": "❺",
+          "text": "Depth: Ensure adequate depth of anaesthesia and analgesia."
+        },
+        {
+          "step_number": "❻",
+          "text": "If not resolving, call for help AND check arterial blood gas, 12-lead ECG, chest X-ray."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "increased airway pressure",
+      "airway obstruction",
+      "bronchospasm",
+      "laryngospasm",
+      "anaphylaxis",
+      "pneumothorax",
+      "oxygenation failure",
+      "ventilation circuit leak",
+      "APL valve",
+      "tracheal tube management",
+      "respiratory distress",
+      "anaesthesia emergency"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 8
+  },
+  {
+    "protocol_id": "resus-als",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Cardiac Arrest (Peri-operative)",
+      "probable_cause": "One or more of: something related to surgery or anaesthesia; the patient’s underlying medical condition; the reason for surgery; equipment failure.",
+      "first_priority": "Start chest compressions, then get help, then find and treat the cause using the guideline.",
+      "box_a_potential_causes": {
+        "four_hs_four_ts": [
+          "Hypoxia (→ 2-2)",
+          "Hypovolaemia",
+          "Hypo/hyperkalaemia",
+          "Hypothermia",
+          "Tamponade (→ 3-9)",
+          "Thrombosis (→ 3-5)",
+          "Toxins",
+          "Tension pneumothorax"
+        ],
+        "specific_peri_operative_problems": [
+          "Vagal tone",
+          "Drug error",
+          "Local anaesthetic toxicity (→ 3-10)",
+          "Acidosis",
+          "Anaphylaxis (→ 3-1)",
+          "Embolism, gas/fat/amniotic (→ 3-5)",
+          "Massive blood loss (→ 3-2)"
+        ]
+      },
+      "box_b_drugs": [
+        "Fluid bolus 20 ml.kg-1 (adult 500 ml).",
+        "Adrenaline 10 μg.kg-1 (adult 1000 μg – may be given in increments).",
+        "Atropine 10 μg.kg-1 (adult 0.5-1 mg) if vagal tone likely cause.",
+        "Amiodarone 5 mg.kg-1 (adult 300 mg) after 3rd shock.",
+        "Magnesium 50 mg.kg-1 (adult 2 g) for polymorphic VT/hypomagnesaemia.",
+        "Calcium chloride 10% 0.2 ml.kg-1 (adult 10 ml) for magnesium overdose, hypocalcaemia or hyperkalaemia.",
+        "Thrombolysis for suspected massive pulmonary embolus."
+      ],
+      "box_c_defibrillation": {
+        "instructions": [
+          "Continue compressions while charging: Biphasic 4 J.kg-1 (adult 150-200 J)",
+          "DO NOT check pulse after defibrillation.",
+          "Use 3 stacked shocks in cardiac catheterisation lab."
+        ]
+      },
+      "box_d_dont_forget": [
+        "Use waveform capnography. No expired CO2 = lungs not being ventilated (assume and exclude oesophageal intubation). Very rarely, absent/minimal expired CO2 = CPR not occurring OR pulmonary circulation disconnected from systemic (e.g. in major trauma). Sudden increase in ETCO2 usually signals return of spontaneous circulation.",
+        "Optimise position for chest compressions (use overhead for bariatric patients).",
+        "Uterine displacement in pregnant patients.",
+        "Ventilator can free up hands but remember to set to volume control. Minimise intrathoracic pressure: avoid excessive tidal volume and hyperventilation."
+      ],
+      "steps": [
+        {
+          "step_number": 1,
+          "text": "IMMEDIATE ACTION: Declare 'cardiac arrest' to the theatre team AND note time. Delegate one person (minimum) to chest compressions 100 min-1, depth 5 cm. Call for help: nearby theatres / emergency bell / senior on-call / dial emergency number. Call for cardiac arrest trolley. As soon as possible, delegate task of evaluating potential causes (Box A)."
+        },
+        {
+          "step_number": 2,
+          "text": "Adequate oxygen delivery: Increase fresh gas flow, give 100% oxygen AND check measured FiO2. Turn off anaesthetic (inhalational or intravenous). Check breathing system valves working and system connections intact. Rapidly confirm ventilator bellows moving or provide manual ventilation."
+        },
+        {
+          "step_number": 3,
+          "text": "Airway: Check position of airway device and listen for noise (including larynx and stomach). Confirm airway device is patent (consider passing suction catheter). If expired CO2 is absent, presume oesophageal intubation until absolutely excluded."
+        },
+        {
+          "step_number": 4,
+          "text": "Breathing: Check chest symmetry, rate, breath sounds, SpO2, measured expired volume, ETCO2. Evaluate the airway pressure using reservoir bag and APL valve."
+        },
+        {
+          "step_number": 5,
+          "text": "Circulation: Check rate and adequacy of chest compressions (visual and ETCO2). Encourage rotation of personnel performing compressions. If i.v. access fails or impossible use intraosseous (IO) route. Check ECG rhythm for no more than 5 seconds. Follow Resuscitation Council (UK) and ERC Guidelines. See Boxes B and C for reminders about drugs and defibrillation."
+        },
+        {
+          "step_number": 6,
+          "text": "Systematically evaluate potential underlying problems and act accordingly (Box A)."
+        },
+        {
+          "step_number": 7,
+          "text": "If there is return of spontaneous circulation, re-establish anaesthesia."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "cardiac arrest",
+      "resuscitation",
+      "CPR",
+      "defibrillation",
+      "adrenaline",
+      "amiodarone",
+      "asystole",
+      "PEA",
+      "VF",
+      "VT",
+      "hypoxia",
+      "hypovolaemia",
+      "anaphylaxis",
+      "vagal tone",
+      "ALS"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 6,
+    "calculator": {
+      "calculator_name": "Peri-operative Cardiac Arrest Pediatric & Adult Dosing Calculator",
+      "formula_page": 6,
+      "inputs": [
+        {
+          "id": "weight",
+          "label": "Actual Body Weight (kg)",
+          "type": "number",
+          "defaultValue": 70,
+          "min": 10,
+          "max": 200
+        }
+      ],
+      "calculations": [
+        {
+          "id": "fluid_bolus",
+          "label": "Fluid Bolus Volume (20 ml/kg, max 500 ml)",
+          "formula": "Math.min(weight * 20, 500)",
+          "unit": "ml"
+        },
+        {
+          "id": "adrenaline_dose",
+          "label": "Adrenaline Dose (10 mcg/kg, max 1000 mcg)",
+          "formula": "Math.min(weight * 10, 1000)",
+          "unit": "mcg"
+        },
+        {
+          "id": "atropine_dose",
+          "label": "Atropine Dose (10 mcg/kg, adult 0.5-1 mg)",
+          "formula": "Math.min(weight * 10, 1000)",
+          "unit": "mcg"
+        },
+        {
+          "id": "amiodarone_dose",
+          "label": "Amiodarone Dose (5 mg/kg, max 300 mg)",
+          "formula": "Math.min(weight * 5, 300)",
+          "unit": "mg"
+        },
+        {
+          "id": "magnesium_dose",
+          "label": "Magnesium Dose (50 mg/kg, max 2000 mg)",
+          "formula": "Math.min(weight * 50, 2000)",
+          "unit": "mg"
+        },
+        {
+          "id": "calcium_chloride_dose",
+          "label": "Calcium Chloride 10% Dose (0.2 ml/kg, max 10 ml)",
+          "formula": "Math.min(weight * 0.2, 10)",
+          "unit": "ml"
+        },
+        {
+          "id": "defibrillation_energy",
+          "label": "Defibrillation Energy (4 J/kg, max 200 J)",
+          "formula": "Math.min(weight * 4, 200)",
+          "unit": "J"
+        }
+      ]
+    }
+  },
+  {
+    "protocol_id": "hypotension",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Hypotension",
+      "introduction": "Hypotension is commonly due to unnecessarily deep anaesthesia, the autonomic effects of neuraxial block, hypovolaemia or combined causes. You should rapidly exclude a problem in adequate oxygen delivery, airway and breathing first.",
+      "boxes": {
+        "box_a": {
+          "title": "Box A: CRITICAL CHANGES",
+          "text": "If problem worsens significantly or a new problem arises, call for help and go back to START of 1 - 1 Key basic plan."
+        },
+        "box_b": {
+          "title": "Box B: ANTICHOLINERGIC DRUGS",
+          "drugs": [
+            {
+              "name": "Glycopyrrolate",
+              "dose_weight": "5 μg.kg-1",
+              "dose_adult": "200-400 μg"
+            },
+            {
+              "name": "Atropine",
+              "dose_weight": "5 μg.kg-1",
+              "dose_adult": "300-600 μg"
+            }
+          ]
+        },
+        "box_c": {
+          "title": "Box C: VASOPRESSOR DRUGS",
+          "drugs": [
+            {
+              "name": "Ephedrine",
+              "dose_weight": "100 μg.kg-1",
+              "dose_adult": "3-12 mg"
+            },
+            {
+              "name": "Phenylephrine",
+              "dose_weight": "5 μg.kg-1",
+              "dose_adult": "100 μg"
+            },
+            {
+              "name": "Metaraminol",
+              "dose_weight": "5 μg.kg-1",
+              "dose_adult": "500 μg"
+            },
+            {
+              "name": "Adrenaline",
+              "dose_weight": "1 μg.kg-1",
+              "dose_adult": "10-100 μg",
+              "note": "in emergency only"
+            }
+          ]
+        },
+        "box_d": {
+          "title": "Box D: SURGICAL CAUSES",
+          "causes": [
+            "Decreased venous return (e.g. vena cava compression / pneumoperitoneum)",
+            "Blood loss (unrecognised / undeclared / occult)",
+            "Vagal reaction to surgical stimulation",
+            "Embolism (gas / fat / blood / cement reaction)"
+          ]
+        },
+        "box_e": {
+          "title": "Box E: DON’T FORGET!",
+          "points": [
+            "Consider whether you could have made a drug error.",
+            "Pneumothorax and/or high intrathoracic pressure can cause hypotension.",
+            "Also consider: Cardiac ischaemia → 3-12",
+            "Also consider: Anaphylaxis → 3-1",
+            "Also consider: Cardiac tamponade → 3-9",
+            "Also consider: Local anaesthetic toxicity → 3-10",
+            "Also consider: Sepsis → 3-14",
+            "Also consider: Cardiac valvular problem",
+            "Also consider: Endocrine cause (eg steroid dependency)"
+          ]
+        }
+      },
+      "steps": [
+        {
+          "step_number": 1,
+          "text": "Adequate oxygen delivery: Pause surgery if possible. Increase fresh gas flow AND give 100% oxygen AND check measured FiO2. Visual inspection of entire breathing system including valves and connections. Rapidly confirm reservoir bag moving OR ventilator bellows moving."
+        },
+        {
+          "step_number": 2,
+          "text": "Airway: Check position of airway device and listen for noise (including larynx and stomach). Check capnogram shape compatible with patent airway. Check airway AND airway device are patent (consider passing suction catheter)."
+        },
+        {
+          "step_number": 3,
+          "text": "Breathing: Check chest symmetry, rate, breath sounds, SpO2, measured VTexp, ETCO2. Feel the airway pressure using reservoir bag and APL valve <3 breaths. Exclude high intrathoracic pressure as a cause."
+        },
+        {
+          "step_number": 4,
+          "text": "Circulation: Check heart rate, rhythm, perfusion, recheck blood pressure. If heart rate <60 bpm consider giving anticholinergic drug (Box B). Consider giving vasopressor (Box C) and positioning (e.g. move head down). Consider fluid boluses (250 ml adult, 10 ml.kg-1 paediatric). If heart rate >100 bpm sinus rhythm, treat as hypovolaemia: give i.v fluid bolus. If heart rate >100 bpm and non-sinus -> 2-7 Tachycardia."
+        },
+        {
+          "step_number": 5,
+          "text": "Depth: Ensure correct depth of anaesthesia AND analgesia (consider risk of awareness)."
+        },
+        {
+          "step_number": 6,
+          "text": "Exclude potential surgical causes (Box D) – discuss with surgical team."
+        },
+        {
+          "step_number": 7,
+          "text": "Consider causes in Box E and call for help if problem not resolving quickly."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "hypotension",
+      "low blood pressure",
+      "shock",
+      "vasopressor",
+      "ephedrine",
+      "phenylephrine",
+      "metaraminol",
+      "adrenaline",
+      "glycopyrrolate",
+      "atropine",
+      "hypovolaemia",
+      "anaesthesia emergency",
+      "qrh"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 9,
+    "calculator": {
+      "calculator_name": "Hypotension Weight-Based Dosing Calculator",
+      "formula_page": 9,
+      "inputs": [
+        {
+          "id": "weight",
+          "label": "Actual Body Weight (kg)",
+          "type": "number",
+          "defaultValue": 70,
+          "min": 10,
+          "max": 200
+        }
+      ],
+      "calculations": [
+        {
+          "id": "glycopyrrolate_dose",
+          "label": "Glycopyrrolate Dose (5 mcg/kg)",
+          "formula": "weight * 5",
+          "unit": "mcg"
+        },
+        {
+          "id": "atropine_dose",
+          "label": "Atropine Dose (5 mcg/kg)",
+          "formula": "weight * 5",
+          "unit": "mcg"
+        },
+        {
+          "id": "ephedrine_dose",
+          "label": "Ephedrine Dose (100 mcg/kg)",
+          "formula": "weight * 100",
+          "unit": "mcg"
+        },
+        {
+          "id": "phenylephrine_dose",
+          "label": "Phenylephrine Dose (5 mcg/kg)",
+          "formula": "weight * 5",
+          "unit": "mcg"
+        },
+        {
+          "id": "metaraminol_dose",
+          "label": "Metaraminol Dose (5 mcg/kg)",
+          "formula": "weight * 5",
+          "unit": "mcg"
+        },
+        {
+          "id": "adrenaline_dose",
+          "label": "Adrenaline Dose (1 mcg/kg)",
+          "formula": "weight * 1",
+          "unit": "mcg"
+        },
+        {
+          "id": "paediatric_fluid_bolus",
+          "label": "Paediatric Fluid Bolus (10 ml/kg)",
+          "formula": "weight * 10",
+          "unit": "ml"
+        }
+      ]
+    }
+  },
+  {
+    "protocol_id": "hypertension",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Hypertension",
+      "intro": "Hypertension is most commonly due to inappropriate depth of anaesthesia or inadequate analgesia. You should rapidly exclude a problem in adequate oxygen delivery, airway and breathing first.",
+      "box_a": {
+        "title": "CRITICAL CHANGES",
+        "text": "If problem worsens significantly or a new problem arises, call for help and go back to START of 1 - 1 Key Basic Plan."
+      },
+      "box_b": {
+        "title": "POTENTIAL UNDERLYING PROBLEMS",
+        "items": [
+          "Inadequate anaesthesia / analgesia (alfentanil can be diagnostic – see Box C for dose)",
+          "Inadequate neuromuscular blockade",
+          "Consider whether you could have made a drug error",
+          "Omission of usual antihypertensives",
+          "Distended bladder",
+          "Vasopressor administered by surgeon",
+          "Surgical tourniquet",
+          "Excess fluid (over-administration / overload / TURP syndrome)",
+          "Medical causes: drug interaction, renal failure, raised intracranial pressure, seizure, thyrotoxicosis, phaeochromocytoma"
+        ]
+      },
+      "box_c": {
+        "title": "TEMPORISING DRUGS FOR HYPERTENSION",
+        "items": [
+          "Alfentanil 10 μg.kg-1 (adult 0.5-1 mg)",
+          "Propofol 1 mg.kg-1 (adult 50-100 mg)",
+          "Labetolol 0.5 mg.kg-1 (adult 25-50mg). Repeat when necessary.",
+          "Esmolol 0.5 mg.kg-1 (adult 25-50mg) Follow with infusion.",
+          "Hydralazine 0.1 mg.kg-1 (adult 5-10mg)",
+          "Glyceryl trinitrate 0.5-5 μg.kg.min-1 infusion (adult 2-20 ml.hr-1 of 1 mg.ml-1 solution)"
+        ]
+      },
+      "steps": [
+        {
+          "step_number": 1,
+          "text": "Immediate actions: Recheck blood pressure AND increase anaesthesia AND reduce stimulus."
+        },
+        {
+          "step_number": 2,
+          "text": "Adequate oxygen delivery: Check fresh gas flow for circuit in use AND check measured FiO2. Visual inspection of entire breathing system including valves and connections. Rapidly confirm reservoir bag moving OR ventilator bellows moving."
+        },
+        {
+          "step_number": 3,
+          "text": "Airway: Check position of airway device and listen for noise (including larynx and stomach). Check capnogram shape compatible with patent airway. Confirm airway device is patent (consider passing suction catheter)."
+        },
+        {
+          "step_number": 4,
+          "text": "Breathing - exclude hypoxia and hypercarbia as causes: Check chest symmetry, rate, breath sounds, SpO2, measured VTexp, ETCO2. Feel the airway pressure using reservoir bag and APL valve <3 breaths."
+        },
+        {
+          "step_number": 5,
+          "text": "Circulation: Check rate, rhythm, perfusion; increase frequency of BP check. Check cuff size and location, consider intra-arterial monitoring."
+        },
+        {
+          "step_number": 6,
+          "text": "Depth: Ensure adequate depth of anaesthesia and analgesia."
+        },
+        {
+          "step_number": 7,
+          "text": "Consider underlying problem (Box B)."
+        },
+        {
+          "step_number": 8,
+          "text": "Call for help and consider temporising drug (Box C) if problem not resolving."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "hypertension",
+      "high blood pressure",
+      "anaesthesia",
+      "analgesia",
+      "alfentanil",
+      "propofol",
+      "labetalol",
+      "labetolol",
+      "esmolol",
+      "hydralazine",
+      "glyceryl trinitrate",
+      "vasopressor",
+      "tourniquet",
+      "phaeochromocytoma"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 10,
+    "calculator": {
+      "calculator_name": "Hypertension Temporising Drug Doses",
+      "formula_page": 10,
+      "inputs": [
+        {
+          "id": "weight",
+          "label": "Actual Body Weight (kg)",
+          "type": "number",
+          "defaultValue": 70,
+          "min": 10,
+          "max": 200
+        }
+      ],
+      "calculations": [
+        {
+          "id": "alfentanil_dose",
+          "label": "Alfentanil Bolus (10 μg/kg)",
+          "formula": "weight * 10",
+          "unit": "μg"
+        },
+        {
+          "id": "propofol_dose",
+          "label": "Propofol Bolus (1 mg/kg)",
+          "formula": "weight * 1",
+          "unit": "mg"
+        },
+        {
+          "id": "labetolol_dose",
+          "label": "Labetolol Bolus (0.5 mg/kg)",
+          "formula": "weight * 0.5",
+          "unit": "mg"
+        },
+        {
+          "id": "esmolol_dose",
+          "label": "Esmolol Bolus (0.5 mg/kg)",
+          "formula": "weight * 0.5",
+          "unit": "mg"
+        },
+        {
+          "id": "hydralazine_dose",
+          "label": "Hydralazine Bolus (0.1 mg/kg)",
+          "formula": "weight * 0.1",
+          "unit": "mg"
+        }
+      ]
+    }
+  },
+  {
+    "protocol_id": "bradycardia",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Bradycardia",
+      "introduction": "Bradycardia in theatre should not be treated as an isolated variable: remember to tailor treatment to the patient and the situation. Follow the full steps to exclude a serious underlying problem.",
+      "boxes": {
+        "box_a": {
+          "title": "CRITICAL BRADYCARDIA",
+          "instructions": [
+            "Give atropine 20 μg.kg-1 (adult 0.5-1 mg) with fluid flush.",
+            "If no pulse: (or heart rate <60 bpm infant or neonate):",
+            "• Delegate (minimum) 1 person to chest compressions",
+            "• → 2 - 1 Cardiac arrest"
+          ]
+        },
+        "box_b": {
+          "title": "DRUGS FOR BRADYCARDIA",
+          "drugs": [
+            "Glycopyrrolate 5 μg.kg-1 (adult 200 - 400 μg)",
+            "Ephedrine 100 μg.kg-1 (adult 3-12 mg)",
+            "Atropine 10 μg.kg-1 (adult 300-600 μg)",
+            "Isoprenaline 0.5 μg.kg.min-1 (adult 5 μg.min-1)",
+            "Adrenaline 1 μg.kg-1 (adult 10-100 μg) in emergency only"
+          ]
+        },
+        "box_c": {
+          "title": "POTENTIAL UNDERLYING PROBLEMS",
+          "points": [
+            "Consider whether you could have made a drug error.",
+            "Consider known drug causes (eg. remifentanil, digoxin etc).",
+            "Surgical stimulation with inadequate depth.",
+            "Also consider: high intrathoracic pressure; pneumoperitoneum; local anaesthetic toxicity (→ 3-10); beta-blocker; digoxin; calcium channel blocker; myocardial infarction, hyperkalaemia, hypothermia, raised intra-cranial pressure."
+          ]
+        },
+        "box_d": {
+          "title": "TRANSCUTANEOUS PACING",
+          "steps": [
+            "Attach pads and ECG leads from pacing defibrillator.",
+            "Set to PACING MODE.",
+            "Set PACER RATE.",
+            "Increase PACER OUTPUT from 60 mA until capture (spikes align QRS).",
+            "Confirm capture: electrical AND mechanical (femoral pulse).",
+            "Set PACER OUTPUT 10 mA above capture.",
+            "START."
+          ]
+        }
+      },
+      "steps": [
+        {
+          "step_number": 1,
+          "title": "Immediate action",
+          "text": "Stop any stimulus, check pulse, rhythm and blood pressure:\n• If no pulse OR not sinus bradycardia OR severe hypotension: use Box A.\n• If pulse present AND sinus bradycardia: use Box B."
+        },
+        {
+          "step_number": 2,
+          "title": "Adequate oxygen delivery",
+          "text": "• Check fresh gas flow for circuit in use AND check measured FiO2.\n• Visual inspection of entire breathing system including valves and connections.\n• Rapidly confirm reservoir bag moving OR ventilator bellows moving."
+        },
+        {
+          "step_number": 3,
+          "title": "Airway",
+          "text": "• Check position of airway device and listen for noise (including larynx and stomach).\n• Check capnogram shape compatible with patent airway.\n• Confirm airway device is patent (consider passing suction catheter)."
+        },
+        {
+          "step_number": 4,
+          "title": "Breathing",
+          "text": "• Check chest symmetry, rate, breath sounds, SpO2, measured VT exp, ETCO2.\n• Feel the airway pressure using reservoir bag and APL valve <3 breaths."
+        },
+        {
+          "step_number": 5,
+          "title": "Circulation",
+          "text": "• Check rate, rhythm, perfusion, recheck blood pressure."
+        },
+        {
+          "step_number": 6,
+          "title": "Depth",
+          "text": "• Consider current depth of anaesthesia AND adequacy of analgesia."
+        },
+        {
+          "step_number": 7,
+          "title": "Consider underlying problem",
+          "text": "Consider underlying problem (Box C)."
+        },
+        {
+          "step_number": 8,
+          "title": "Call for help",
+          "text": "Call for help if problem not resolving quickly."
+        },
+        {
+          "step_number": 9,
+          "title": "Consider transcutaneous pacing",
+          "text": "Consider transcutaneous pacing (Box D)."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "bradycardia",
+      "slow heart rate",
+      "atropine",
+      "glycopyrrolate",
+      "ephedrine",
+      "isoprenaline",
+      "adrenaline",
+      "pacing",
+      "transcutaneous pacing",
+      "cardiac arrest",
+      "anaesthesia emergency",
+      "theatre emergency",
+      "qrh"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 11,
+    "calculator": {
+      "calculator_name": "Bradycardia Emergency Drug Dose Calculator",
+      "formula_page": 11,
+      "inputs": [
+        {
+          "id": "weight",
+          "label": "Actual Body Weight (kg)",
+          "type": "number",
+          "defaultValue": 70,
+          "min": 2,
+          "max": 150
+        }
+      ],
+      "calculations": [
+        {
+          "id": "atropine_critical",
+          "label": "Atropine (Critical Bradycardia - 20 μg/kg)",
+          "formula": "weight * 20",
+          "unit": "μg"
+        },
+        {
+          "id": "glycopyrrolate",
+          "label": "Glycopyrrolate (5 μg/kg)",
+          "formula": "weight * 5",
+          "unit": "μg"
+        },
+        {
+          "id": "ephedrine",
+          "label": "Ephedrine (100 μg/kg)",
+          "formula": "weight * 100",
+          "unit": "μg"
+        },
+        {
+          "id": "atropine_standard",
+          "label": "Atropine (Standard - 10 μg/kg)",
+          "formula": "weight * 10",
+          "unit": "μg"
+        },
+        {
+          "id": "isoprenaline",
+          "label": "Isoprenaline Infusion (0.5 μg/kg/min)",
+          "formula": "weight * 0.5",
+          "unit": "μg/min"
+        },
+        {
+          "id": "adrenaline",
+          "label": "Adrenaline (Emergency - 1 μg/kg)",
+          "formula": "weight * 1",
+          "unit": "μg"
+        }
+      ]
+    }
+  },
+  {
+    "protocol_id": "tachycardia",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "2 - 7 Tachycardia v.1",
+      "preamble": "Tachycardia in theatre is often due to inadequate depth of anaesthesia / analgesia or alternatively a reflex to hypotension. Tachycardia should not be treated as an isolated variable: remember to tailor treatment to the patient and the situation. Follow the full steps to exclude a serious underlying problem.",
+      "boxes": {
+        "box_a": {
+          "title": "Box A: CRITICAL TACHYCARDIA",
+          "instructions": [
+            "If no pulse, delegate one person (minimum) to chest compressions and → 2-1 Cardiac arrest.",
+            "If hypotension worsening or impending arrest, consider electrical cardioversion (Box D)."
+          ]
+        },
+        "box_b": {
+          "title": "Box B: POTENTIAL UNDERLYING PROBLEMS",
+          "problems": [
+            "Stimulation with inadequate depth.",
+            "Consider drug error.",
+            "Also consider: central line/wire; hypovolaemia; primary cardiac arrhythmia; myocardial infarction; electrolyte disturbance; local anaesthetic toxicity (→ 3-10); sepsis (→ 3-14); circulatory embolus, gas/fat/amniotic (→ 3-5); anaphylaxis (→ 3-1); malignant hyperthermia crisis (→ 3-8)"
+          ]
+        },
+        "box_c": {
+          "title": "Box C: DRUGS FOR TACHYCARDIA",
+          "drugs": [
+            {
+              "name": "Fluid bolus",
+              "dose_weight": "10 ml.kg-1",
+              "dose_adult": "250 ml"
+            },
+            {
+              "name": "Magnesium",
+              "dose_weight": "50 mg.kg-1",
+              "dose_adult": "2 g",
+              "administration": "over >10 min, max conc. 200 mg.ml-1"
+            },
+            {
+              "name": "Amiodarone",
+              "dose_weight": "5 mg.kg-1",
+              "dose_adult": "300 mg",
+              "administration": "over >3 min, NOT in polymorphic VT"
+            },
+            {
+              "name": "Labetalol",
+              "dose_weight": "0.5 mg.kg-1",
+              "dose_adult": "25-50 mg",
+              "administration": "repeat when necessary"
+            },
+            {
+              "name": "Esmolol",
+              "dose_weight": "0.5 mg.kg-1",
+              "dose_adult": "25-50 mg"
+            },
+            {
+              "name": "Adenosine",
+              "dose_weight": "0.1 to 0.5 mg.kg-1",
+              "dose_adult": "3 to 18 mg",
+              "note": "for SVT"
+            }
+          ]
+        },
+        "box_d": {
+          "title": "Box D: ELECTRICAL CARDIOVERSION",
+          "instructions": [
+            "Attach pads and ECG from defibrillator.",
+            "Ensure adequate depth / sedation / analgesia for cardioversion.",
+            "Engage synchronisation and check for sync spikes on R-waves.",
+            "Start with 1 Jkg-1 (adult 50-100 J) biphasic.",
+            "Remember to hold shock button until sync shock delivered."
+          ]
+        }
+      },
+      "steps": [
+        {
+          "step_number": 1,
+          "title": "Immediate action",
+          "text": "Stop any stimulus, Check pulse, rhythm and blood pressure:\n• If no pulse or impending arrest: use Box A.\n• If narrow complex AND not hypotensive first increase depth of anaesthesia/analgesia."
+        },
+        {
+          "step_number": 2,
+          "title": "Adequate oxygen delivery",
+          "text": "• Check fresh gas flow for circuit in use AND check measured FiO2.\n• Visual inspection of entire breathing system including valves and connections.\n• Rapidly confirm reservoir bag moving OR ventilator bellows moving."
+        },
+        {
+          "step_number": 3,
+          "title": "Airway",
+          "text": "• Check position of airway device and listen for noise (including larynx and stomach).\n• Check capnogram shape compatible with patent airway.\n• Confirm airway device is patent (consider passing suction catheter)."
+        },
+        {
+          "step_number": 4,
+          "title": "Breathing",
+          "text": "• Check chest symmetry, rate, breath sounds, SpO2, measured VTexp, ETCO2.\n• Feel the airway pressure using reservoir bag and APL valve <3 breaths."
+        },
+        {
+          "step_number": 5,
+          "title": "Circulation",
+          "text": "• Check rate, rhythm, perfusion, recheck blood pressure, obtain 12-lead ECG if possible."
+        },
+        {
+          "step_number": 6,
+          "title": "Consider underlying problems",
+          "text": "Consider underlying problems (Box B)."
+        },
+        {
+          "step_number": 7,
+          "title": "Consider rate control",
+          "text": "Consider rate control (Box C)."
+        },
+        {
+          "step_number": 8,
+          "title": "Call for help",
+          "text": "Call for help; consider electrical cardioversion (Box D) if problem not resolving quickly."
+        },
+        {
+          "step_number": 9,
+          "title": "Depth",
+          "text": "Consider current depth of anaesthesia AND adequacy of analgesia."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "tachycardia",
+      "arrhythmia",
+      "SVT",
+      "cardiac arrest",
+      "hypotension",
+      "rate control",
+      "electrical cardioversion",
+      "anaphylaxis",
+      "sepsis",
+      "MI",
+      "electrolyte disturbance",
+      "analgesia depth",
+      "anaesthesia management"
+    ],
+    "calculator": {
+      "calculator_name": "Tachycardia Drug Dosing and Cardioversion Calculator (Weight-Based)",
+      "formula_page": 12,
+      "inputs": [
+        {
+          "id": "weight",
+          "label": "Actual Body Weight (kg)",
+          "type": "number",
+          "defaultValue": 70,
+          "min": 10,
+          "max": 200
+        }
+      ],
+      "calculations": [
+        {
+          "id": "fluid_bolus",
+          "label": "Fluid Bolus Volume (10 ml/kg, adult max 250 ml)",
+          "formula": "min(weight * 10, 250)",
+          "unit": "ml"
+        },
+        {
+          "id": "magnesium_bolus",
+          "label": "Magnesium Sulfate Dose (50 mg/kg, adult max 2000 mg / 2 g)",
+          "formula": "min(weight * 50, 2000)",
+          "unit": "mg"
+        },
+        {
+          "id": "amiodarone_dose",
+          "label": "Amiodarone Dose (5 mg/kg, adult max 300 mg)",
+          "formula": "min(weight * 5, 300)",
+          "unit": "mg"
+        },
+        {
+          "id": "labetalol_dose_min",
+          "label": "Labetalol Dose Min (0.5 mg/kg, adult range 25-50 mg)",
+          "formula": "min(weight * 0.5, 25)",
+          "unit": "mg"
+        },
+        {
+          "id": "labetalol_dose_max",
+          "label": "Labetalol Dose Max (0.5 mg/kg, adult range 25-50 mg)",
+          "formula": "min(weight * 0.5, 50)",
+          "unit": "mg"
+        },
+        {
+          "id": "esmolol_dose",
+          "label": "Esmolol Dose (0.5 mg/kg, adult range 25-50 mg)",
+          "formula": "min(weight * 0.5, 50)",
+          "unit": "mg"
+        },
+        {
+          "id": "adenosine_dose_min",
+          "label": "Adenosine Dose Min (0.1 mg/kg, adult range 3-18 mg)",
+          "formula": "min(weight * 0.1, 3)",
+          "unit": "mg"
+        },
+        {
+          "id": "adenosine_dose_max",
+          "label": "Adenosine Dose Max (0.5 mg/kg, adult range 3-18 mg)",
+          "formula": "min(weight * 0.5, 18)",
+          "unit": "mg"
+        },
+        {
+          "id": "cardioversion_energy",
+          "label": "Electrical Cardioversion Energy (1 J/kg, adult range 50-100 J)",
+          "formula": "min(weight * 1, 100)",
+          "unit": "J"
+        }
+      ]
+    }
+  },
+  {
+    "protocol_id": "peri-operative-hyperthermia",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Peri-operative Hyperthermia",
+      "emergency_warning": "If prolonged or ≥ 39°C this is a clinical emergency: permanent organ dysfunction and death can result. Treatment depends on the aetiology. Distinguish early between: Excessive heating (most common), Inadequate dissipation of metabolic heat, Excessive heat production, Actively maintained fever.",
+      "box_a_causes": {
+        "common": [
+          "Excessive insulation, high ambient temperature, external warming devices, especially infants and children (most common)",
+          "Surgical devices, e.g. HIFU, diathermy, radiotherapy",
+          "Prolonged epidural anaesthesia",
+          "Sepsis (→ 3-14) e.g. during manipulation of a urological device",
+          "Blood transfusion",
+          "Allergic reaction / anaphylaxis (→ 3-1)"
+        ],
+        "drug_induced": [
+          "Neuroleptic malignant syndrome (e.g. haloperidol and other antipsychotics)",
+          "Malignant hyperthermia crisis (late sign) (→ 3-8)",
+          "Serotonin syndrome (cocaine, amphetamine, phencyclidine, MDMA)",
+          "Anticholinergic syndrome (tricyclic antidepressants, antipsychotics, antihistamines)",
+          "Sympathomimetic syndrome (cocaine, MDMA, amphetamines)"
+        ],
+        "toxic": [
+          "Radiologic contrast neurotoxicity",
+          "Alcohol withdrawal"
+        ],
+        "endocrine": [
+          "Thyrotoxicosis",
+          "Phaeochromocytoma"
+        ],
+        "neurologic": [
+          "Meningitis",
+          "Intracranial blood",
+          "Hypoxic encephalopathy",
+          "Traumatic brain injury"
+        ]
+      },
+      "box_b_chlorpromazine_dose": "Chlorpromazine (Largactil) 25 - 50 mg i.m. 6 - 8 hourly. Caution in elderly.",
+      "steps": [
+        {
+          "step_number": 1,
+          "text": "Call for help. Inform theatre team of problem. Measure and record core temperature."
+        },
+        {
+          "step_number": 2,
+          "text": "Remove cause of hyperthermia including any insulation and heating devices."
+        },
+        {
+          "step_number": 3,
+          "text": "Make an initial diagnosis of the cause as this affects further management (Box A): Actively maintained fever (typically cold peripheries, vasoconstricted) OR Non-febrile hyperthermia (typically warm peripheries, vasodilated). Suspect malignant hyperthermia crisis or neuroleptic malignant syndrome? (→ 3-8)"
+        },
+        {
+          "step_number": 4,
+          "text": "Start active cooling WITH CAUTION if core temp ≥ 39°C (stop once below): Reduce the operating room ambient temperature; Cooling jackets or blankets; Ice packing in groin, axillae and anterior neck; Bladder, gastric or peritoneal lavage with boluses 10 ml.kg-1 iced water."
+        },
+        {
+          "step_number": 5,
+          "text": "Give benzodiazepines to treat shivering and consider tracheal intubation and muscle paralysis if core temperature ≥ 40°C."
+        },
+        {
+          "step_number": 6,
+          "text": "If fever, give antipyretics such as paracetamol and treat underlying cause if known."
+        },
+        {
+          "step_number": 7,
+          "text": "Give chlorpromazine if serotonin syndrome is suspected (Box B: Chlorpromazine (Largactil) 25 - 50 mg i.m. 6 - 8 hourly. Caution in elderly)."
+        },
+        {
+          "step_number": 8,
+          "text": "Monitor and manage life-threatening complications especially: Hyperkalaemia, hypoglycaemia, acidosis, hypotension (→ 2-4), malignant hypertension, altered conscious level, convulsions, coagulopathy and disseminated intravascular coagulation."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "hyperthermia",
+      "malignant hyperthermia",
+      "serotonin syndrome",
+      "neuroleptic malignant syndrome",
+      "fever",
+      "cooling",
+      "chlorpromazine",
+      "anticholinergic syndrome",
+      "sympathomimetic syndrome",
+      "thyrotoxicosis",
+      "phaeochromocytoma",
+      "heat stroke"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 13,
+    "calculator": {
+      "calculator_name": "Iced Water Lavage Volume Calculator",
+      "formula_page": 13,
+      "inputs": [
+        {
+          "id": "weight",
+          "label": "Actual Body Weight (kg)",
+          "type": "number",
+          "defaultValue": 70,
+          "min": 10,
+          "max": 200
+        }
+      ],
+      "calculations": [
+        {
+          "id": "lavage_volume",
+          "label": "Iced Water Lavage Bolus Volume (10 ml/kg)",
+          "formula": "weight * 10",
+          "unit": "ml"
+        }
+      ]
+    }
+  },
+  {
+    "protocol_id": "anaphylaxis",
+    "status": "Active",
+    "metadata": {
+      "version": "v.5",
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Anaphylaxis",
+      "presentation_signs": [
+        "Unexplained hypotension",
+        "Unexplained bronchospasm (wheeze may be absent if severe)",
+        "Unexplained tachycardia or bradycardia",
+        "Angioedema (often absent in severe cases)",
+        "Unexpected cardiac arrest where other causes are excluded",
+        "Cutaneous flushing in association with one of more of the signs above (often absent in severe cases)"
+      ],
+      "boxes": {
+        "box_a_drugs_to_treat_hypotension": {
+          "if_cardiac_arrest": "→ 2 - 1",
+          "adult_adrenaline": {
+            "iv": "50 μg (= 0.5 ml of 1:10 000)",
+            "im": "0.5 mg (= 0.5 ml of 1:1000) if i.v. not possible"
+          },
+          "paediatric_adrenaline": {
+            "iv": "1.0 μg.kg-1 (0.1 ml.kg-1 of 1:100 000) [1:100 000 solution made by diluting 1 ml of 1:10 000 up to 10 ml]",
+            "io": "If no i.v. access, intraosseous adrenaline dose same as i.v."
+          },
+          "suggested_adrenaline_infusion_regimes_adult": [
+            "5 mg in 500 mL dextrose = 1:100 000, titrate to effect",
+            "3 mg in 50 mL saline. Start at 3 ml.h-1 (= 3 μg.min-1), titrate to maximum 40 ml.h-1 (= 40 μg.min-1)"
+          ],
+          "glucagon_adult": "1 mg, repeat as necessary",
+          "vasopressin_adult": "2 units, repeat as necessary (consider infusion)"
+        },
+        "box_b_critical_changes": {
+          "cardiac_arrest": "→ QRH SECTION 2 - 1"
+        },
+        "box_c_hydrocortisone_and_chlorphenamine_changes": {
+          "timing": "AFTER initial resuscitation",
+          "guidelines": [
+            "Consider steroids for refractory reactions or ongoing asthma/shock.",
+            "Antihistamines (preferably oral, non-sedating) can be given for skin symptoms."
+          ]
+        },
+        "box_d_dont_forget": [
+          "Repeat testing for serum tryptase at 1-2 hours and >24 hours.",
+          "Liaise with hospital laboratory about analysis of samples.",
+          "Liaise with department anaphylaxis lead regarding referral to a specialist allergy or immunology centre to identify the causative agent (see www.bsaci.org for details).",
+          "Inform the patient, surgeon and general practitioner.",
+          "Report to MHRA (https://yellowcard.mhra.gov.uk).",
+          "NAP6 online resource including anaphylaxis follow-up packs: http://www.nationalauditprojects.org.uk/NAP6-Resources#pt"
+        ]
+      },
+      "steps": [
+        {
+          "step_number": 1,
+          "text": "Call for help. Note the time. Stop or do not start non-essential surgery."
+        },
+        {
+          "step_number": 2,
+          "text": "Call for cardiac arrest trolley, anaphylaxis treatment pack and investigation pack."
+        },
+        {
+          "step_number": 3,
+          "text": "Remove all potential causative agents and maintain anaesthesia.",
+          "bullets": [
+            "Important culprits: antibiotics, neuromuscular blocking agents, patent blue.",
+            "Consider chlorhexidine as cause (impregnated catheters, lubricants, cleansing agents).",
+            "Consider i.v. colloids as a possible cause.",
+            "Change to inhalational anaesthetic agent (if not already)."
+          ]
+        },
+        {
+          "step_number": 4,
+          "text": "Give 100% oxygen and ensure adequate ventilation:",
+          "bullets": [
+            "Maintain the airway and, if necessary, secure it with tracheal tube."
+          ]
+        },
+        {
+          "step_number": 5,
+          "text": "Elevate patient’s legs if there is hypotension."
+        },
+        {
+          "step_number": 6,
+          "text": "If systolic blood pressure < 50 mmHg or cardiac arrest, start CPR immediately."
+        },
+        {
+          "step_number": 7,
+          "text": "Give drugs to treat hypotension (Box A):",
+          "bullets": [
+            "Hypotension may be resistant and may require prolonged treatment.",
+            "Give adrenaline bolus and repeat as necessary.",
+            "Consider starting an adrenaline infusion after three boluses.",
+            "If hypotension resistant, give alternate vasopressor (e.g. metaraminol, noradrenaline infusion +/- vasopressin)",
+            "Give glucagon in ß-blocked patient unresponsive to adrenaline.",
+            "Hydrocortisone and chlorphenamine are no longer part of acute treatment (Box C)"
+          ]
+        },
+        {
+          "step_number": 8,
+          "text": "Give rapid i.v. crystalloid:",
+          "bullets": [
+            "20 ml.kg-1 initial bolus, repeated until hypotension resolved.",
+            "Fluid requirements may be significant"
+          ]
+        },
+        {
+          "step_number": 9,
+          "text": "If bronchospasm is persistent, consider → 3-4"
+        },
+        {
+          "step_number": 10,
+          "text": "Take 5-10 ml clotted blood sample for serum tryptase as soon as patient is stable.",
+          "bullets": [
+            "Plan for repeat sample at 1-2 hours and >24 hours."
+          ]
+        },
+        {
+          "step_number": 11,
+          "text": "Plan transfer of the patient to an appropriate critical care area. Note tasks in Box D."
+        },
+        {
+          "step_number": 12,
+          "text": "Prevent re-administration of possible trigger agents (allergy band, annotate notes/drug chart)"
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "anaphylaxis",
+      "allergic reaction",
+      "shock",
+      "adrenaline",
+      "epinephrine",
+      "hypotension",
+      "bronchospasm",
+      "angioedema",
+      "tryptase",
+      "allergy",
+      "mast cell",
+      "hypersensitivity",
+      "resuscitation"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 14,
+    "calculator": {
+      "calculator_name": "Anaphylaxis Paediatric Adrenaline & Fluid Bolus Calculator",
+      "formula_page": 14,
+      "inputs": [
+        {
+          "id": "weight",
+          "label": "Actual Body Weight (kg)",
+          "type": "number",
+          "defaultValue": 20,
+          "min": 2,
+          "max": 150
+        }
+      ],
+      "calculations": [
+        {
+          "id": "paed_adrenaline_dose",
+          "label": "Paediatric IV Adrenaline Dose (1.0 μg/kg)",
+          "formula": "weight * 1.0",
+          "unit": "μg"
+        },
+        {
+          "id": "paed_adrenaline_vol",
+          "label": "Paediatric IV Adrenaline Volume (0.1 ml/kg of 1:100,000)",
+          "formula": "weight * 0.1",
+          "unit": "ml"
+        },
+        {
+          "id": "fluid_bolus",
+          "label": "Rapid IV Crystalloid Bolus (20 ml/kg)",
+          "formula": "weight * 20",
+          "unit": "ml"
+        }
+      ]
+    }
+  },
+  {
+    "protocol_id": "massive-blood-loss",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Massive blood loss",
+      "version": "v.2",
+      "subtitle": "Expected or unexpected major haemorrhage.",
+      "steps": [
+        {
+          "step_number": 1,
+          "text": "Call for help, inform theatre team of problem and note the time."
+        },
+        {
+          "step_number": 2,
+          "text": "Increase FiO2 and consider cautiously reducing inhalational/intravenous anaesthetics."
+        },
+        {
+          "step_number": 3,
+          "text": "Check and expose intravenous access."
+        },
+        {
+          "step_number": 4,
+          "text": "Control any obvious bleeding (pressure, uterotonics, tourniquet, haemostatic dressings)."
+        },
+        {
+          "step_number": 5,
+          "text": "Call blood bank (and assign one person in theatre to liaise with them): Activate major haemorrhage protocol, communicate how quickly blood is required, and communicate how much blood and blood product is required."
+        },
+        {
+          "step_number": 6,
+          "text": "Begin active patient warming."
+        },
+        {
+          "step_number": 7,
+          "text": "Use rapid infusion and fluid warming equipment."
+        },
+        {
+          "step_number": 8,
+          "text": "Discuss management plan between surgical, anaesthetic and nursing teams: Liaise with haematologist if necessary (Box A), consider interventional radiology, and consider use of cell salvage equipment."
+        },
+        {
+          "step_number": 9,
+          "text": "Monitor progress: Use point of care testing (Hb, lactate, coagulation, etc.) and lab testing (including calcium and fibrinogen)."
+        },
+        {
+          "step_number": 10,
+          "text": "Replace calcium and consider giving tranexamic acid (Box C)."
+        },
+        {
+          "step_number": 11,
+          "text": "If bleeding continues consider giving recombinant factor VIIa: liaise with haematologist."
+        },
+        {
+          "step_number": 12,
+          "text": "Plan ongoing care in an appropriate clinical area."
+        }
+      ],
+      "box_a_special_cases": {
+        "title": "Box A: SPECIAL CASES",
+        "instruction": "Seek advice from haematologist if:",
+        "triggers": [
+          "Non-surgical uncontrolled bleeding despite PRBCs/FFP/platelets",
+          "Warfarin overdose",
+          "Newer oral anticoagulants (eg dabigatran/rivaroxaban)",
+          "Inherited bleeding disorder (eg haemophilia, von Willebrand disease)"
+        ]
+      },
+      "box_b_transfusion_goals": {
+        "title": "Box B: TRANSFUSION GOALS",
+        "goals": [
+          "Maintain Hb > 80 g.l - 1",
+          "Maintain platelet count > 75x10 9 l -1",
+          "Maintain PT and APTT <1.5 x mean control (FFP)",
+          "Maintain fibrinogen >1.0 g.l -1 (cryoprecipitate)",
+          "Avoid DIC (maintain blood pressure, treat/prevent acidosis, avoid hypothermia, treat hypocalcaemia and hyperkalaemia)"
+        ]
+      },
+      "box_c_drug_doses": {
+        "title": "Box C: DRUG DOSES",
+        "calcium": {
+          "instruction": "use either the chloride or gluconate",
+          "adult_doses": [
+            "10 ml of 10% calcium chloride i.v.",
+            "20 ml of 10% calcium gluconate i.v."
+          ],
+          "child_doses": [
+            "0.2 ml.kg -1 of 10% calcium chloride i.v.",
+            "0.5 ml.kg -1 of 10% calcium gluconate i.v."
+          ]
+        },
+        "tranexamic_acid": {
+          "child_dose": "15 mg.kg -1 i.v. bolus then 2 mg.kg -1 .h -1 until bleeding stops",
+          "adult_dose": {
+            "bolus": "1 g i.v. bolus",
+            "subsequent": [
+              "Obstetric haemorrhage, repeat dose 30 mins later",
+              "Non-obstetric haemorrhage, 1 g i.v. infusion over next 8 h"
+            ]
+          }
+        }
+      }
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "haemorrhage",
+      "bleeding",
+      "transfusion",
+      "mhp",
+      "tranexamic acid",
+      "calcium chloride",
+      "coagulopathy",
+      "blood loss",
+      "shock",
+      "hypovolemia",
+      "hemostasis",
+      "cryoprecipitate",
+      "ffp",
+      "platelets"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 15,
+    "calculator": {
+      "calculator_name": "Pediatric Massive Blood Loss Drug Doses",
+      "formula_page": 15,
+      "inputs": [
+        {
+          "id": "weight",
+          "label": "Actual Body Weight (kg)",
+          "type": "number",
+          "defaultValue": 20,
+          "min": 2,
+          "max": 150
+        }
+      ],
+      "calculations": [
+        {
+          "id": "child_calcium_chloride",
+          "label": "Child 10% Calcium Chloride IV (0.2 ml/kg)",
+          "formula": "weight * 0.2",
+          "unit": "ml"
+        },
+        {
+          "id": "child_calcium_gluconate",
+          "label": "Child 10% Calcium Gluconate IV (0.5 ml/kg)",
+          "formula": "weight * 0.5",
+          "unit": "ml"
+        },
+        {
+          "id": "child_txa_bolus",
+          "label": "Child Tranexamic Acid IV Bolus (15 mg/kg)",
+          "formula": "weight * 15",
+          "unit": "mg"
+        },
+        {
+          "id": "child_txa_infusion",
+          "label": "Child Tranexamic Acid IV Infusion (2 mg/kg/h)",
+          "formula": "weight * 2",
+          "unit": "mg/h"
+        }
+      ]
+    }
+  },
+  {
+    "protocol_id": "cico",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Can’t intubate, can’t oxygenate (CICO) v.1",
+      "steps": [
+        {
+          "step_number": "BOX A: CRITICAL CHANGES",
+          "text": "Cardiac arrest → 2 - 1"
+        },
+        {
+          "step_number": "BOX B: EQUIPMENT INSTRUCTIONS",
+          "text": "Airway rescue trolley, FoNA drawer:\n• Scalpel with number 10 blade\n• Bougie with coudé (angled) tip\n• Tracheal tube, cuffed, 6 mm"
+        },
+        {
+          "step_number": "BOX C: (STAB, TWIST, BOUGIE, TUBE TECHNIQUE)",
+          "text": "• Identify the cricothyroid membrane (If unable, go to Box D)\n• Single transverse incision through skin and membrane\n• Rotate scalpel 90° with sharp edge facing caudally\n• Slide angled tip of bougie past the scalpel into the trachea\n• Railroad tube over bougie"
+        },
+        {
+          "step_number": "BOX D: IF BOX C FAILS (SCALPEL, FINGER, BOUGIE TECHNIQUE)",
+          "text": "• Make an 8 - 10 cm vertical incision head to toe orientation\n• Use blunt dissection to retract tissue to identify trachea\n• Stabilise the trachea and proceed as in Box C through the cricothyroid membrane"
+        },
+        {
+          "step_number": "START",
+          "text": "Follow the steps below:"
+        },
+        {
+          "step_number": "❶",
+          "text": "Check optimal airway management is in place and maintain anaesthesia: supply 100% oxygen either by tightly fitting facemask, supraglottic airway device or nasal high flow."
+        },
+        {
+          "step_number": "❷",
+          "text": "Consider ONE final attempt at rescue oxygenation via upper airway if not already done."
+        },
+        {
+          "step_number": "❸",
+          "text": "Declare CICO and call for help (additional staff and surgical airway expertise e.g. ENT, ICU)."
+        },
+        {
+          "step_number": "❹",
+          "text": "Call for airway rescue trolley and then cardiac arrest trolley."
+        },
+        {
+          "step_number": "❺",
+          "text": "Give neuromuscular blocking drug now."
+        },
+        {
+          "step_number": "❻",
+          "text": "Prepare for Front of Neck Access – FoNA (see Box B)."
+        },
+        {
+          "step_number": "❼",
+          "text": "Check that the patient is positioned with full neck extension."
+        },
+        {
+          "step_number": "❽",
+          "text": "Operator position:\n• Right-handed operator stands on patient’s left hand side.\n• Left-handed operator stands on patient’s right hand side."
+        },
+        {
+          "step_number": "❾",
+          "text": "Perform a ‘laryngeal handshake’ to identify the laryngeal anatomy."
+        },
+        {
+          "step_number": "❿",
+          "text": "Perform FoNA using technique in Box C to intubate trachea via cricothyroid membrane. (If cricothyroid membrane cannot be identified, use technique in Box D)."
+        },
+        {
+          "step_number": "⓫",
+          "text": "Secure tube, continue to oxygenate patient and ensure adequate depth of anaesthesia."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "CICO",
+      "Cannot Intubate Cannot Oxygenate",
+      "Surgical Airway",
+      "Cricothyroidotomy",
+      "FoNA",
+      "Airway Management",
+      "Tracheal Tube Insertion",
+      "Cardiac Arrest",
+      "Oxygenation Failure",
+      "Neuromuscular Blockade",
+      "Laryngeal Anatomy",
+      "Emergency Resuscitation"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 16
+  },
+  {
+    "protocol_id": "bronchospasm",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Bronchospasm",
+      "signs_and_symptoms": {
+        "presentation": [
+          "expiratory wheeze",
+          "prolonged expiration",
+          "increased inflation pressures",
+          "desaturation",
+          "hypercapnia",
+          "upsloping capnograph trace",
+          "silent chest"
+        ],
+        "note": "Can occur alone or as part of another problem."
+      },
+      "box_a_alternates_and_mimics": {
+        "wheeze": [
+          "pulmonary oedema",
+          "ARDS",
+          "laryngospasm"
+        ],
+        "raised_airway_pressure": [
+          "obstruction of larynx, trachea or bronchi",
+          "decreased lung compliance",
+          "pneumothorax"
+        ]
+      },
+      "box_b_drug_doses": {
+        "salbutamol": {
+          "nebuliser": {
+            "child_under_5": "2.5 mg",
+            "adult_and_over_5": "5 mg",
+            "instructions": "Remove HME filter OR nebulise downstream"
+          },
+          "iv_bolus": {
+            "adult": "250 µg diluted, slowly",
+            "child_1_23_months": "5 µg.kg-1 once over 5 mins",
+            "child_2_17_years": "15 µg.kg-1 once over 5 mins (max. 250 µg)"
+          },
+          "iv_infusion": {
+            "adult": "5-20 µg.min-1",
+            "child": "0.5-1 µg.kg-1.min-1 (max. 20 µg.min-1)"
+          }
+        },
+        "ipratropium": {
+          "nebuliser": {
+            "child_2_12_years": "0.25 mg",
+            "adult": "0.5 mg"
+          }
+        },
+        "adrenaline": {
+          "nebuliser": {
+            "child": "0.5 ml of 1:1000",
+            "adult": "5 ml of 1:1000"
+          },
+          "im": {
+            "under_6_months": "50 µg",
+            "under_6_years": "120 µg",
+            "under_12_years": "250 µg",
+            "adult": "500 µg"
+          },
+          "slow_iv_bolus": "0.1 - 1 µg.kg-1 (Adult 10 - 100 µg)"
+        },
+        "magnesium": {
+          "iv_over_20_min": "50 mg.kg-1 (Adult 2 g)"
+        },
+        "ketamine": {
+          "bolus": "Adult 20 mg",
+          "iv_infusion": "1 - 3 mg.kg-1.hr-1"
+        },
+        "aminophylline": {
+          "iv_over_20_min": "5 mg.kg-1 (omit if already on theophylline)",
+          "iv_infusion": {
+            "under_9_years": "1 mg.kg-1.hr-1",
+            "under_16_years": "0.8 mg.kg-1.h-1",
+            "adult": "0.5 mg.kg-1.h-1"
+          }
+        },
+        "hydrocortisone": "4 mg.kg-1 (Adult 200 mg)"
+      },
+      "box_c_actions_if_airway_soiling_aspiration": [
+        "Consider tracheal intubation and tracheal toilet",
+        "Use nasogastric tube to aspirate gastric contents"
+      ],
+      "box_d_ventilation_strategies": [
+        "Increase expiratory time to allow complete expiration",
+        "Pressure control ventilation may be better",
+        "Be alert to 'breath stacking'",
+        "Permissive hypercapnia may be appropriate"
+      ],
+      "steps": [
+        {
+          "step_number": 1,
+          "text": "Call for help and inform theatre team of problem."
+        },
+        {
+          "step_number": 2,
+          "text": "Give 100% oxygen."
+        },
+        {
+          "step_number": 3,
+          "text": "Stop surgery / other stimulation."
+        },
+        {
+          "step_number": 4,
+          "text": "Fully expose the chest and perform a rapid systematic examination: Inspect, percuss, palpate, auscultate. Note: Absence of wheeze may indicate severe bronchospasm with no air movement."
+        },
+        {
+          "step_number": 5,
+          "text": "Deepen anaesthesia: Inhalational anaesthetic agents are bronchodilators AND bronchospasm may be a consequence of light anaesthesia. Avoid isoflurane or desflurane if possible – airway irritant if increased rapidly."
+        },
+        {
+          "step_number": 6,
+          "text": "Exclude conditions that may be misinterpreted as bronchospasm: Mispositioned or occluded airway device; Endobronchial or oesophageal intubation; Occlusion of breathing system – check all hoses; Consider other conditions mimicking bronchospasm (Box A)."
+        },
+        {
+          "step_number": 7,
+          "text": "Consider anaphylaxis; if suspected → 3-1."
+        },
+        {
+          "step_number": 8,
+          "text": "Treat bronchospasm (Box B). First line is salbutamol by metered dose inhaler or by nebuliser (remove HME filter or nebulise downstream); i.v. route is second line. Other drugs at clinician discretion."
+        },
+        {
+          "step_number": 9,
+          "text": "If airway soiling/aspiration suspected, see Box C."
+        },
+        {
+          "step_number": 10,
+          "text": "Use appropriate ventilation strategy (Box D)."
+        },
+        {
+          "step_number": 11,
+          "text": "If raised airway pressure and/or desaturation persists, consider → 2-2 Hypoxia/desaturation/cyanosis."
+        },
+        {
+          "step_number": 12,
+          "text": "Obtain a chest X-ray as soon as clinically safe to do so."
+        },
+        {
+          "step_number": 13,
+          "text": "Plan appropriate placement for post-procedure care."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "bronchospasm",
+      "wheeze",
+      "asthma",
+      "salbutamol",
+      "adrenaline",
+      "magnesium",
+      "aminophylline",
+      "anaphylaxis",
+      "hypoxia",
+      "desaturation",
+      "airway pressure",
+      "copd",
+      "bronchodilator"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 17,
+    "calculator": {
+      "calculator_name": "Bronchospasm Weight-Based Dosing Calculator",
+      "formula_page": 17,
+      "inputs": [
+        {
+          "id": "weight",
+          "label": "Actual Body Weight (kg)",
+          "type": "number",
+          "defaultValue": 70,
+          "min": 2,
+          "max": 150
+        }
+      ],
+      "calculations": [
+        {
+          "id": "salbutamol_child_bolus",
+          "label": "Salbutamol IV Bolus (Child 2-17 yrs, 15 µg/kg, max 250 µg)",
+          "formula": "(weight * 15) > 250 ? 250 : (weight * 15)",
+          "unit": "µg"
+        },
+        {
+          "id": "magnesium_bolus",
+          "label": "Magnesium IV Bolus (50 mg/kg, max 2g)",
+          "formula": "(weight * 50) > 2000 ? 2000 : (weight * 50)",
+          "unit": "mg"
+        },
+        {
+          "id": "hydrocortisone_dose",
+          "label": "Hydrocortisone IV Dose (4 mg/kg, max 200mg)",
+          "formula": "(weight * 4) > 200 ? 200 : (weight * 4)",
+          "unit": "mg"
+        },
+        {
+          "id": "aminophylline_loading",
+          "label": "Aminophylline IV Loading Dose (5 mg/kg over 20 min)",
+          "formula": "weight * 5",
+          "unit": "mg"
+        },
+        {
+          "id": "adrenaline_bolus_low",
+          "label": "Adrenaline Slow IV Bolus (0.1 µg/kg)",
+          "formula": "weight * 0.1",
+          "unit": "µg"
+        },
+        {
+          "id": "adrenaline_bolus_high",
+          "label": "Adrenaline Slow IV Bolus (1.0 µg/kg)",
+          "formula": "weight * 1.0",
+          "unit": "µg"
+        }
+      ]
+    }
+  },
+  {
+    "protocol_id": "circulatory-embolus",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Circulatory Embolus",
+      "causes": [
+        "thrombus",
+        "fat",
+        "amniotic fluid",
+        "air/gas"
+      ],
+      "signs": [
+        "hypotension",
+        "tachycardia",
+        "hypoxemia",
+        "decreased ETCO2"
+      ],
+      "symptoms": [
+        "dyspnoea",
+        "anxiety",
+        "tachypnoea",
+        "sudden unexplained loss of cardiac output"
+      ],
+      "boxes": {
+        "box_a": {
+          "title": "THROMBOEMBOLISM",
+          "items": [
+            "Consider thrombolysis e.g. alteplase 10 mg i.v. then 90 mg over 2 h (>65 kg)",
+            "Consider surgical removal – consult vascular surgeon",
+            "Consider percutaneous removal – consult radiologist"
+          ]
+        },
+        "box_b": {
+          "title": "FAT EMBOLISM",
+          "items": [
+            "Petechial rash, desaturation, confusion/irritability if patient conscious",
+            "Supportive measures are mainstay of initial management"
+          ]
+        },
+        "box_c": {
+          "title": "AMNIOTIC FLUID EMBOLISM",
+          "items": [
+            "Supportive measures are mainstay of initial management",
+            "Monitor the fetus, if undelivered",
+            "Treat coagulopathy (fresh frozen plasma, cryoprecipitate and/or platelets)",
+            "Consider plasmaphoresis"
+          ]
+        },
+        "box_d": {
+          "title": "AIR/GAS EMBOLISM",
+          "items": [
+            "“Mill wheel” murmur may be present",
+            "Discontinue source of air/gas if applicable and discontinue N2O",
+            "Tell surgeon to flood wound with saline and cover with wet packs",
+            "Lower surgical field to below level of heart if possible",
+            "Place patient in left lateral position if possible",
+            "If central venous catheter in situ, attempt to aspirate air",
+            "Volume loading and Valsalva manoeuvre may help"
+          ]
+        },
+        "box_e": {
+          "title": "ALTERNATIVE DIAGNOSES",
+          "items": [
+            "Pneumothorax (+/- tension)",
+            "Bronchospasm (→ 3-4)",
+            "Pulmonary oedema",
+            "Cardiogenic shock",
+            "Hypovolaemia",
+            "Myocardial failure",
+            "Sepsis (→ 3-14)",
+            "Bone cement implantation syndrome",
+            "Anaphylaxis (→ 3-1)"
+          ]
+        }
+      },
+      "steps": [
+        {
+          "step_number": 1,
+          "text": "Call for help and inform theatre team of problem. Note the time."
+        },
+        {
+          "step_number": 2,
+          "text": "Call for cardiac arrest trolley."
+        },
+        {
+          "step_number": 3,
+          "text": "Stop all potential triggers. Stop surgery."
+        },
+        {
+          "step_number": 4,
+          "text": "Give 100% oxygen and ensure adequate ventilation: Maintain the airway and, if necessary, secure it with tracheal tube."
+        },
+        {
+          "step_number": 5,
+          "text": "If indicated start CPR immediately (CPR can help disperse air emboli and large thrombi)."
+        },
+        {
+          "step_number": 6,
+          "text": "Give i.v. crystalloid at a high infusion rate. (Adult: 500-1000 ml, Child: 20 ml.kg-1). Inotropes may be required to support circulation."
+        },
+        {
+          "step_number": 7,
+          "text": "Treat according to suspected embolus type (see Boxes A-D) whilst considering alternative diagnoses (Box E)."
+        },
+        {
+          "step_number": 8,
+          "text": "Consider investigations to help confirm diagnosis: Arterial blood gases (increased PaCO2-ETCO2 gradient), Transoesophageal echocardiography (right heart strain, pulmonary arterial emboli), Computerised tomography."
+        },
+        {
+          "step_number": 9,
+          "text": "If cardiovascular collapse refractory to treatment, consider extra-corporeal membrane oxygenation (ECMO) or intra-aortic balloon counter-pulsation."
+        },
+        {
+          "step_number": 10,
+          "text": "Plan transfer of the patient to an appropriate critical care area."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "circulatory embolus",
+      "thromboembolism",
+      "fat embolism",
+      "amniotic fluid embolism",
+      "air embolism",
+      "gas embolism",
+      "alteplase",
+      "thrombolysis",
+      "hypotension",
+      "hypoxemia",
+      "cardiac arrest",
+      "cpr",
+      "ecmo",
+      "obstructive shock"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 18,
+    "calculator": {
+      "calculator_name": "Pediatric Fluid Bolus Calculator",
+      "formula_page": 18,
+      "inputs": [
+        {
+          "id": "weight",
+          "label": "Actual Body Weight (kg)",
+          "type": "number",
+          "defaultValue": 20,
+          "min": 2,
+          "max": 150
+        }
+      ],
+      "calculations": [
+        {
+          "id": "fluid_bolus",
+          "label": "Pediatric Fluid Bolus Volume (20 ml/kg)",
+          "formula": "weight * 20",
+          "unit": "ml"
+        }
+      ]
+    }
+  },
+  {
+    "protocol_id": "laryngospasm",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Laryngospasm and stridor",
+      "version": "v.1",
+      "introduction": [
+        "Laryngospasm usually occurs when a patient is in a light plane of anaesthesia and their airway is stimulated in some way.",
+        "Stridor is a sign and associated with laryngospasm (although it can have other causes)."
+      ],
+      "box_a_drug_doses": {
+        "title": "DRUG DOSES FOR TREATMENT OF LARYNGOSPASM",
+        "iv_dose_range": "0.25-0.5 mg.kg-1 i.v.",
+        "drugs": [
+          {
+            "name": "Propofol",
+            "class": "Anesthetic agent (for deepening anaesthesia)"
+          },
+          {
+            "name": "Rocuronium",
+            "class": "Neuromuscular blocker"
+          },
+          {
+            "name": "Atracurium",
+            "class": "Neuromuscular blocker"
+          },
+          {
+            "name": "Suxamethonium",
+            "class": "Neuromuscular blocker",
+            "additional_routes": "also i.m. including tongue 4.0 mg.kg-1"
+          }
+        ]
+      },
+      "box_b_alternatives_and_mimics": [
+        "Foreign body",
+        "Infection of larynx/upper respiratory tract",
+        "Anaphylaxis",
+        "Airway tumour",
+        "Vocal cord paralysis",
+        "Intrinsic laryngeal or tracheal obstruction",
+        "Extrinsic laryngeal or tracheal compression",
+        "Sub-glottic stenosis",
+        "Laryngo/tracheomalacia"
+      ],
+      "box_c_critical_changes": [
+        {
+          "condition": "Cardiac arrest",
+          "guideline_link": "2-1"
+        },
+        {
+          "condition": "Hypoxia/desaturation/cyanosis",
+          "guideline_link": "2-2"
+        },
+        {
+          "condition": "Increased airway pressure",
+          "guideline_link": "2-3"
+        },
+        {
+          "condition": "Hypotension",
+          "guideline_link": "2-4"
+        },
+        {
+          "condition": "Bradycardia",
+          "guideline_link": "2-6"
+        }
+      ],
+      "steps": [
+        {
+          "step_number": 1,
+          "text": "Call for help and inform theatre team of problem."
+        },
+        {
+          "step_number": 2,
+          "text": "Perform jaw thrust and stop any other stimulation."
+        },
+        {
+          "step_number": 3,
+          "text": "Remove airway devices and anything else that may be stimulating or obstructing the airway, e.g. suction catheters, blood or vomit (direct visualisation and suction if in doubt).",
+          "bullets": [
+            "A correctly positioned tracheal tube rules out laryngospasm."
+          ]
+        },
+        {
+          "step_number": 4,
+          "text": "Give CPAP with 100% oxygen and face mask:",
+          "bullets": [
+            "Avoid over-vigorous attempts at lung inflation, as this may inflate the stomach.",
+            "Insert an oro-pharyngeal and/or nasal airway if you are not sure that the airway is clear above the larynx."
+          ]
+        },
+        {
+          "step_number": 5,
+          "text": "If problem persists:",
+          "bullets": [
+            "Continue CPAP.",
+            "Deepen anaesthesia.",
+            "Give a neuromuscular blocker (See Box A)."
+          ]
+        },
+        {
+          "step_number": 6,
+          "text": "Consider tracheal intubation particularly if likely to recur."
+        },
+        {
+          "step_number": 7,
+          "text": "Use nasogastric tube to decompress the stomach."
+        },
+        {
+          "step_number": 8,
+          "text": "Consider other causes (Box B)."
+        },
+        {
+          "step_number": 9,
+          "text": "Consider whether guideline 2-3 Increased airway pressure may help."
+        },
+        {
+          "step_number": 10,
+          "text": "Consider the appropriate strategy, location and support needed for waking the patient."
+        },
+        {
+          "step_number": 11,
+          "text": "Continued airway and ventilation support may be necessary if aspiration has occurred or if the patient has developed negative-pressure pulmonary oedema."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "laryngospasm",
+      "stridor",
+      "airway obstruction",
+      "hypoxia",
+      "propofol",
+      "suxamethonium",
+      "rocuronium",
+      "atracurium",
+      "spasm",
+      "vocal cords",
+      "anaesthesia emergency",
+      "negative pressure pulmonary oedema",
+      "CPAP"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 19,
+    "calculator": {
+      "calculator_name": "Laryngospasm Drug Dose Calculator",
+      "formula_page": 19,
+      "inputs": [
+        {
+          "id": "weight",
+          "label": "Actual Body Weight (kg)",
+          "type": "number",
+          "defaultValue": 70,
+          "min": 10,
+          "max": 200
+        }
+      ],
+      "calculations": [
+        {
+          "id": "iv_drug_dose_low",
+          "label": "IV Propofol / Rocuronium / Atracurium / Suxamethonium Low Dose (0.25 mg/kg)",
+          "formula": "weight * 0.25",
+          "unit": "mg"
+        },
+        {
+          "id": "iv_drug_dose_high",
+          "label": "IV Propofol / Rocuronium / Atracurium / Suxamethonium High Dose (0.5 mg/kg)",
+          "formula": "weight * 0.5",
+          "unit": "mg"
+        },
+        {
+          "id": "im_suxamethonium",
+          "label": "IM Suxamethonium Dose (4.0 mg/kg)",
+          "formula": "weight * 4.0",
+          "unit": "mg"
+        }
+      ]
+    }
+  },
+  {
+    "protocol_id": "patient-fire",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Patient fire",
+      "code": "3-7",
+      "version": "v.1",
+      "trigger": "Evidence of fire (smoke, heat, odour, flash, flame) on patient or drapes, or in patient’s airway",
+      "equipment_locations": {
+        "fire_alarm": "",
+        "fire_extinguisher": ""
+      },
+      "steps": [
+        {
+          "step_number": 1,
+          "text": "Call for help and inform theatre team: Activate fire alarm; Dial hospital fire emergency number and report location and nature of fire; Bring CO2 fire extinguisher into theatre."
+        },
+        {
+          "step_number": 2,
+          "branch": "AIRWAY fire",
+          "text": "Extinguish fire: Stop laser or diathermy; Discontinue ventilation AND fresh gas flow; Remove tracheal tube if on fire; Remove flammable material from airway; Flood airway with 0.9% saline."
+        },
+        {
+          "step_number": 3,
+          "branch": "AIRWAY fire",
+          "text": "After fire extinguished: Re-establish ventilation; Minimise O2, avoid N2O; Check airway for damage and debris; Consider bronchoscopy; Re-intubate."
+        },
+        {
+          "step_number": 2,
+          "branch": "NON-AIRWAY fire",
+          "text": "Extinguish fire: Stop laser or diathermy; Remove all drapes and burning material; Flood fire with 0.9% saline or saline soaked gauze; Use CO2 extinguisher."
+        },
+        {
+          "step_number": 3,
+          "branch": "NON-AIRWAY fire",
+          "text": "After fire extinguished: Re-establish ventilation; Minimise O2, avoid N2O; Assess damage; Consider inhalational injury if not intubated; Consider intubation depending on degree of injury."
+        },
+        {
+          "step_number": 4,
+          "text": "Assess patient and devise ongoing management plan: Confirm no secondary fire, assess smoke risk to patient, consider intensive care."
+        },
+        {
+          "step_number": 5,
+          "text": "Keep involved materials or devices for inspection and report to the MHRA."
+        },
+        {
+          "step_number": 6,
+          "text": "If secondary non-patient fire occurs, or concerned about smoke/fire risk to staff, follow local fire procedures."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "fire_alarm_location": "",
+        "fire_extinguisher_location": ""
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "fire_alarm_location": "",
+        "fire_extinguisher_location": ""
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "fire_alarm_location": "",
+        "fire_extinguisher_location": ""
+      }
+    },
+    "search_tags": [
+      "patient fire",
+      "airway fire",
+      "smoke inhalation",
+      "laser injury",
+      "diathermy burn",
+      "fire extinguisher use",
+      "resuscitation",
+      "bronchoscopy",
+      "inhalational injury",
+      "anaesthesia emergency",
+      "flammable material removal",
+      "oxygen minimization",
+      "tracheal tube management"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 20
+  },
+  {
+    "protocol_id": "cardiac-tamponade",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Cardiac tamponade v.1",
+      "description": "Caused by an accumulation of blood, pus, effusion fluid or air. Most commonly seen in context of cardiothoracic surgery, trauma or iatrogenic causes, e.g. central line placement.",
+      "box_a_diagnostic_features": {
+        "preferred_technique": "ULTRASOUND DIAGNOSIS IS THE PREFERRED TECHNIQUE",
+        "features": [
+          "Unexplained dyspnoea/tachypnoea and agitation if conscious",
+          "At least one of 'Beck's Triad': Jugular venous distension, Muffled heart sounds, Hypotension",
+          "Other signs: Pulsus paradoxus; ECG → low voltage QRS / electrical alternans / pulseless electrical activity; chest X-ray → enlarged cardiac silhouette"
+        ]
+      },
+      "box_b_emergency_pericardiocentesis": {
+        "approach": "sub-xiphoid approach",
+        "preferred_technique": "ULTRASOUND GUIDANCE IS THE PREFERRED TECHNIQUE",
+        "warning": "Myocardial rupture, aortic dissection and severe bleeding disorder are relative contraindications.",
+        "steps": [
+          "Identify tip of xiphoid",
+          "Prep and drape overlying skin",
+          "Infiltrate local anaesthetic (if necessary and if time)",
+          "Ideally use ultrasound to identify pericardial fluid",
+          "Insert pericardiocentesis needle immediately to left of tip of xiphoid",
+          "Attach 3-way tap and 20 ml syringe",
+          "Direct needle generally toward left shoulder but using ultrasound to direct needle toward the largest pericardial collection",
+          "Aspirate and drain – aspiration of a small volume may cause a dramatic clinical improvement"
+        ]
+      },
+      "box_c_critical_changes": {
+        "cardiac_arrest": "1-A"
+      },
+      "steps": [
+        {
+          "step_number": 1,
+          "text": "START. Call for help and inform clinical team of problem. Note the time."
+        },
+        {
+          "step_number": 2,
+          "text": "If indicated, start CPR immediately."
+        },
+        {
+          "step_number": 3,
+          "text": "Give 100% oxygen, ventilate and exclude tension pneumothorax: Maintain the airway and, if necessary, secure it with tracheal tube."
+        },
+        {
+          "step_number": 4,
+          "text": "Rapid diagnosis and rapid drainage are vital, so: Call for ultrasound machine. Call for pericardiocentesis kit (eg 18G Luer spinal needle + 3-way tap + 20 ml syringe or a purpose made kit). Call for cardiac arrest trolley. Diagnostic features are shown in Box A."
+        },
+        {
+          "step_number": 5,
+          "text": "Consider whether there is time to wait for someone with expertise in pericaridiocentesis, or whether thoracotomy is a better treatment option."
+        },
+        {
+          "step_number": 6,
+          "text": "Consider the following temporising measures: Fluid bolus (Adult: 500 - 1000 ml, Child: 20 ml.kg-1). Inotropic drugs. Low tidal volume, low/no PEEP ventilation strategy."
+        },
+        {
+          "step_number": 7,
+          "text": "If clinically indicated, perform pericardiocentesis (Box B)."
+        },
+        {
+          "step_number": 8,
+          "text": "After pericardiocentesis, re-assess using ultrasound examination and vital signs."
+        },
+        {
+          "step_number": 9,
+          "text": "Reassess continually in case tamponade recurs."
+        },
+        {
+          "step_number": 10,
+          "text": "Plan definitive management of underlying cause, including specialist referral."
+        },
+        {
+          "step_number": 11,
+          "text": "Plan transfer of the patient to an appropriate critical care area."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "cardiac arrest",
+      "hypotension",
+      "shock",
+      "pericardiocentesis",
+      "ultrasound guidance",
+      "dyspnoea",
+      "Beck's Triad",
+      "low voltage QRS",
+      "pulsus paradoxus",
+      "fluid bolus",
+      "CPR",
+      "tension pneumothorax",
+      "cardiothoracic surgery",
+      "trauma"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 22,
+    "calculator": {
+      "calculator_name": "Fluid Bolus Calculation (Pediatric)",
+      "formula_page": 22,
+      "inputs": [
+        {
+          "id": "weight",
+          "label": "Actual Body Weight (kg)",
+          "type": "number",
+          "defaultValue": null,
+          "min": 1,
+          "max": 50
+        }
+      ],
+      "calculations": [
+        {
+          "id": "fluid_bolus",
+          "label": "Fluid Bolus Volume (20 ml/kg)",
+          "formula": "weight * 20",
+          "unit": "ml"
+        }
+      ]
+    }
+  },
+  {
+    "protocol_id": "high-central-neuraxial-block",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "High central neuraxial block",
+      "introduction": {
+        "cause": "Can occur with deliberate or accidental injection of local anaesthetic drugs into the subarachnoid space.",
+        "symptoms": "Symptoms are – in sequence – hypotension and bradycardia – difficulty breathing – paralysis of the arms – impaired consciousness – apnoea and unconsciousness.",
+        "progression": "Progression through this sequence can be slow or fast."
+      },
+      "boxes": {
+        "box_a": {
+          "title": "INDUCING ANAESTHESIA",
+          "instructions": [
+            "Consider reduced dose of hypnotic drug to avoid further hypotension. A full induction dose will not be necessary if the patient’s consciousness is already impaired.",
+            "Neuromuscular blockade may not be necessary for tracheal intubation if the patient is unconscious, paralysed and apnoeic."
+          ]
+        },
+        "box_b": {
+          "title": "DRUG DOSES",
+          "bradycardia": [
+            "Atropine: 0.6-1.2 mg",
+            "Glycopyrrolate: 0.2-0.4 mg"
+          ],
+          "hypotension": [
+            "Metaraminol: 1-2 mg boluses repeated",
+            "Phenylephrine: 50-100 μg boluses repeated or by infusion",
+            "Ephedrine: 6-12 mg boluses repeated up to max 30 mg (tachyphylaxis limits further usefulness)"
+          ]
+        },
+        "box_c": {
+          "title": "CRITICAL CHANGES",
+          "redirects": [
+            "Cardiac arrest → 2 - 1",
+            "Hypotension → 2-4",
+            "Bradycardia → 2-6",
+            "Local anaesthetic toxicity → 3 - 10"
+          ]
+        }
+      },
+      "steps": [
+        {
+          "step_number": 1,
+          "text": "Reassure the patient – remember that they may be fully aware.",
+          "substeps": [
+            "Plan to ensure hypnosis as soon as clinical situation permits."
+          ]
+        },
+        {
+          "step_number": 2,
+          "text": "Call for help and inform theatre team of the problem."
+        },
+        {
+          "step_number": 3,
+          "text": "Treat airway and breathing:",
+          "substeps": [
+            "Give 100% oxygen.",
+            "Chin lift / jaw thrust may suffice.",
+            "Consider supraglottic airway or tracheal intubation (Box A)."
+          ]
+        },
+        {
+          "step_number": 4,
+          "text": "Treat circulatory insufficiency:",
+          "substeps": [
+            "Give i.v. fluid by rapid infusion.",
+            "Elevate the legs. Do not use head-down tilt.",
+            "In obstetrics, relieve aorto-caval compression.",
+            "Bradycardia: give atropine or glycopyrrolate (Box B).",
+            "Hypotension: give metaraminol, phenylephrine or ephedrine (Box B).",
+            "CPR may be necessary to circulate drugs."
+          ]
+        },
+        {
+          "step_number": 5,
+          "text": "If the case is obstetric, consider expedited delivery of the baby to manage:",
+          "substeps": [
+            "Risk to mother of unrelieved aorto-caval compression",
+            "Risk to fetus of impaired feto-placental oxygen delivery"
+          ]
+        },
+        {
+          "step_number": 6,
+          "text": "Consider other causes that may mimic signs and symptoms, including (Box C):",
+          "substeps": [
+            "Obstetric aorto-caval compression.",
+            "Local anaesthetic toxicity.",
+            "Embolism.",
+            "Vasovagal event.",
+            "Haemorrhage."
+          ]
+        },
+        {
+          "step_number": 7,
+          "text": "Plan ongoing care in a suitable location."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "neuraxial block",
+      "spinal anesthesia",
+      "local anaesthetic toxicity",
+      "hypotension",
+      "bradycardia",
+      "airway management",
+      "circulatory collapse",
+      "aorto-caval compression",
+      "resuscitation",
+      "anaesthesia emergency",
+      "vasovagal event",
+      "high central block"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 24
+  },
+  {
+    "protocol_id": "cardiac-ischaemia",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Cardiac Ischaemia",
+      "unconscious_signs": [
+        "ST elevation or depression",
+        "T wave flattening or inversion",
+        "Arrhythmias, particularly ventricular",
+        "Other haemodynamic abnormalities (hypo- or hypertension, tachy- or bradycardia)",
+        "New or evolving regional wall motion abnormalities if echocardiography is used"
+      ],
+      "conscious_symptoms": [
+        "Chest pain",
+        "Breathlessness",
+        "Dizziness",
+        "Nausea and vomiting"
+      ],
+      "clinical_suspicion_note": "Have a high index of suspicion in patients with a pre-existing history or risk factors for cardiac ischaemia",
+      "steps": [
+        {
+          "step_number": 1,
+          "text": "Call for cardiac arrest trolley and 12-lead ECG machine."
+        },
+        {
+          "step_number": 2,
+          "text": "Ensure adequate oxygenation and anaesthesia/analgesia."
+        },
+        {
+          "step_number": 3,
+          "text": "Treat haemodynamic instability (Box A: Cardiac arrest -> 2-1, Hypotension -> 2-4, Hypertension -> 2-5, Bradycardia -> 2-6, Tachycardia -> 2-7)."
+        },
+        {
+          "step_number": 4,
+          "text": "Apply CM5 continuous ECG monitoring (Box B: Right arm [red] lead over upper right sternum; Left arm [yellow] lead 5th intercostal space under left nipple; Indifferent [green or black] lead on left shoulder). Obtain a 12-lead ECG as soon as possible."
+        },
+        {
+          "step_number": 5,
+          "text": "If ischaemia does not resolve: Call for help. Inform theatre team of problem. Stop or rapidly complete the surgery. Start glyceryl trinitrate (GTN) (Box C: Consider sublingual administration, or i.v. 1 mg/ml solution starting at 0.1 ml/kg/hr, titrated against response. NOT RECOMMENDED IN CHILDREN). EXTREME CAUTION with GTN if the patient is hypotensive."
+        },
+        {
+          "step_number": 6,
+          "text": "Consider invasive arterial blood pressure monitoring."
+        },
+        {
+          "step_number": 7,
+          "text": "Treat electrolyte abnormalities particularly potassium, magnesium and calcium."
+        },
+        {
+          "step_number": 8,
+          "text": "Treat anaemia aiming for haematocrit >30%. CAUTION – beware volume overload especially in heart failure."
+        },
+        {
+          "step_number": 9,
+          "text": "If persistent ST elevation is present, consider need for anticoagulation, anti-platelet therapy and revascularisation in consultation with cardiology and surgical teams."
+        }
+      ],
+      "after_the_event": [
+        "Admit to critical care environment and consult cardiology",
+        "Maintain head up position if practicable",
+        "Obtain serial 12-lead ECGs and cardiac enzymes"
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "cardiac ischaemia",
+      "myocardial infarction",
+      "st elevation",
+      "st depression",
+      "gtn",
+      "glyceryl trinitrate",
+      "ecg",
+      "chest pain",
+      "angina",
+      "coronary syndrome",
+      "heart attack",
+      "intraoperative ischaemia"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 25,
+    "calculator": {
+      "calculator_name": "GTN Infusion Rate Calculator",
+      "formula_page": 25,
+      "inputs": [
+        {
+          "id": "weight",
+          "label": "Actual Body Weight (kg)",
+          "type": "number",
+          "defaultValue": 70,
+          "min": 10,
+          "max": 200
+        }
+      ],
+      "calculations": [
+        {
+          "id": "gtn_rate",
+          "label": "GTN Infusion Starting Rate (0.1 ml/kg/hr of 1 mg/ml solution)",
+          "formula": "weight * 0.1",
+          "unit": "ml/hr"
+        }
+      ]
+    }
+  },
+  {
+    "protocol_id": "neuroprotection-post-arrest",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Neuroprotection following cardiac arrest v.1",
+      "introduction": "Outcome from cardiac arrest is determined by the severity of any supervening neurological or cardiac dysfunction / instability which results from poor vital organ perfusion. Following return of spontaneous circulation (ROSC), inability of the patient to obey commands indicates that neuroprotection techniques should be considered.",
+      "box_a_cooling_strategies": {
+        "intravenous_fluid_bolus": "if not contraindicated give 30 ml.kg-1 of cold (4°C) non glucose-containing solutions",
+        "external": "simple ice packs and/or wet towels; cooling blankets or pads; water or air circulating blankets; water circulating gel-coated pads",
+        "internal": "intravascular heat exchanger; cardiopulmonary bypass"
+      },
+      "box_b_drugs_to_control_prevent_seizures": [
+        "Benzodiazepines or propofol are likely to be closest to hand in the operating theatre.",
+        "Sodium valproate, levetiracetam, phenytoin or a barbiturate can also be used."
+      ],
+      "box_c_critical_changes": "Cardiac arrest → 2 - 1 START.",
+      "steps": [
+        {
+          "step_number": 1,
+          "text": "Prepare the cardiac arrest trolley for any further events."
+        },
+        {
+          "step_number": 2,
+          "text": "Use positive pressure ventilation, aiming for: SpO2 > 94% and < 98%; PCO2 > 4.5 kPa and < 5.5 kPa."
+        },
+        {
+          "step_number": 3,
+          "text": "Give sedation and neuromuscular blocking drugs to reduce thermogenesis from shivering."
+        },
+        {
+          "step_number": 4,
+          "text": "Insert intra-arterial blood pressure monitoring. Consider vasopressor/inotrope to maintain systolic blood pressure, target SBP > 100 mmHg."
+        },
+        {
+          "step_number": 5,
+          "text": "Obtain 12-lead ECG and discuss with cardiology if percutaneous coronary intervention is possible or appropriate."
+        },
+        {
+          "step_number": 6,
+          "text": "Check blood glucose. Start glycaemic control therapies if above 10 mmol.l-1."
+        },
+        {
+          "step_number": 7,
+          "text": "Check core temperature. Target temperature is a constant temperature in the range of 32 – 36°C (precise target determined by local policy): Temperature usually decreases without intervention in the immediate post-arrest period; Start cooling strategies if indicated (Box A); Avoid hyperthermia > 37.5°C."
+        },
+        {
+          "step_number": 8,
+          "text": "Give antiepileptic drugs if seizures develop (Box B)."
+        },
+        {
+          "step_number": 9,
+          "text": "Plan further management in critical care area. Call for extra help as necessary."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "cardiac arrest",
+      "neuroprotection",
+      "ROSC",
+      "hypothermia",
+      "seizure control",
+      "ventilation management",
+      "glycaemic control",
+      "vasopressors",
+      "temperature monitoring",
+      "anticonvulsants",
+      "acid-base balance",
+      "cardiology",
+      "fluid resuscitation"
+    ],
+    "calculator": {
+      "calculator_name": "Fluid Bolus Calculation for Neuroprotection",
+      "formula_page": 26,
+      "inputs": [
+        {
+          "id": "weight",
+          "label": "Actual Body Weight (kg)",
+          "type": "number",
+          "defaultValue": 70,
+          "min": 10,
+          "max": 200
+        }
+      ],
+      "calculations": [
+        {
+          "id": "fluid_bolus",
+          "label": "Cold Fluid Bolus Volume (30 ml/kg)",
+          "formula": "weight * 30",
+          "unit": "ml"
+        }
+      ]
+    },
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 26
+  },
+  {
+    "protocol_id": "sepsis",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Sepsis",
+      "description": "Severe sepsis (hypotension persisting after initial fluid challenge of 30ml.kg-1 or blood lactate concentration ≥ 4mmol.l-1 if infection most likely underlying cause) or septic shock (sepsis with end organ dysfunction).",
+      "boxes": {
+        "box_a": {
+          "title": "FLUID THERAPY",
+          "points": [
+            "Crystalloids initial fluid of choice in severe sepsis and septic shock.",
+            "Greater than 30 ml.kg-1 of crystalloid may be required in some patients.",
+            "Continue fluid challenge if haemodynamic improvement.",
+            "Hydroxyethyl starches should not be used."
+          ]
+        },
+        "box_b": {
+          "title": "SET PHYSIOLOGICAL GOALS",
+          "points": [
+            "Central venous pressure.",
+            "Mean arterial pressure.",
+            "Urine output.",
+            "Central venous (superior vena cava) or mixed venous saturation."
+          ]
+        },
+        "box_c": {
+          "title": "PAEDIATRIC CONSIDERATIONS",
+          "points": [
+            "Goals: capillary refill time (CRT) ≤ 2 secs, normal BP for age, normal peripheral pulses, warm extremities, urine >1 ml.kg-1.hr-1, SCVO2 >70%.",
+            "Give 20 ml.kg-1 initially up to or over 60 ml.kg-1 fluid until goals or unless rales or hepatomegaly develops.",
+            "Begin peripheral inotropic support pending central/intraosseous access.",
+            "If warm shock (↑HR, ↓BP) start noradrenaline.",
+            "If cold shock (↑HR, ↓CRT) start dopamine and, if resistant, adrenaline."
+          ]
+        },
+        "box_d": {
+          "title": "DRUG THERAPY",
+          "points": [
+            "Noradrenaline (NA) as first choice vasopressor.",
+            "Adrenaline added to noradrenaline when additional agent needed.",
+            "Vasopressin 0.03 units.min-1 added to ↑MAP or ↓ noradrenaline need.",
+            "Dobutamine up to 20 μg.kg-1.min-1 if evidence of myocardial dysfunction or ongoing signs of hypoperfusion despite adequate MAP and adequate intravascular volume.",
+            "Hydrocortisone if unable to restore haemodynamic stability."
+          ]
+        }
+      },
+      "steps": [
+        {
+          "step_number": 1,
+          "text": "Call for help and inform theatre team of problem."
+        },
+        {
+          "step_number": 2,
+          "text": "Increase FiO2, consider reducing anaesthetic agent and intubate patient."
+        },
+        {
+          "step_number": 3,
+          "text": "Give crystalloid i.v.: Adult: at least 30 ml.kg-1 (Box A, Box B). Child: at least 20 ml.kg-1 (Box C)."
+        },
+        {
+          "step_number": 4,
+          "text": "Take bloods including blood gas, lactate, FBC, U&Es, coagulation and cultures."
+        },
+        {
+          "step_number": 5,
+          "text": "Give empiric intravenous antimicrobials within 1 h (seek microbiology advice)."
+        },
+        {
+          "step_number": 6,
+          "text": "Consider whether indwelling devices could have caused a septic shower."
+        },
+        {
+          "step_number": 7,
+          "text": "If patient is not improving proceed to the next steps."
+        },
+        {
+          "step_number": 8,
+          "text": "Insert central and arterial access lines. Check serial lactates."
+        },
+        {
+          "step_number": 9,
+          "text": "Start noradrenaline to achieve mean arterial pressure >= 65 mmHg (Box D)."
+        },
+        {
+          "step_number": 10,
+          "text": "Insert urinary catheter and record hourly urine output."
+        },
+        {
+          "step_number": 11,
+          "text": "Consider monitoring cardiac output to further aid fluid and vasopressor therapy."
+        },
+        {
+          "step_number": 12,
+          "text": "Identify source of sepsis, consider source control and send source cultures if possible (eg. surgical site, urine, broncho-alveolar lavage)."
+        },
+        {
+          "step_number": 13,
+          "text": "Discuss whether appropriate to abandon or limit surgery."
+        },
+        {
+          "step_number": 14,
+          "text": "Discuss ongoing management plan with intensive care team."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "sepsis",
+      "septic shock",
+      "severe sepsis",
+      "infection",
+      "hypotension",
+      "lactate",
+      "crystalloid",
+      "noradrenaline",
+      "vasopressor",
+      "paediatric sepsis",
+      "antibiotics",
+      "fluid resuscitation"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 27,
+    "calculator": {
+      "calculator_name": "Sepsis Fluid and Drug Calculator",
+      "formula_page": 27,
+      "inputs": [
+        {
+          "id": "weight",
+          "label": "Actual Body Weight (kg)",
+          "type": "number",
+          "defaultValue": 70,
+          "min": 2,
+          "max": 200
+        }
+      ],
+      "calculations": [
+        {
+          "id": "adult_fluid_bolus",
+          "label": "Adult Fluid Bolus (30 ml/kg)",
+          "formula": "weight * 30",
+          "unit": "ml"
+        },
+        {
+          "id": "child_fluid_bolus",
+          "label": "Child Fluid Bolus (20 ml/kg)",
+          "formula": "weight * 20",
+          "unit": "ml"
+        },
+        {
+          "id": "dobutamine_max",
+          "label": "Dobutamine Max Rate (20 mcg/kg/min)",
+          "formula": "weight * 20",
+          "unit": "mcg/min"
+        }
+      ]
+    }
+  },
+  {
+    "protocol_id": "mains-oxygen-failure",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Mains oxygen failure",
+      "version": "v.1",
+      "description": "Complete failure of wall or pendant oxygen supply. Failure may be theatre-specific, zone-specific or hospital-wide.",
+      "boxes": {
+        "box_a": {
+          "title": "ORGANISATIONAL ISSUES",
+          "role": "Theatre coordinator or equivalent should:",
+          "points": [
+            "Ensure no new case is started unless clinical priority absolutely requires it.",
+            "Ascertain the extent of the failure throughout the hospital.",
+            "Ascertain the reserve supplies of oxygen.",
+            "Evaluate implications for ongoing supply.",
+            "Ensure any other relevant emergency plans are initiated.",
+            "Coordinate delivery of further oxygen cylinders in good time.",
+            "Ensure individual theatres are kept informed."
+          ]
+        },
+        "box_b": {
+          "title": "OXYGEN CYLINDER : REMAINING CONTENTS",
+          "headers": [
+            "% full (pressure)",
+            "CYLINDER SIZE C",
+            "CYLINDER SIZE D",
+            "CYLINDER SIZE E",
+            "CYLINDER SIZE F",
+            "CYLINDER SIZE G",
+            "CYLINDER SIZE J"
+          ],
+          "rows": [
+            {
+              "pressure": "100% (137 bar)",
+              "C": "170 L",
+              "D": "340 L",
+              "E": "680 L",
+              "F": "1360 L",
+              "G": "3400 L",
+              "J": "6800 L"
+            },
+            {
+              "pressure": "50% (69 bar)",
+              "C": "85 L",
+              "D": "170 L",
+              "E": "340 L",
+              "F": "680 L",
+              "G": "1700 L",
+              "J": "3400 L"
+            },
+            {
+              "pressure": "25% (34 bar)",
+              "C": "43 L",
+              "D": "85 L",
+              "E": "170 L",
+              "F": "340 L",
+              "G": "850 L",
+              "J": "1700 L"
+            }
+          ]
+        },
+        "box_c": {
+          "title": "RECOVERY",
+          "points": [
+            "Recovery area must be appropriately supplied with cylinder oxygen if also affected.",
+            "Identify patients who do not require supplemental oxygen."
+          ]
+        },
+        "box_d": {
+          "title": "RE-ESTABLISHMENT OF SERVICES",
+          "points": [
+            "Disconnect equipment from failed wall/pendant outlets.",
+            "When re-established, output may not initially be 100% oxygen.",
+            "Do not re-use outlet until gas composition and quality satisfactorily confirmed by a competent authority."
+          ]
+        }
+      },
+      "steps": [
+        {
+          "step_number": 1,
+          "text": "Inform the theatre team of the problem, including theatre coordinator (Box A)."
+        },
+        {
+          "step_number": 2,
+          "text": "Call for help, but be aware failure may be widespread."
+        },
+        {
+          "step_number": 3,
+          "text": "Switch to cylinder oxygen supply."
+        },
+        {
+          "step_number": 4,
+          "text": "Check remaining cylinder content (Box B):",
+          "bullets": [
+            "Ensure at least one further cylinder always available."
+          ]
+        },
+        {
+          "step_number": 5,
+          "text": "Prolong duration of cylinder oxygen supply:",
+          "bullets": [
+            "Use circle system.",
+            "Use lowest possible fresh gas flow.",
+            "Use lowest possible FiO2.",
+            "Check FiO2 alarms."
+          ]
+        },
+        {
+          "step_number": 6,
+          "text": "Minimise auxiliary gas usage:",
+          "bullets": [
+            "Some ventilator systems are gas-driven. If so, switching to manual ventilation will prolong oxygen cylinder supply."
+          ]
+        },
+        {
+          "step_number": 7,
+          "text": "Evaluate moving to nearby area if oxygen supply there preserved."
+        },
+        {
+          "step_number": 8,
+          "text": "Continue to monitor and ensure adequacy of inspired oxygen and volatile agent."
+        },
+        {
+          "step_number": 9,
+          "text": "Workflow:",
+          "bullets": [
+            "Do not start any new case unless clinical priority absolutely requires it.",
+            "Expedite conclusion of current case if clinically appropriate.",
+            "Consider recovering the patient in theatre if recovery also affected (Box C)."
+          ]
+        },
+        {
+          "step_number": 10,
+          "text": "Disconnect from failed outlets and do not re-connect until safe to do so (Box D)."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "Oxygen supply failure",
+      "Anaesthesia emergency",
+      "Hypoxia management",
+      "Respiratory distress",
+      "Theatre crisis",
+      "Cylinder oxygen",
+      "Ventilation failure",
+      "Gas embolism prevention",
+      "Anesthetic gas monitoring",
+      "Emergency protocol",
+      "Oxygen deprivation",
+      "Anaesthesia coordinator"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 28
+  },
+  {
+    "protocol_id": "mains-electricity-failure",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Mains electricity failure",
+      "steps": [
+        {
+          "step_number": 1,
+          "text": "Call for help – extra staff to monitor patient and source additional equipment."
+        },
+        {
+          "step_number": 2,
+          "text": "Liaise with local coordinator to activate appropriate local plan (Box A): If immediate evacuation necessary → 4-3. (Box A: Local coordinator should activate any local incident plan and urgently establish and brief teams on: Extent of failure, likely duration of failure, interruption to other services [eg oxygen, water])."
+        },
+        {
+          "step_number": 3,
+          "text": "Get additional light into theatre (Box B: Open doors and blinds; Hand torches, portable lights, mobile phones, laryngoscopes)."
+        },
+        {
+          "step_number": 4,
+          "text": "Ensure ventilation continues: Manual ventilation if required; Consider moving to spontaneous ventilation; Maintain anaesthesia."
+        },
+        {
+          "step_number": 5,
+          "text": "Check the pulse and blood pressure manually if monitors have failed."
+        },
+        {
+          "step_number": 6,
+          "text": "Check mains oxygen supply intact. If failed → 4-1."
+        },
+        {
+          "step_number": 7,
+          "text": "Unplug unnecessary equipment. Use correct socket for essential equipment (Box C: Standard power socket: not protected; SPS: Secondary supply [red socket] for devices that can sustain brief periods of loss of power [eg those with internal battery back-up]; UPS: Uninterrupted supply [blue socket] for instantaneous and continuous protection [this supply is limited therefore avoid using UPS sockets unless absolutely necessary]; Devices’ internal battery backup: this may not supply all functions of the device and duration may be variable)."
+        },
+        {
+          "step_number": 8,
+          "text": "Assess reliability of power supply, duration of surgery and patient condition: Consider stopping surgery immediately; Consider continuing surgery until patient is stable and wound is closed (may be temporary closure); Consider evacuation to theatre with intact mains supply → 4-3."
+        },
+        {
+          "step_number": 9,
+          "text": "Prepare recovery facilities. Consider theatres, recovery, ICU."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "power failure",
+      "anaesthesia crisis",
+      "electrical emergency",
+      "oxygen depletion",
+      "backup power",
+      "emergency protocol",
+      "resuscitation",
+      "ventilation failure",
+      "local anesthetic",
+      "critical care",
+      "circuit breaker",
+      "power outage management",
+      "clinical emergency"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 29
+  },
+  {
+    "protocol_id": "emergency-evacuation",
+    "status": "Active",
+    "metadata": {
+      "version_hash": "git_qrh2023",
+      "compiled_at": "2023-06-01T00:00:00Z",
+      "review_due_at": "2028-06-01T00:00:00Z",
+      "owner_email": "audit.lead@nhs.net",
+      "supersedes_document_id": null
+    },
+    "clinical": {
+      "title": "Emergency Evacuation of Anesthetised or Sedated Patient Due to Environmental Hazard",
+      "steps": [
+        {
+          "step_number": "Pre-Step/Context",
+          "text": "Definition: Applicable when an anaesthetised or sedated patient requires unplanned transfer because of environmental hazard (e.g. flood, fire, smoke, structural collapse, noxious gas)."
+        },
+        {
+          "step_number": "Box A: UNABLE TO MOVE PATIENT",
+          "text": "Ensure adequate depth of anaesthesia. Ensure adequate reserve: 100% oxygen, low flow, fill vaporiser. Ensure adequate neuromuscular blockade if relevant. Evacuate all staff, including anaesthetist when indicated. Inform rescue services and theatre coordinator."
+        },
+        {
+          "step_number": "Box B: DRUGS",
+          "text": "Drugs may not be readily available at muster point. Aim to take: Oxygen; Propofol /other hypnotic; Neuromuscular blockade; Vasopressor(s); Analgesics; i.v. fluids; Neuromuscular reversal if extubation anticipated."
+        },
+        {
+          "step_number": "Box C: MUSTER POINT",
+          "text": "Able bodied → adjacent safe zone. Anaesthetised/sedated patient → area with appropriate access to oxygen and medications, e.g. theatre, recovery or critical care area in a safe zone. Inform rescue services and relevant coordinator of location."
+        },
+        {
+          "step_number": "Box D: ROUTE",
+          "text": "Ensure route avoids original hazard and any consequent ones. Caution using lifts, especially in fire."
+        },
+        {
+          "step_number": "❶",
+          "text": "Consider if patient can be safely moved: if not see Box A."
+        },
+        {
+          "step_number": "❷",
+          "text": "Stop any operative procedure as soon as safe. Pack and cover wounds."
+        },
+        {
+          "step_number": "❸",
+          "text": "Transfer patient to bed or trolley. Transfer on operating table in extremis."
+        },
+        {
+          "step_number": "❹",
+          "text": "Evacuate non-essential staff. Consider calling for help but be aware their own safety may preclude their attendance."
+        },
+        {
+          "step_number": "❺",
+          "text": "Airway: Consider tracheal intubation to improve airway security if time allows."
+        },
+        {
+          "step_number": "❻",
+          "text": "Breathing/ventilation options: Minimise oxygen usage: lowest flows possible. Self-inflating bag +/- supplemental oxygen. Mechanical ventilator or C-circuit require higher flows."
+        },
+        {
+          "step_number": "❼",
+          "text": "Circulation: Ensure adequacy and security of i.v access. Take adequate supplies of fluid ± infusion sets. Take vasopressor(s) and/or resuscitation drug box."
+        },
+        {
+          "step_number": "❽",
+          "text": "Maintenance of anaesthesia: Intermittent bolus propofol simplest and quickest. Infusion if time allows – remember mains cable for pump if available. Consider taking stocks and pump to make infusion later. Take blankets and/or warming devices if possible."
+        },
+        {
+          "step_number": "❾",
+          "text": "If time allows, assemble adequate supply of drugs (Box B)."
+        },
+        {
+          "step_number": "❿",
+          "text": "Take existing monitoring and mains cabling."
+        },
+        {
+          "step_number": "⓫",
+          "text": "Agree and communicate staff and patient muster points (Box C)."
+        }
+      ]
+    },
+    "site_logistics": {
+      "site_1": {
+        "hospital_name": "St George's Hospital",
+        "emergency_extension": "2222",
+        "drug_location": "Obstetric Theatre Drug Fridge / Cardiac Arrest Trolley"
+      },
+      "site_2": {
+        "hospital_name": "Queen Mary's Hospital",
+        "emergency_extension": "3333",
+        "drug_location": "Main Theatre Fridge / Cardiac Arrest Trolley"
+      },
+      "site_3": {
+        "hospital_name": "Nelson Community Hospital",
+        "emergency_extension": "9999",
+        "drug_location": "Community Emergency Grab Box / Crash Cart"
+      }
+    },
+    "search_tags": [
+      "anesthesia",
+      "evacuation protocol",
+      "environmental hazard",
+      "airway management",
+      "ventilation",
+      "resuscitation",
+      "propofol",
+      "vasopressor",
+      "critical care",
+      "sedated patient",
+      "anaesthesia safety",
+      "mass casualty incident",
+      "circulatory support",
+      "hypothermia prevention"
+    ],
+    "pdf_name": "QRH_complete_June_2023.pdf",
+    "default_page": 30
   }
 ]

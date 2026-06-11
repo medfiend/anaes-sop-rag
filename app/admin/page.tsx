@@ -11,7 +11,14 @@ import DoseCalculator from '../../components/DoseCalculator';
 
 // Manually curated guidelines bundled with the app — their calculators were
 // hand-verified, so they are exempt from the dynamic approval workflow.
-const STATIC_GUIDELINE_IDS = ['la-toxicity', 'malignant-hyperthermia', 'resus-als', 'dexmed-sop-afoi', 'post-op-fossa'];
+const STATIC_GUIDELINE_IDS = [
+  'la-toxicity', 'malignant-hyperthermia', 'resus-als', 'dexmed-sop-afoi', 'post-op-fossa',
+  'key-basic-plan', 'hypoxia', 'increased-airway-pressure', 'hypotension', 'hypertension',
+  'bradycardia', 'tachycardia', 'peri-operative-hyperthermia', 'anaphylaxis', 'massive-blood-loss',
+  'cico', 'bronchospasm', 'circulatory-embolus', 'laryngospasm', 'patient-fire',
+  'cardiac-tamponade', 'high-central-neuraxial-block', 'cardiac-ischaemia', 'neuroprotection-post-arrest',
+  'sepsis', 'mains-oxygen-failure', 'mains-electricity-failure', 'emergency-evacuation'
+];
 
 export default function AdminDashboard() {
   const { user: clerkUser, isLoaded } = useUser();
