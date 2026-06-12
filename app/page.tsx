@@ -965,7 +965,7 @@ export default function Home() {
                           </button>
                           {activeGuideline.pdf_name && (
                             <a
-                              href={getPdfUrl(activeGuideline.pdf_name)}
+                              href={activeGuideline.pdf_name.startsWith('http') ? activeGuideline.pdf_name : `${getPdfUrl(activeGuideline.pdf_name)}#page=${activePage || activeGuideline.default_page || 1}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="bg-slate-850 hover:bg-slate-750 text-teal-400 font-bold px-3 py-1.5 rounded-lg text-xxs flex items-center gap-1.5 transition-colors border border-slate-750 hover:border-teal-500/30 shadow-sm"
@@ -1048,8 +1048,10 @@ export default function Home() {
                       <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-slate-950">
                         {/* Summary / Calculator Column */}
                         {(showSummary || (showCalculator && hasCalculator)) && (
-                          <div className={`flex-1 flex flex-col overflow-y-auto p-5 space-y-4 ${
-                            showPdf && !activeGuideline.pdf_name.startsWith('http') ? 'md:w-1/2 md:max-w-[50%] border-r border-slate-800' : 'w-full'
+                          <div className={`flex-1 flex-col overflow-y-auto p-5 space-y-4 ${
+                            showPdf && !activeGuideline.pdf_name.startsWith('http')
+                              ? 'hidden md:flex md:w-1/2 md:max-w-[50%] border-r border-slate-800'
+                              : 'flex w-full'
                           }`}>
                             
                             {/* Dose Calculator block */}

@@ -216,13 +216,13 @@ export default function DoseCalculator({ schema, isSandbox = false, onApprove, i
 
               <div
                 className="relative overflow-hidden bg-[#090f1e] rounded-lg border border-slate-800"
-                style={{ height: ROW_HEIGHT * 4 }}
+                style={{ height: ROW_HEIGHT * 3 }}
               >
                 {/* Horizontal Highlight Reticle Bar */}
                 <div
                   className="absolute left-0 right-0 z-10 pointer-events-none border-y"
                   style={{
-                    top: ROW_HEIGHT * 1.5,
+                    top: ROW_HEIGHT,
                     height: ROW_HEIGHT,
                     backgroundColor: '#2dd4bf15',
                     borderColor: '#2dd4bf40',
@@ -232,11 +232,11 @@ export default function DoseCalculator({ schema, isSandbox = false, onApprove, i
                 <div
                   ref={scrollerRef}
                   onScroll={handleScroll}
-                  className="h-full overflow-y-auto"
+                  className="h-full overflow-y-auto scrollbar-none"
                   style={{
                     scrollSnapType: 'y mandatory',
-                    paddingTop: ROW_HEIGHT * 1.5,
-                    paddingBottom: ROW_HEIGHT * 1.5,
+                    paddingTop: ROW_HEIGHT,
+                    paddingBottom: ROW_HEIGHT,
                   }}
                 >
                   {lookupData.map(row => {
@@ -247,8 +247,8 @@ export default function DoseCalculator({ schema, isSandbox = false, onApprove, i
                         key={row.weight}
                         type="button"
                         onClick={() => handleRowPress(row.weight)}
-                        className="w-full flex items-center justify-between px-4 text-left"
-                        style={{ height: ROW_HEIGHT, scrollSnapAlign: 'start' }}
+                        className="w-full flex items-center justify-between px-4 text-left cursor-pointer"
+                        style={{ height: ROW_HEIGHT, scrollSnapAlign: 'center' }}
                       >
                         <span className={`font-mono ${isActive ? 'text-teal-400 font-extrabold text-sm' : 'text-slate-500 text-xs'}`}>
                           {row.weight} kg

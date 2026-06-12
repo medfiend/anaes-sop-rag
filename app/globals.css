@@ -9,6 +9,12 @@
   --color-emergency-hover: #b91c1c;
   --color-bg-dark: #030712;
   --color-card-dark: #1f2937;
+
+  /* Custom slate and teal colors to fix mobile layout fallback rendering issues */
+  --color-slate-350: #aebacf;
+  --color-slate-750: #293548;
+  --color-slate-850: #172237;
+  --color-teal-405: #2dd4bf;
 }
 
 /* Custom Scrollbar styling */
@@ -65,4 +71,13 @@ body {
 
 .pdf-canvas-container {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Hide scrollbar utility */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
