@@ -553,7 +553,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen md:h-screen bg-slate-900 flex flex-col font-sans md:overflow-hidden">
+    <div className="h-screen h-dvh bg-slate-900 flex flex-col font-sans overflow-hidden">
       {/* Global Clinical Header */}
       <header className="bg-slate-950 border-b border-slate-800 text-white px-4 py-3 flex items-center justify-between z-20 shrink-0">
         <div className="flex items-center gap-2">
@@ -963,17 +963,6 @@ export default function Home() {
                             <Pin className={`w-3.5 h-3.5 ${pinnedGuidelineIds.includes(activeGuideline.id) ? 'fill-teal-400 text-teal-400' : 'text-slate-400'}`} />
                             {pinnedGuidelineIds.includes(activeGuideline.id) ? 'Pinned' : 'Pin'}
                           </button>
-                          {activeGuideline.pdf_name && (
-                            <a
-                              href={activeGuideline.pdf_name.startsWith('http') ? activeGuideline.pdf_name : `${getPdfUrl(activeGuideline.pdf_name)}#page=${activePage || activeGuideline.default_page || 1}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="bg-slate-850 hover:bg-slate-750 text-teal-400 font-bold px-3 py-1.5 rounded-lg text-xxs flex items-center gap-1.5 transition-colors border border-slate-750 hover:border-teal-500/30 shadow-sm"
-                            >
-                              <FileText className="w-3.5 h-3.5" />
-                              Source PDF ↗
-                            </a>
-                          )}
                         </div>
                       </div>
 
@@ -1125,7 +1114,7 @@ export default function Home() {
 
                         {/* Embedded PDF Viewer Column */}
                         {showPdf && !activeGuideline.pdf_name.startsWith('http') && (
-                          <div className="flex-1 h-full min-w-[320px]">
+                          <div className="flex-1 flex flex-col min-w-[320px] h-full">
                             <PdfViewer 
                               fileUrl={getPdfUrl(activeGuideline.pdf_name)} 
                               pageNumber={activePage || activeGuideline.default_page || 1}
